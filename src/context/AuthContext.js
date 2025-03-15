@@ -1,44 +1,48 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { authService } from '../services/authService';
+import React, { createContext, useState } from 'react';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({
+    name: 'Айдар Тестов',
+    email: 'aidar@test.com',
+    avatar: null,
+    phone: '+7 (777) 123-45-67',
+    faculty: 'Экономический факультет',
+    specialization: 'Финансы и кредит',
+    studentId: '2023-1234',
+    year: '3 курс',
+  });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  const loadUser = useCallback(async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      if (token) {
-        const userData = await authService.getCurrentUser();
-        setUser(userData);
-      }
-    } catch (err) {
-      console.error('Failed to load user', err);
-      setError('Failed to authenticate user');
-      localStorage.removeItem('token');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadUser();
-  }, [loadUser]);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   const login = async (credentials) => {
     try {
       setLoading(true);
-      const { user: userData, token } = await authService.login(credentials);
-      localStorage.setItem('token', token);
-      setUser(userData);
-      setError(null);
-      return userData;
+      // Имитация задержки сети
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Простая проверка для тестирования
+      if (credentials.email === 'test@test.com' && credentials.password === 'password') {
+        setUser({
+          name: 'Айдар Тестов',
+          email: credentials.email,
+          avatar: null,
+          phone: '+7 (777) 123-45-67',
+          faculty: 'Экономический факультет',
+          specialization: 'Финансы и кредит',
+          studentId: '2023-1234',
+          year: '3 курс',
+        });
+        setIsAuthenticated(true);
+        setError(null);
+        return user;
+      } else {
+        throw new Error('Неверный email или пароль');
+      }
     } catch (err) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Ошибка входа');
       throw err;
     } finally {
       setLoading(false);
@@ -48,13 +52,19 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       setLoading(true);
-      const { user: newUser, token } = await authService.register(userData);
-      localStorage.setItem('token', token);
-      setUser(newUser);
+      // Имитация задержки сети
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Просто устанавливаем пользователя из полученных данных
+      setUser({
+        ...userData,
+        avatar: null
+      });
+      setIsAuthenticated(true);
       setError(null);
-      return newUser;
+      return userData;
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      setError(err.message || 'Ошибка регистрации');
       throw err;
     } finally {
       setLoading(false);
@@ -62,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    setIsAuthenticated(false);
     setUser(null);
   };
 
@@ -73,7 +83,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    isAuthenticated: !!user,
+    isAuthenticated,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
