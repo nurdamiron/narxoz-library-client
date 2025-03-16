@@ -28,10 +28,28 @@ import {
   Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 
-// Имитация задержки загрузки
+/**
+ * Жүктеу кідірісін имитациялау функциясы
+ * 
+ * Бұл функция серверден мәліметтер жүктеуді имитациялау үшін қолданылады
+ * 
+ * @param {number} ms - Миллисекундпен көрсетілген кідіріс уақыты
+ * @returns {Promise<void>} - Кідіріс аяқталғаннан кейін орындалатын Promise
+ */
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Тестовые данные истории заимствований
+/**
+ * Кітап беру тарихының тестілік деректері
+ * 
+ * Бұл массив пайдаланушының кітап беру тарихын сақтайды. Әр жазба келесі қасиеттерден тұрады:
+ * - id: Жазбаның бірегей идентификаторы
+ * - bookTitle: Кітаптың атауы
+ * - author: Кітаптың авторы
+ * - borrowDate: Кітапты алған күні
+ * - dueDate: Кітапты қайтару мерзімі
+ * - returnDate: Кітапты қайтарған күні (егер қайтарылмаған болса, null)
+ * - status: Кітап берудің күйі ('active' - белсенді, 'returned' - қайтарылған, 'overdue' - мерзімі өткен)
+ */
 const mockBorrows = [
   {
     id: 1,
@@ -80,56 +98,104 @@ const mockBorrows = [
   },
 ];
 
+/**
+ * BorrowHistoryPage компоненті - пайдаланушының кітап беру тарихын көрсететін бет
+ * 
+ * Бұл компонент пайдаланушының кітап беру тарихын көрсетеді және оны фильтрлеу мүмкіндігін ұсынады:
+ * - Барлық кітаптар
+ * - Белсенді (әлі қайтарылмаған) кітаптар
+ * - Қайтарылған кітаптар
+ * - Мерзімі өткен кітаптар
+ * 
+ * Сонымен қатар, компонент кітапхананы пайдалану ережелері мен статистиканы көрсетеді.
+ */
 const BorrowHistoryPage = () => {
-  const theme = useTheme();
-  const [loading, setLoading] = useState(true);
-  const [borrows, setBorrows] = useState([]);
-  const [tab, setTab] = useState('all');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const theme = useTheme(); // Material UI тақырыбын алу
+  const [loading, setLoading] = useState(true); // Жүктелу күйі
+  const [borrows, setBorrows] = useState([]); // Кітап беру тарихы
+  const [tab, setTab] = useState('all'); // Таңдалған қойынды (фильтр)
+  const [page, setPage] = useState(0); // Ағымдағы бет (пагинация)
+  const [rowsPerPage, setRowsPerPage] = useState(5); // Бетте көрсетілетін жазбалар саны
 
+  /**
+   * Деректерді жүктеу эффекті
+   * 
+   * Компонент жүктелгенде деректерді жүктейді (бұл жағдайда тестілік деректерді)
+   */
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
-      // Имитация загрузки данных
+      setLoading(true); // Жүктелу күйін қосу
+      // Деректерді жүктеу имитациясы (нақты қосымшада API сұрауы болар еді)
       await delay(1000);
-      setBorrows(mockBorrows);
-      setLoading(false);
+      setBorrows(mockBorrows); // Деректерді күйге сақтау
+      setLoading(false); // Жүктелу күйін өшіру
     };
 
-    fetchData();
-  }, []);
+    fetchData(); // Функцияны шақыру
+  }, []); // Компонент алғаш жүктелгенде бір рет шақырылады
 
+  /**
+   * Қойынды өзгеру функциясы
+   * 
+   * @param {Event} event - Оқиға объектісі
+   * @param {string} newValue - Жаңа қойынды мәні ('all', 'active', 'returned', 'overdue')
+   */
   const handleTabChange = (event, newValue) => {
-    setTab(newValue);
-    setPage(0);
+    setTab(newValue); // Қойынды күйін жаңарту
+    setPage(0); // Беттеуді бастапқы бетке қайтару
   };
 
+  /**
+   * Бетті өзгерту функциясы (пагинация)
+   * 
+   * @param {Event} event - Оқиға объектісі
+   * @param {number} newPage - Жаңа бет нөмірі
+   */
   const handleChangePage = (event, newPage) => {
-    setPage(newPage);
+    setPage(newPage); // Бет күйін жаңарту
   };
 
+  /**
+   * Бетте көрсетілетін жазбалар санын өзгерту функциясы
+   * 
+   * @param {Event} event - Оқиға объектісі
+   */
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    setRowsPerPage(parseInt(event.target.value, 10)); // Жазбалар санын жаңарту
+    setPage(0); // Беттеуді бастапқы бетке қайтару
   };
 
+  /**
+   * Таңдалған фильтрге сәйкес жазбаларды фильтрлеу функциясы
+   * 
+   * @returns {Array} - Фильтрленген жазбалар тізімі
+   */
   const getFilteredBorrows = () => {
     if (tab === 'all') {
-      return borrows;
+      return borrows; // 'all' фильтрі үшін барлық жазбаларды қайтару
     }
+    // Белгілі бір күй үшін жазбаларды фильтрлеу
     return borrows.filter((borrow) => borrow.status === tab);
   };
 
+  // Фильтрленген жазбалар тізімі
   const filteredBorrows = getFilteredBorrows();
+  
+  // Ағымдағы бетте көрсетілетін жазбалар тізімі
   const paginatedBorrows = filteredBorrows.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+    page * rowsPerPage, // Бастапқы индекс
+    page * rowsPerPage + rowsPerPage // Соңғы индекс
   );
 
+  /**
+   * Кітап берудің күйіне сәйкес Chip компонентін қайтару функциясы
+   * 
+   * @param {string} status - Кітап берудің күйі ('active', 'returned', 'overdue')
+   * @returns {JSX.Element} - Chip компоненті
+   */
   const getStatusChip = (status) => {
     switch (status) {
-      case 'active':
+      case 'active': // Белсенді (алынған, қайтарылмаған)
         return (
           <Chip
             icon={<LibraryIcon />}
@@ -138,7 +204,7 @@ const BorrowHistoryPage = () => {
             size="small"
           />
         );
-      case 'returned':
+      case 'returned': // Қайтарылған
         return (
           <Chip
             icon={<CheckCircleIcon />}
@@ -147,7 +213,7 @@ const BorrowHistoryPage = () => {
             size="small"
           />
         );
-      case 'overdue':
+      case 'overdue': // Мерзімі өткен
         return (
           <Chip
             icon={<WarningIcon />}
@@ -163,6 +229,7 @@ const BorrowHistoryPage = () => {
 
   return (
     <Container>
+      {/* Беттің тақырыбы */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
           <HistoryIcon sx={{ mr: 1, verticalAlign: 'text-bottom' }} />
@@ -173,6 +240,7 @@ const BorrowHistoryPage = () => {
         </Typography>
       </Box>
 
+      {/* Қойындылар (фильтрлер) */}
       <Paper sx={{ borderRadius: 2, overflow: 'hidden', mb: 4 }}>
         <Tabs
           value={tab}
@@ -180,15 +248,16 @@ const BorrowHistoryPage = () => {
           variant="fullWidth"
           aria-label="history tabs"
         >
-          <Tab label="Все" value="all" />
-          <Tab label="Активные" value="active" />
-          <Tab label="Возвращенные" value="returned" />
-          <Tab label="Просроченные" value="overdue" />
+          <Tab label="Все" value="all" /> {/* Барлық жазбалар */}
+          <Tab label="Активные" value="active" /> {/* Белсенді жазбалар */}
+          <Tab label="Возвращенные" value="returned" /> {/* Қайтарылған жазбалар */}
+          <Tab label="Просроченные" value="overdue" /> {/* Мерзімі өткен жазбалар */}
         </Tabs>
       </Paper>
 
+      {/* Жазбалар кестесі */}
       <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
-        {loading ? (
+        {loading ? ( // Жүктелу кезінде скелетондарды көрсету
           <Box sx={{ p: 2 }}>
             <Skeleton height={60} />
             <Skeleton height={60} />
@@ -196,7 +265,7 @@ const BorrowHistoryPage = () => {
             <Skeleton height={60} />
             <Skeleton height={60} />
           </Box>
-        ) : (
+        ) : ( // Жүктелу аяқталғаннан кейін деректерді көрсету
           <>
             <TableContainer>
               <Table sx={{ minWidth: 650 }}>
@@ -210,7 +279,7 @@ const BorrowHistoryPage = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedBorrows.length > 0 ? (
+                  {paginatedBorrows.length > 0 ? ( // Егер жазбалар болса, оларды көрсету
                     paginatedBorrows.map((borrow) => (
                       <TableRow
                         key={borrow.id}
@@ -236,7 +305,7 @@ const BorrowHistoryPage = () => {
                         <TableCell>{getStatusChip(borrow.status)}</TableCell>
                       </TableRow>
                     ))
-                  ) : (
+                  ) : ( // Егер жазбалар болмаса, хабарлама көрсету
                     <TableRow>
                       <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                         <Typography variant="body1" color="text.secondary">
@@ -248,30 +317,33 @@ const BorrowHistoryPage = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+            {/* Беттеу (пагинация) */}
             <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
+              rowsPerPageOptions={[5, 10, 25]} // Бетте көрсетілетін жазбалар саны нұсқалары
               component="div"
-              count={filteredBorrows.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              labelRowsPerPage="Записей на странице:"
+              count={filteredBorrows.length} // Жазбалардың жалпы саны
+              rowsPerPage={rowsPerPage} // Бетте көрсетілетін жазбалар саны
+              page={page} // Ағымдағы бет
+              onPageChange={handleChangePage} // Бетті өзгерту функциясы
+              onRowsPerPageChange={handleChangeRowsPerPage} // Жазбалар санын өзгерту функциясы
+              labelRowsPerPage="Записей на странице:" // "Бетте қанша жазба" жазуы
               labelDisplayedRows={({ from, to, count }) =>
                 `${from}-${to} из ${count !== -1 ? count : `более чем ${to}`}`
-              }
+              } // "Жазба статистикасы" жазуы
             />
           </>
         )}
       </Paper>
 
+      {/* Қосымша ақпарат блоктары */}
       <Grid container spacing={4} sx={{ mt: 4 }}>
+        {/* Пайдалану ережелері */}
         <Grid item xs={12} md={6}>
           <Paper
             sx={{
               p: 3,
               borderRadius: 2,
-              backgroundColor: 'rgba(25, 118, 210, 0.05)',
+              backgroundColor: 'rgba(25, 118, 210, 0.05)', // Көк түсті фон
             }}
           >
             <Box
@@ -302,12 +374,13 @@ const BorrowHistoryPage = () => {
           </Paper>
         </Grid>
 
+        {/* Статистика блогы */}
         <Grid item xs={12} md={6}>
           <Paper
             sx={{
               p: 3,
               borderRadius: 2,
-              backgroundColor: 'rgba(76, 175, 80, 0.05)',
+              backgroundColor: 'rgba(76, 175, 80, 0.05)', // Жасыл түсті фон
             }}
           >
             <Box
@@ -324,6 +397,7 @@ const BorrowHistoryPage = () => {
             </Box>
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
+              {/* Барлық алынған кітаптар саны */}
               <Grid item xs={6}>
                 <Paper
                   elevation={0}
@@ -342,6 +416,7 @@ const BorrowHistoryPage = () => {
                   </Typography>
                 </Paper>
               </Grid>
+              {/* Қайтарылған кітаптар саны */}
               <Grid item xs={6}>
                 <Paper
                   elevation={0}
@@ -364,6 +439,7 @@ const BorrowHistoryPage = () => {
                   </Typography>
                 </Paper>
               </Grid>
+              {/* Белсенді (қайтарылмаған) кітаптар саны */}
               <Grid item xs={6}>
                 <Paper
                   elevation={0}
@@ -386,6 +462,7 @@ const BorrowHistoryPage = () => {
                   </Typography>
                 </Paper>
               </Grid>
+              {/* Мерзімі өткен кітаптар саны */}
               <Grid item xs={6}>
                 <Paper
                   elevation={0}

@@ -10,8 +10,32 @@ import {
 } from '@mui/material';
 import BookDetails from '../components/books/BookDetails';
 
-// Имитация задержки загрузки
+/**
+ * Жүктеу кідірісін имитациялау функциясы
+ * 
+ * Бұл функция серверден мәліметтер жүктеуді имитациялау үшін қолданылады
+ * 
+ * @param {number} ms - Миллисекундпен көрсетілген кідіріс уақыты
+ * @returns {Promise<void>} - Кідіріс аяқталғаннан кейін орындалатын Promise
+ */
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Тестілік кітаптар тізімі
+ * 
+ * Бұл массив кітаптардың деректерін сақтайды. Әр кітап объектісі келесі қасиеттерді қамтиды:
+ * - id: Кітаптың бірегей идентификаторы
+ * - title: Кітаптың атауы
+ * - author: Автор аты-жөні
+ * - category: Кітап категориясы
+ * - cover: Кітап мұқабасының суреті (URL)
+ * - rating: Рейтинг (1-ден 5-ке дейін)
+ * - reviewCount: Пікірлер саны
+ * - available: Қолжетімділік (true/false)
+ * - isBookmarked: Таңдаулыларға қосылған-қосылмағаны (true/false)
+ * - publicationYear: Жарияланған жылы
+ * - description: Кітаптың сипаттамасы
+ */
 
 // Тестовые данные книг
 const mockBooks = [
@@ -121,43 +145,62 @@ const mockBooks = [
   },
 ];
 
-const BookDetailsPage = () => {
-  const { id } = useParams();
-  const [book, setBook] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+/**
+ * BookDetailsPage компоненті - жеке кітаптың толық ақпаратын көрсететін бет
+ * 
+ * Бұл компонент URL параметрінен кітаптың идентификаторын алып,
+ * оған сәйкес кітаптың толық ақпаратын көрсетеді.
+ * 
+ * Компонент келесі күйлерді қолданады:
+ * - loading: Кітап деректерінің жүктелу күйі
+ * - book: Кітап туралы ақпарат
+ * - error: Қате туралы ақпарат (егер қате орын алса)
+ */
 
+const BookDetailsPage = () => {
+  const { id } = useParams(); // URL-ден кітап идентификаторын алу
+  const [book, setBook] = useState(null); // Кітап деректері күйі
+  const [loading, setLoading] = useState(true); // Жүктелу күйі
+  const [error, setError] = useState(null); // Қате күйі
+
+  /**
+   * Кітап деректерін жүктеу
+   * 
+   * useEffect қолдану арқылы компонент жүктелгенде
+   * немесе кітап идентификаторы өзгергенде орындалады
+   */
   useEffect(() => {
     const fetchBook = async () => {
-      setLoading(true);
-      setError(null);
+      setLoading(true); // Жүктелу күйін қосу
+      setError(null); // Қате күйін тазалау
       
       try {
-        // Имитация задержки API
+        // API жауабының кідірісін имитациялау
         await delay(800);
         
-        // Поиск книги по ID
+        // ID бойынша кітапты іздеу
         const bookId = parseInt(id, 10);
         const foundBook = mockBooks.find(b => b.id === bookId);
         
         if (foundBook) {
-          setBook(foundBook);
+          setBook(foundBook); // Кітап табылса, оны күйге сақтау
         } else {
-          setError('Книга не найдена');
+          setError('Книга не найдена'); // Кітап табылмаса, қате күйін орнату
         }
       } catch (err) {
-        setError('Ошибка при загрузке данных');
+        setError('Ошибка при загрузке данных'); // Басқа қате болса, қате күйін орнату
         console.error(err);
       } finally {
-        setLoading(false);
+        setLoading(false); // Жүктелу күйін өшіру
       }
     };
     
-    fetchBook();
-  }, [id]);
+    fetchBook(); // Функцияны шақыру
+  }, [id]); // Тек id өзгергенде қайта орындау
 
   return (
     <Box>
+      {/* Breadcrumbs - навигация сілтемелері */}
       <Breadcrumbs sx={{ mb: 2 }}>
         <Link component={RouterLink} underline="hover" color="inherit" to="/">
           Главная
@@ -165,6 +208,7 @@ const BookDetailsPage = () => {
         <Link component={RouterLink} underline="hover" color="inherit" to="/books">
           Каталог
         </Link>
+        {/* Кітап атауын тек жүктелу аяқталған соң және кітап табылған жағдайда көрсету */}
         {!loading && book && (
           <Typography color="text.primary">
             {book.title}
@@ -172,6 +216,7 @@ const BookDetailsPage = () => {
         )}
       </Breadcrumbs>
       
+      {/* Жүктелу кезінде скелетон көрсету */}
       {loading ? (
         <Box>
           <Skeleton variant="text" width="40%" height={40} sx={{ mb: 1 }} />
@@ -192,6 +237,7 @@ const BookDetailsPage = () => {
           </Box>
         </Box>
       ) : error ? (
+        // Қате болған жағдайда қате туралы хабарлама көрсету
         <Box
           sx={{
             p: 4,
@@ -216,6 +262,7 @@ const BookDetailsPage = () => {
           </Link>
         </Box>
       ) : book ? (
+        // Кітап туралы ақпаратты көрсету - BookDetails компонентін қолдану
         <BookDetails book={book} />
       ) : null}
     </Box>

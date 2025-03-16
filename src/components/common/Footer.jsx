@@ -16,23 +16,37 @@ import {
   YouTube as YouTubeIcon,
 } from '@mui/icons-material';
 
+/**
+ * Footer компоненті - сайттың төменгі бөлігі
+ * 
+ * Бұл компонент сайттың төменгі бөлігін (футерін) құрайды және келесі элементтерді қамтиды:
+ * - Сайт туралы қысқаша ақпарат
+ * - Навигация сілтемелері (меню)
+ * - Пайдаланушы аккаунты сілтемелері
+ * - Контактілік ақпарат
+ * - Әлеуметтік желілер иконкалары
+ * - Авторлық құқық туралы ақпарат
+ * - Конфиденциалдылық саясаты мен пайдалану шарттары сілтемелері
+ */
 const Footer = () => {
-  const theme = useTheme();
-  const currentYear = new Date().getFullYear();
+  const theme = useTheme(); // Material UI тақырыбын алу
+  const currentYear = new Date().getFullYear(); // Ағымдағы жылды алу (авторлық құқық үшін)
 
   return (
     <Box
-      component="footer"
+      component="footer" // Футер ретінде белгілеу (семантикалық HTML)
       sx={{
-        py: 3,
-        px: 2,
-        mt: 'auto',
-        backgroundColor: theme.palette.primary.main,
-        color: 'white',
+        py: 3, // Жоғарғы және төменгі padding
+        px: 2, // Сол және оң жақ padding
+        mt: 'auto', // Жоғарыдан автоматты түрде margin (футерді төменге бекіту үшін)
+        backgroundColor: theme.palette.primary.main, // Негізгі түс
+        color: 'white', // Мәтін түсі - ақ
       }}
     >
       <Container maxWidth="lg">
+        {/* Футер контентінің торы (grid) */}
         <Grid container spacing={4} justifyContent="space-between">
+          {/* Бірінші бағана - Сайт туралы ақпарат */}
           <Grid item xs={12} sm={6} md={3}>
             <Typography variant="h6" gutterBottom>
               НАРХОЗ Библиотека
@@ -40,6 +54,7 @@ const Footer = () => {
             <Typography variant="body2" sx={{ mb: 2 }}>
               Электронная библиотечная система для студентов и преподавателей Университета Нархоз
             </Typography>
+            {/* Әлеуметтік желілер иконкалары */}
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Link href="#" color="inherit">
                 <FacebookIcon />
@@ -56,17 +71,18 @@ const Footer = () => {
             </Box>
           </Grid>
 
+          {/* Екінші бағана - Навигация сілтемелері */}
           <Grid item xs={6} sm={3} md={2}>
             <Typography variant="subtitle1" gutterBottom fontWeight="bold">
               Навигация
             </Typography>
             <Link
-              component={RouterLink}
-              to="/"
-              color="inherit"
-              variant="body2"
-              display="block"
-              sx={{ mb: 1 }}
+              component={RouterLink} // React Router сілтемесі ретінде рендерлеу
+              to="/" // Басты бетке сілтеме
+              color="inherit" // Түсті мұрагерлеу (ақ)
+              variant="body2" // Шрифт өлшемі
+              display="block" // Блок элементі ретінде көрсету
+              sx={{ mb: 1 }} // Төменгі margin
             >
               Главная
             </Link>
@@ -92,6 +108,7 @@ const Footer = () => {
             </Link>
           </Grid>
 
+          {/* Үшінші бағана - Аккаунт сілтемелері */}
           <Grid item xs={6} sm={3} md={2}>
             <Typography variant="subtitle1" gutterBottom fontWeight="bold">
               Аккаунт
@@ -128,6 +145,7 @@ const Footer = () => {
             </Link>
           </Grid>
 
+          {/* Төртінші бағана - Контактілік ақпарат */}
           <Grid item xs={12} sm={6} md={3}>
             <Typography variant="subtitle1" gutterBottom fontWeight="bold">
               Контакты
@@ -144,12 +162,16 @@ const Footer = () => {
           </Grid>
         </Grid>
 
+        {/* Бөлгіш сызық - футердің төменгі бөлігінен бөледі */}
         <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.2)' }} />
 
+        {/* Футердің төменгі бөлігі - авторлық құқық пен қосымша сілтемелер */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          {/* Авторлық құқық туралы мәлімет - ағымдағы жылмен */}
           <Typography variant="body2">
             © {currentYear} Университет Нархоз. Все права защищены.
           </Typography>
+          {/* Қосымша сілтемелер - конфиденциалдылық саясаты және пайдалану шарттары */}
           <Box>
             <Link
               component={RouterLink}

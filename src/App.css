@@ -1,18 +1,22 @@
+/* Негізгі қолданба стильдері */
 .App {
   text-align: center;
 }
 
+/* Логотип стильдері */
 .App-logo {
   height: 40vmin;
   pointer-events: none;
 }
 
+/* Анимация параметрлерін теңшеу */
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
   }
 }
 
+/* Басты тақырып аймағының стильдері */
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
@@ -24,10 +28,12 @@
   color: white;
 }
 
+/* Сілтеме стильдері */
 .App-link {
   color: #61dafb;
 }
 
+/* Логотип айналу анимациясы */
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);

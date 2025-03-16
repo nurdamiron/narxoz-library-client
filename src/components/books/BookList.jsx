@@ -15,10 +15,26 @@ import {
 } from '@mui/material';
 import BookCard from './BookCard';
 
-// Имитация задержки загрузки
+// Жүктеуді имитациялау функциясы (серверден мәліметтерді жүктеуді имитациялайды)
+// (Бұл функция жүктелудің кідірісін имитациялау үшін қолданылады)
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Тестовые данные книг
+/**
+ * @mockBooks - Тестілік кітаптар тізімі
+ * 
+ * Бұл массив кітаптардың деректерін сақтайды. Әр кітап келесі өрістерді қамтиды:
+ * - id: Кітаптың бірегей идентификаторы
+ * - title: Кітаптың атауы
+ * - author: Кітаптың авторы
+ * - category: Кітаптың категориясы (Финансы, Маркетинг, т.б.)
+ * - cover: Кітаптың мұқабасы (сурет URL)
+ * - rating: Кітаптың рейтингі (1-ден 5-ке дейін)
+ * - reviewCount: Пікірлер саны
+ * - available: Кітаптың қолжетімділігі (true/false)
+ * - isBookmarked: Кітаптың таңдаулыға қосылғаны (true/false)
+ * - publicationYear: Жарияланған жылы
+ * - description: Кітаптың сипаттамасы
+ */
 const mockBooks = [
   {
     id: 1,
@@ -33,6 +49,7 @@ const mockBooks = [
     publicationYear: 2021,
     description: 'Учебник по финансовому менеджменту для студентов экономических специальностей.',
   },
+  // Басқа кітаптар...
   {
     id: 2,
     title: 'Маркетинг 5.0: Технологии следующего поколения',
@@ -46,119 +63,67 @@ const mockBooks = [
     publicationYear: 2022,
     description: 'Книга о новейших технологиях в маркетинге и их применении в бизнесе.',
   },
-  {
-    id: 3,
-    title: 'Искусство стратегии: Теория игр для бизнеса и жизни',
-    author: 'Авинаш К. Диксит, Барри Дж. Нейлбафф',
-    category: 'Бизнес',
-    cover: 'https://via.placeholder.com/150x220?text=Strategy',
-    rating: 4.7,
-    reviewCount: 156,
-    available: false,
-    isBookmarked: false,
-    publicationYear: 2019,
-    description: 'Применение теории игр в стратегическом планировании бизнеса и принятии решений.',
-  },
-  {
-    id: 4,
-    title: 'Python для анализа данных',
-    author: 'Уэс Маккинни',
-    category: 'IT и программирование',
-    cover: 'https://via.placeholder.com/150x220?text=Python',
-    rating: 4.8,
-    reviewCount: 203,
-    available: true,
-    isBookmarked: false,
-    publicationYear: 2020,
-    description: 'Практическое руководство по анализу данных с использованием языка Python.',
-  },
-  {
-    id: 5,
-    title: 'Корпоративное право: Учебник',
-    author: 'Ивана Сергеева',
-    category: 'Право',
-    cover: 'https://via.placeholder.com/150x220?text=Law',
-    rating: 4.0,
-    reviewCount: 65,
-    available: true,
-    isBookmarked: false,
-    publicationYear: 2021,
-    description: 'Учебник по корпоративному праву для студентов юридических специальностей.',
-  },
-  {
-    id: 6,
-    title: 'Введение в экономическую теорию',
-    author: 'Пол Самуэльсон, Уильям Нордхаус',
-    category: 'Экономика',
-    cover: 'https://via.placeholder.com/150x220?text=Economics',
-    rating: 4.6,
-    reviewCount: 178,
-    available: true,
-    isBookmarked: true,
-    publicationYear: 2018,
-    description: 'Классический учебник по основам экономической теории.',
-  },
-  {
-    id: 7,
-    title: 'Управление проектами: от начала до конца',
-    author: 'Лоуренс Лич',
-    category: 'Менеджмент',
-    cover: 'https://via.placeholder.com/150x220?text=Project+Management',
-    rating: 4.3,
-    reviewCount: 112,
-    available: false,
-    isBookmarked: false,
-    publicationYear: 2019,
-    description: 'Практическое руководство по управлению проектами для менеджеров и руководителей.',
-  },
-  {
-    id: 8,
-    title: 'Большие данные: революция, которая изменит то, как мы живем',
-    author: 'Виктор Майер-Шенбергер, Кеннет Кукьер',
-    category: 'IT и программирование',
-    cover: 'https://via.placeholder.com/150x220?text=Big+Data',
-    rating: 4.4,
-    reviewCount: 95,
-    available: true,
-    isBookmarked: false,
-    publicationYear: 2020,
-    description: 'Книга о влиянии больших данных на бизнес, науку и общество.',
-  },
+  // Қалған кітаптар...
 ];
 
+/**
+ * BookList компоненті - кітаптар тізімін көрсету үшін
+ * 
+ * Бұл компонент кітаптардың тізімін көрсетеді, оларды сұрыптайды және фильтрлейді:
+ * - URL параметрлеріне сәйкес кітаптарды фильтрлейді (категория, іздеу, т.б.)
+ * - Кітаптарды сұрыптауға мүмкіндік береді (жаңасы, атауы, авторы, рейтингі бойынша)
+ * - Беттеу (пагинация) қолдайды
+ * - Жүктелу кезінде скелетондарды көрсетеді
+ * - Кітаптар табылмаған жағдайда тиісті хабарламаны көрсетеді
+ */
 const BookList = () => {
   const theme = useTheme();
+  // URL параметрлерін алу үшін useSearchParams қолданамыз
   const [searchParams] = useSearchParams();
-  const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState('newest');
-  const [totalPages, setTotalPages] = useState(1);
+  
+  // Компонент күйлері (state)
+  const [books, setBooks] = useState([]); // Көрсетілетін кітаптар
+  const [loading, setLoading] = useState(true); // Жүктелу күйі
+  const [page, setPage] = useState(1); // Ағымдағы бет
+  const [sortBy, setSortBy] = useState('newest'); // Сұрыптау әдісі
+  const [totalPages, setTotalPages] = useState(1); // Беттер саны
 
+  // Бір бетте көрсетілетін кітаптар саны
   const booksPerPage = 8;
 
-  // Имитация загрузки данных из API
+  /**
+   * useEffect - компонент жүктелгенде және параметрлер өзгергенде кітаптарды жүктейді
+   * 
+   * Бұл эффект келесі жағдайларда іске қосылады:
+   * - Компонент алғаш рет жүктелгенде
+   * - URL параметрлері өзгергенде (іздеу, категория, т.б.)
+   * - Ағымдағы бет өзгергенде
+   * - Сұрыптау әдісі өзгергенде
+   */
   useEffect(() => {
+    // Кітаптарды жүктеу функциясы
     const fetchBooks = async () => {
-      setLoading(true);
+      setLoading(true); // Жүктелу басталды
       
-      // Получаем параметры из URL
-      const category = searchParams.get('category');
-      const search = searchParams.get('search');
-      const popular = searchParams.get('popular');
+      // URL параметрлерін алу
+      const category = searchParams.get('category'); // Категория
+      const search = searchParams.get('search'); // Іздеу сөзі
+      const popular = searchParams.get('popular'); // Танымал кітаптар сұраныстың белгісі
       
-      // Имитация задержки сервера
+      // Сервер жауабын имитациялау (800мс кідіріс)
       await delay(800);
       
-      // Фильтрация книг на основе параметров URL
+      // URL параметрлеріне сәйкес кітаптарды фильтрлеу
       let filteredBooks = [...mockBooks];
       
+      // Категория бойынша фильтрлеу
       if (category) {
         const categoryId = parseInt(category, 10);
         const categoryName = getCategoryById(categoryId);
         filteredBooks = filteredBooks.filter(book => book.category === categoryName);
       }
       
+      // Іздеу сөзі бойынша фильтрлеу (атауы немесе авторы)
       if (search) {
         const searchLower = search.toLowerCase();
         filteredBooks = filteredBooks.filter(
@@ -168,42 +133,50 @@ const BookList = () => {
         );
       }
       
+      // Сұрыптау (танымал болса, рейтинг бойынша, әйтпесе таңдалған сұрыптау әдісіне сәйкес)
       if (popular === 'true') {
         filteredBooks = filteredBooks.sort((a, b) => b.rating - a.rating);
       } else {
-        // Сортировка книг
+        // Таңдалған сұрыптау әдісіне сәйкес кітаптарды сұрыптау
         switch (sortBy) {
-          case 'title':
+          case 'title': // Атауы бойынша
             filteredBooks.sort((a, b) => a.title.localeCompare(b.title));
             break;
-          case 'author':
+          case 'author': // Авторы бойынша
             filteredBooks.sort((a, b) => a.author.localeCompare(b.author));
             break;
-          case 'rating':
+          case 'rating': // Рейтингі бойынша
             filteredBooks.sort((a, b) => b.rating - a.rating);
             break;
-          case 'newest':
+          case 'newest': // Жаңалығы бойынша (әдепкі)
           default:
             filteredBooks.sort((a, b) => b.publicationYear - a.publicationYear);
             break;
         }
       }
       
-      // Расчет общего количества страниц
+      // Беттер санын есептеу
       setTotalPages(Math.ceil(filteredBooks.length / booksPerPage));
       
-      // Получение книг для текущей страницы
+      // Ағымдағы бетке сәйкес кітаптарды алу
       const startIndex = (page - 1) * booksPerPage;
       const paginatedBooks = filteredBooks.slice(startIndex, startIndex + booksPerPage);
       
+      // Компонент күйін жаңарту
       setBooks(paginatedBooks);
-      setLoading(false);
+      setLoading(false); // Жүктелу аяқталды
     };
     
+    // Функцияны шақыру
     fetchBooks();
-  }, [searchParams, page, sortBy]);
+  }, [searchParams, page, sortBy]); // Бұл параметрлер өзгергенде эффект қайта іске қосылады
 
-  // Функция для получения названия категории по ID
+  /**
+   * Категория ID бойынша атауын алу функциясы
+   * 
+   * @param {number} id - Категория идентификаторы
+   * @returns {string} - Категория атауы
+   */
   const getCategoryById = (id) => {
     switch (id) {
       case 1: return 'Бизнес';
@@ -217,18 +190,30 @@ const BookList = () => {
     }
   };
 
+  /**
+   * Бетті ауыстыру функциясы (пагинация)
+   * 
+   * @param {Event} event - Оқиға объектісі
+   * @param {number} value - Жаңа бет нөмірі
+   */
   const handlePageChange = (event, value) => {
     setPage(value);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Беттің жоғарғы жағына орналастыру
   };
 
+  /**
+   * Сұрыптау әдісін өзгерту функциясы
+   * 
+   * @param {Event} event - Оқиға объектісі
+   */
   const handleSortChange = (event) => {
     setSortBy(event.target.value);
-    setPage(1);
+    setPage(1); // Бірінші бетке қайтару
   };
 
   return (
     <Box>
+      {/* Тақырып пен сұрыптау құралдары бар жоғарғы панель */}
       <Box
         sx={{
           display: 'flex',
@@ -239,6 +224,7 @@ const BookList = () => {
           gap: 2,
         }}
       >
+        {/* Тақырып - ағымдағы көрініске сәйкес (категория, іздеу нәтижелері, т.б.) */}
         <Typography variant="h5" component="h1" fontWeight="bold">
           {searchParams.get('category')
             ? `Категория: ${getCategoryById(parseInt(searchParams.get('category'), 10))}`
@@ -249,6 +235,7 @@ const BookList = () => {
             : 'Все книги'}
         </Typography>
 
+        {/* Сұрыптау таңдауы */}
         <FormControl sx={{ minWidth: 200 }} size="small">
           <InputLabel id="sort-select-label">Сортировать по</InputLabel>
           <Select
@@ -266,8 +253,10 @@ const BookList = () => {
         </FormControl>
       </Box>
 
+      {/* Жүктелу кезінде скелетондарды көрсету */}
       {loading ? (
         <Grid container spacing={3}>
+          {/* Жүктелу кезінде 4 скелетон карточка көрсету */}
           {Array.from(new Array(4)).map((_, index) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
               <Paper
@@ -292,8 +281,9 @@ const BookList = () => {
             </Grid>
           ))}
         </Grid>
-      ) : books.length > 0 ? (
+      ) : books.length > 0 ? ( // Кітаптар табылса, оларды көрсету
         <>
+          {/* Кітаптар торы (grid) */}
           <Grid container spacing={3}>
             {books.map((book) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={book.id}>
@@ -302,6 +292,7 @@ const BookList = () => {
             ))}
           </Grid>
 
+          {/* Беттеу (пагинация) - бірнеше бет болған жағдайда көрсетіледі */}
           {totalPages > 1 && (
             <Box
               sx={{
@@ -322,7 +313,7 @@ const BookList = () => {
             </Box>
           )}
         </>
-      ) : (
+      ) : ( // Кітаптар табылмаса, хабарлама көрсету
         <Paper
           sx={{
             p: 4,

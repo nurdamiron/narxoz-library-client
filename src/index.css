@@ -1,9 +1,11 @@
+/* Бүкіл элементтерге қолданылатын негізгі стильдер */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* Беттің негізгі стильдері */
 body {
   font-family: 'Roboto', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -12,12 +14,13 @@ body {
   color: #333;
 }
 
+/* Сілтемелер стилі */
 a {
   text-decoration: none;
   color: inherit;
 }
 
-/* Animations */
+/* Анимациялар */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -27,24 +30,28 @@ a {
   }
 }
 
+/* Көрінуге анимация қосу */
 .fade-in {
   animation: fadeIn 0.5s ease-in;
 }
 
-/* Scroll bar styling */
+/* Айналдыру жолағын стильдеу */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
+/* Айналдыру жолағының артқы фоны */
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
 
+/* Айналдыру жолағының басқару элементі */
 ::-webkit-scrollbar-thumb {
   background: #1565c0;
   border-radius: 4px;
 }
 
+/* Айналдыру жолағының басқару элементіне тышқан тигенде */
 ::-webkit-scrollbar-thumb:hover {
   background: #003c8f;
 }

@@ -23,10 +23,21 @@ import {
 } from '@mui/icons-material';
 import BookCard from '../components/books/BookCard';
 
-// Имитация задержки загрузки
+/**
+ * Жүктеу кідірісін имитациялау функциясы
+ * 
+ * Бұл функция серверден мәліметтер жүктеуді имитациялау үшін қолданылады
+ * 
+ * @param {number} ms - Миллисекундпен көрсетілген кідіріс уақыты
+ * @returns {Promise<void>} - Кідіріс аяқталғаннан кейін орындалатын Promise
+ */
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Тестовые данные для популярных и новых книг
+/**
+ * Танымал кітаптардың тестілік деректері
+ * 
+ * Бұл массив танымал кітаптар туралы ақпаратты сақтайды
+ */
 const mockPopularBooks = [
   {
     id: 1,
@@ -78,6 +89,11 @@ const mockPopularBooks = [
   },
 ];
 
+/**
+ * Жаңа түскен кітаптардың тестілік деректері
+ * 
+ * Бұл массив кітапханаға жаңадан түскен кітаптар туралы ақпаратты сақтайды
+ */
 const mockNewBooks = [
   {
     id: 5,
@@ -129,7 +145,11 @@ const mockNewBooks = [
   },
 ];
 
-// События
+/**
+ * Болатын іс-шаралардың тестілік деректері
+ * 
+ * Бұл массив университет кітапханасындағы болатын іс-шаралар туралы ақпаратты сақтайды
+ */
 const mockEvents = [
   {
     id: 1,
@@ -154,7 +174,11 @@ const mockEvents = [
   },
 ];
 
-// Функция для подсвечивания заголовков секций
+/**
+ * Секция тақырыптарын ерекшелейтін стилдендірілген компонент
+ * 
+ * Секция тақырыптарының астына түрлі-түсті сызық қосады
+ */
 const SectionTitle = styled(Typography)(({ theme }) => ({
   position: 'relative',
   display: 'inline-block',
@@ -171,22 +195,30 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
   },
 }));
 
-// Баннер для главной страницы
+/**
+ * HeroBanner компоненті - басты беттің жоғарғы баннері
+ * 
+ * Бұл компонент басты бетте көрінетін үлкен баннерді көрсетеді және 
+ * негізгі навигациялық түймелерді ұсынады.
+ * 
+ * @returns {JSX.Element} - Баннер компоненті
+ */
 const HeroBanner = () => {
-  const theme = useTheme();
+  const theme = useTheme(); // Material UI тақырыбын алу
 
   return (
     <Paper
       sx={{
         position: 'relative',
-        height: { xs: 300, sm: 400 },
-        backgroundImage: 'linear-gradient(to right, rgba(21, 101, 192, 0.8), rgba(255, 152, 0, 0.8))',
+        height: { xs: 300, sm: 400 }, // Экран өлшеміне байланысты биіктік
+        backgroundImage: 'linear-gradient(to right, rgba(21, 101, 192, 0.8), rgba(255, 152, 0, 0.8))', // Градиент фоны
         color: 'white',
         borderRadius: 4,
         overflow: 'hidden',
         mb: 6,
       }}
     >
+      {/* Фондық сурет */}
       <Box
         sx={{
           position: 'absolute',
@@ -197,9 +229,11 @@ const HeroBanner = () => {
           backgroundImage: 'url(https://via.placeholder.com/1500x500?text=Library+Background)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          opacity: 0.3,
+          opacity: 0.3, // Мөлдірлігі
         }}
       />
+      
+      {/* Баннер контенті */}
       <Container
         sx={{
           height: '100%',
@@ -207,32 +241,37 @@ const HeroBanner = () => {
           flexDirection: 'column',
           justifyContent: 'center',
           position: 'relative',
-          zIndex: 1,
+          zIndex: 1, // Фон суретінің үстінде көрсету
         }}
       >
+        {/* Баннер тақырыбы */}
         <Typography
           variant="h3"
           component="h1"
           fontWeight="bold"
           gutterBottom
           sx={{ 
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-            fontSize: { xs: '1.8rem', sm: '2.5rem', md: '3rem' }
+            textShadow: '1px 1px 2px rgba(0,0,0,0.3)', // Көлеңке
+            fontSize: { xs: '1.8rem', sm: '2.5rem', md: '3rem' } // Адаптивті шрифт өлшемі
           }}
         >
           Библиотека Университета Нархоз
         </Typography>
+        
+        {/* Тақырыпша */}
         <Typography
           variant="h6"
           sx={{ 
             maxWidth: 600,
             mb: 4,
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-            fontSize: { xs: '1rem', sm: '1.25rem' }
+            textShadow: '1px 1px 2px rgba(0,0,0,0.3)', // Көлеңке
+            fontSize: { xs: '1rem', sm: '1.25rem' } // Адаптивті шрифт өлшемі
           }}
         >
           Доступ к тысячам учебников, научных работ и литературы для студентов и преподавателей
         </Typography>
+        
+        {/* Навигациялық түймелер */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <Button
             variant="contained"
@@ -277,35 +316,55 @@ const HeroBanner = () => {
   );
 };
 
+/**
+ * HomePage компоненті - сайттың басты беті
+ * 
+ * Бұл компонент сайттың басты бетінің мазмұнын көрсетеді:
+ * - Баннер
+ * - Танымал кітаптар
+ * - Жаңа түскен кітаптар
+ * - Болатын іс-шаралар
+ * - Кітапхана туралы пайдалы ақпарат
+ * 
+ * @returns {JSX.Element} - Басты бет компоненті
+ */
 const HomePage = () => {
-  const theme = useTheme();
-  const [loading, setLoading] = useState(true);
-  const [popularBooks, setPopularBooks] = useState([]);
-  const [newBooks, setNewBooks] = useState([]);
+  const theme = useTheme(); // Material UI тақырыбын алу
+  const [loading, setLoading] = useState(true); // Жүктелу күйі
+  const [popularBooks, setPopularBooks] = useState([]); // Танымал кітаптар
+  const [newBooks, setNewBooks] = useState([]); // Жаңа түскен кітаптар
 
+  /**
+   * Деректерді жүктеу эффекті
+   * 
+   * Компонент жүктелгенде деректерді жүктейді (бұл жағдайда тестілік деректерді)
+   */
   useEffect(() => {
     const fetchData = async () => {
-      // Имитация загрузки данных
+      // Деректерді жүктеу имитациясы
       setLoading(true);
       await delay(1000);
       
+      // Тестілік деректерді күйге сақтау
       setPopularBooks(mockPopularBooks);
       setNewBooks(mockNewBooks);
       setLoading(false);
     };
 
-    fetchData();
-  }, []);
+    fetchData(); // Функцияны шақыру
+  }, []); // Компонент алғаш жүктелгенде бір рет шақырылады
 
   return (
     <Box>
+      {/* Басты баннер */}
       <HeroBanner />
 
+      {/* Танымал кітаптар секциясы */}
       <Box sx={{ mb: 6 }}>
         <SectionTitle variant="h4" component="h2" fontWeight="bold">
           Популярные книги
         </SectionTitle>
-        {loading ? (
+        {loading ? ( // Жүктелу кезінде скелетондарды көрсету
           <Grid container spacing={3}>
             {Array.from(new Array(4)).map((_, index) => (
               <Grid item xs={12} sm={6} md={3} key={index}>
@@ -313,7 +372,7 @@ const HomePage = () => {
               </Grid>
             ))}
           </Grid>
-        ) : (
+        ) : ( // Жүктелу аяқталғаннан кейін деректерді көрсету
           <>
             <Grid container spacing={3}>
               {popularBooks.map((book) => (
@@ -322,6 +381,7 @@ const HomePage = () => {
                 </Grid>
               ))}
             </Grid>
+            {/* "Барлығын көру" түймесі */}
             <Box
               sx={{
                 display: 'flex',
@@ -342,11 +402,12 @@ const HomePage = () => {
         )}
       </Box>
 
+      {/* Жаңа түскен кітаптар секциясы */}
       <Box sx={{ mb: 6 }}>
         <SectionTitle variant="h4" component="h2" fontWeight="bold">
           Новые поступления
         </SectionTitle>
-        {loading ? (
+        {loading ? ( // Жүктелу кезінде скелетондарды көрсету
           <Grid container spacing={3}>
             {Array.from(new Array(4)).map((_, index) => (
               <Grid item xs={12} sm={6} md={3} key={index}>
@@ -354,7 +415,7 @@ const HomePage = () => {
               </Grid>
             ))}
           </Grid>
-        ) : (
+        ) : ( // Жүктелу аяқталғаннан кейін деректерді көрсету
           <>
             <Grid container spacing={3}>
               {newBooks.map((book) => (
@@ -363,6 +424,7 @@ const HomePage = () => {
                 </Grid>
               ))}
             </Grid>
+            {/* "Барлығын көру" түймесі */}
             <Box
               sx={{
                 display: 'flex',
@@ -383,7 +445,9 @@ const HomePage = () => {
         )}
       </Box>
 
+      {/* Іс-шаралар мен ақпарат блоктары */}
       <Grid container spacing={4} sx={{ mb: 6 }}>
+        {/* Іс-шаралар бөлімі */}
         <Grid item xs={12} md={7}>
           <SectionTitle variant="h4" component="h2" fontWeight="bold">
             Предстоящие события
@@ -397,11 +461,12 @@ const HomePage = () => {
                     flexDirection: { xs: 'column', sm: 'row' },
                     transition: 'transform 0.2s',
                     '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0px 6px 12px rgba(0, 0, 0, 0.1)',
+                      transform: 'translateY(-4px)', // Үстінен өткенде жоғары көтерілу
+                      boxShadow: '0px 6px 12px rgba(0, 0, 0, 0.1)', // Көлеңке күшейту
                     },
                   }}
                 >
+                  {/* Іс-шара күні блогы */}
                   <Box
                     sx={{
                       display: 'flex',
@@ -416,12 +481,13 @@ const HomePage = () => {
                   >
                     <EventNoteIcon sx={{ fontSize: 40, mb: 1 }} />
                     <Typography variant="h6" fontWeight="bold">
-                      {event.date.split(' ')[0]}
+                      {event.date.split(' ')[0]} {/* Күні */}
                     </Typography>
                     <Typography variant="body2">
-                      {event.date.split(' ').slice(1).join(' ')}
+                      {event.date.split(' ').slice(1).join(' ')} {/* Ай */}
                     </Typography>
                   </Box>
+                  {/* Іс-шара туралы ақпарат */}
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" gutterBottom fontWeight="bold">
                       {event.title}
@@ -446,6 +512,7 @@ const HomePage = () => {
               </Grid>
             ))}
           </Grid>
+          {/* "Барлық іс-шараларды көру" түймесі */}
           <Box
             sx={{
               display: 'flex',
@@ -464,6 +531,7 @@ const HomePage = () => {
           </Box>
         </Grid>
 
+        {/* Пайдалы ақпарат бөлімі */}
         <Grid item xs={12} md={5}>
           <SectionTitle variant="h4" component="h2" fontWeight="bold">
             Информация
@@ -476,6 +544,7 @@ const HomePage = () => {
             }}
           >
             <CardContent>
+              {/* Жұмыс кестесі */}
               <Box sx={{ mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <AutoStoriesIcon
@@ -514,6 +583,7 @@ const HomePage = () => {
                 </Grid>
               </Box>
 
+              {/* Пайдалы ақпарат */}
               <Box sx={{ mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <LightbulbIcon

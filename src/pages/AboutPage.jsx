@@ -26,10 +26,28 @@ import {
   ImportContacts as ImportContactsIcon,
 } from '@mui/icons-material';
 
+/**
+ * AboutPage компоненті - кітапхана туралы ақпаратты көрсету беті
+ * 
+ * Бұл компонент кітапхана туралы келесі ақпаратты көрсетеді:
+ * - Кітапхана миссиясы
+ * - Кітапхана тарихы
+ * - Байланыс ақпараты мен жұмыс кестесі
+ * - Кітапхананың артықшылықтары
+ * - Кітапханың білім беру рөлі
+ * - Ресурстар мен коллекциялар туралы ақпарат
+ */
 const AboutPage = () => {
-  const theme = useTheme();
+  const theme = useTheme(); // Material UI тақырыбын алу
 
-  // Секция с преимуществами
+  /**
+   * Кітапхананың артықшылықтары туралы деректер массиві
+   * 
+   * Әр элемент келесі қасиеттерден тұрады:
+   * - icon: Артықшылықты көрсететін иконка
+   * - title: Артықшылық атауы
+   * - description: Артықшылықтың сипаттамасы
+   */
   const features = [
     {
       icon: <AutoStoriesIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
@@ -51,6 +69,7 @@ const AboutPage = () => {
   return (
     <Container>
       <Box sx={{ mb: 6 }}>
+        {/* Беттің тақырыбы мен қысқаша сипаттамасы */}
         <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
           О библиотеке
         </Typography>
@@ -58,6 +77,7 @@ const AboutPage = () => {
           Библиотека Университета Нархоз - центр знаний и информационных ресурсов
         </Typography>
 
+        {/* Кітапхана ғимаратының суреті */}
         <Paper
           sx={{
             p: 0,
@@ -73,14 +93,17 @@ const AboutPage = () => {
             alt="Здание библиотеки"
             sx={{
               width: '100%',
-              height: { xs: 200, sm: 300, md: 400 },
+              height: { xs: 200, sm: 300, md: 400 }, // Экран өлшеміне байланысты биіктігі
               objectFit: 'cover',
             }}
           />
         </Paper>
 
+        {/* Миссия мен тарих бөлімі */}
         <Grid container spacing={4}>
+          {/* Сол жақ бағана - миссия мен тарих */}
           <Grid item xs={12} md={8}>
+            {/* Миссия бөлімі */}
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               Наша миссия
             </Typography>
@@ -95,8 +118,9 @@ const AboutPage = () => {
               исследований на высоком уровне.
             </Typography>
 
-            <Divider sx={{ my: 4 }} />
+            <Divider sx={{ my: 4 }} /> {/* Бөлгіш сызық */}
 
+            {/* Тарих бөлімі */}
             <Box sx={{ mb: 4 }}>
               <Typography variant="h5" fontWeight="bold" gutterBottom>
                 <HistoryIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
@@ -120,15 +144,18 @@ const AboutPage = () => {
             </Box>
           </Grid>
 
+          {/* Оң жақ бағана - байланыс ақпараты мен жұмыс кестесі */}
           <Grid item xs={12} md={4}>
             <Card sx={{ borderRadius: 2, height: '100%' }}>
               <CardContent>
+                {/* Байланыс ақпараты бөлімі */}
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   <LocationOnIcon sx={{ verticalAlign: 'middle', mr: 1, color: theme.palette.primary.main }} />
                   Контактная информация
                 </Typography>
                 <Divider sx={{ my: 2 }} />
                 <List dense>
+                  {/* Мекенжай */}
                   <ListItem>
                     <ListItemIcon>
                       <LocationOnIcon color="primary" />
@@ -138,6 +165,7 @@ const AboutPage = () => {
                       secondary="ул. Жандосова, 55, Алматы, Казахстан"
                     />
                   </ListItem>
+                  {/* Телефон */}
                   <ListItem>
                     <ListItemIcon>
                       <PhoneIcon color="primary" />
@@ -147,6 +175,7 @@ const AboutPage = () => {
                       secondary="+7 (727) 377-11-11"
                     />
                   </ListItem>
+                  {/* Email */}
                   <ListItem>
                     <ListItemIcon>
                       <EmailIcon color="primary" />
@@ -160,23 +189,27 @@ const AboutPage = () => {
 
                 <Divider sx={{ my: 2 }} />
 
+                {/* Жұмыс кестесі бөлімі */}
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   <ScheduleIcon sx={{ verticalAlign: 'middle', mr: 1, color: theme.palette.primary.main }} />
                   Часы работы
                 </Typography>
                 <List dense>
+                  {/* Дүйсенбі-жұма */}
                   <ListItem>
                     <ListItemText
                       primary="Понедельник - Пятница"
                       secondary="9:00 - 20:00"
                     />
                   </ListItem>
+                  {/* Сенбі */}
                   <ListItem>
                     <ListItemText
                       primary="Суббота"
                       secondary="10:00 - 17:00"
                     />
                   </ListItem>
+                  {/* Жексенбі */}
                   <ListItem>
                     <ListItemText
                       primary="Воскресенье"
@@ -189,12 +222,14 @@ const AboutPage = () => {
           </Grid>
         </Grid>
 
-        <Divider sx={{ my: 6 }} />
+        <Divider sx={{ my: 6 }} /> {/* Бөлгіш сызық */}
 
+        {/* Кітапхананың артықшылықтары бөлімі */}
         <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ mb: 4 }}>
           Преимущества нашей библиотеки
         </Typography>
 
+        {/* Артықшылықтар картасының торы */}
         <Grid container spacing={4} sx={{ mb: 6 }}>
           {features.map((feature, index) => (
             <Grid item xs={12} md={4} key={index}>
@@ -206,9 +241,9 @@ const AboutPage = () => {
                   alignItems: 'center',
                   p: 3,
                   textAlign: 'center',
-                  transition: 'transform 0.3s',
+                  transition: 'transform 0.3s', // Анимация үшін
                   '&:hover': {
-                    transform: 'translateY(-8px)',
+                    transform: 'translateY(-8px)', // Үстінен өткенде жоғары көтеріледі
                   },
                 }}
               >
@@ -224,9 +259,11 @@ const AboutPage = () => {
           ))}
         </Grid>
 
-        <Divider sx={{ my: 6 }} />
+        <Divider sx={{ my: 6 }} /> {/* Бөлгіш сызық */}
 
+        {/* Кітапхананың білім беру рөлі мен ресурстар бөлімі */}
         <Grid container spacing={4}>
+          {/* Білім беру рөлі */}
           <Grid item xs={12} md={6}>
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               <SchoolIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
@@ -243,6 +280,7 @@ const AboutPage = () => {
             </Typography>
           </Grid>
 
+          {/* Ресурстар мен коллекциялар */}
           <Grid item xs={12} md={6}>
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               <ImportContactsIcon sx={{ verticalAlign: 'middle', mr: 1 }} />

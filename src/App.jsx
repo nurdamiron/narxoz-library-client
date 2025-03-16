@@ -14,11 +14,24 @@ import AboutPage from './pages/AboutPage';
 import { AuthProvider } from './context/AuthContext';
 import theme from './styles/theme';
 
+/**
+ * Негізгі қолданба компоненті
+ * Бұл компонент бүкіл қолданбаны құрылымдайды:
+ * - Тақырыпты баптау (ThemeProvider арқылы)
+ * - Аутентификация провайдерін орнату
+ * - Беттер маршрутизациясын конфигурациялау
+ * 
+ * Барлық беттер MainLayout ішінде көрсетіледі, бұл
+ * біркелкі навигация мен футерді қамтамасыз етеді.
+ */
 function App() {
   return (
     <ThemeProvider theme={theme}>
+      {/* Аутентификация контекстін орнату */}
       <AuthProvider>
+        {/* Негізгі стильдерді қалпына келтіру */}
         <CssBaseline />
+        {/* Қолданба маршруттары */}
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />

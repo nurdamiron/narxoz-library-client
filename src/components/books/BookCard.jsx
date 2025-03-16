@@ -16,17 +16,21 @@ import {
 import { Bookmark, BookmarkBorder } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
+// Кітап картасының негізгі стилі
+// (Бұл кітап картасының негізгі стильдерін анықтайды, кітапты көрсету үшін)
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
   transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
   '&:hover': {
-    transform: 'translateY(-8px)',
-    boxShadow: '0px 6px 12px rgba(0, 0, 0, 0.15)',
+    transform: 'translateY(-8px)', // Үстінен өткенде карта жоғары көтеріледі
+    boxShadow: '0px 6px 12px rgba(0, 0, 0, 0.15)', // Үстінен өткенде көлеңке күшейеді
   },
 }));
 
+// Кітап мұқабасының стилі
+// (Кітаптың мұқаба суретін көрсету үшін стиль)
 const StyledCardMedia = styled(CardMedia)({
   height: 220,
   backgroundSize: 'contain',
@@ -34,10 +38,18 @@ const StyledCardMedia = styled(CardMedia)({
   padding: 16,
 });
 
+/**
+ * BookCard компоненті - кітапхана жүйесінде кітаптарды көрсету үшін қолданылады
+ * 
+ * @param {Object} book - Кітап туралы ақпарат (атауы, авторы, рейтингі және т.б.)
+ * @returns {JSX.Element} - Кітап картасы компоненті
+ */
 const BookCard = ({ book }) => {
   const theme = useTheme();
+  // Кітаптың таңдаулы екенін қадағалайтын күй
   const [bookmarked, setBookmarked] = React.useState(book.isBookmarked || false);
 
+  // Таңдаулыға қосу/алу функциясы
   const handleBookmarkToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -46,12 +58,15 @@ const BookCard = ({ book }) => {
 
   return (
     <StyledCard>
+      {/* Кітап толық бетіне жетекші сілтеме */}
       <CardActionArea component={RouterLink} to={`/books/${book.id}`}>
+        {/* Кітап мұқабасы */}
         <StyledCardMedia
           image={book.cover || 'https://via.placeholder.com/150x220?text=No+Cover'}
           title={book.title}
         />
         <CardContent sx={{ flexGrow: 1 }}>
+          {/* Кітап категориясы мен таңдаулы белгісі */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
             <Chip
               label={book.category}
@@ -68,13 +83,14 @@ const BookCard = ({ book }) => {
               onClick={handleBookmarkToggle}
             >
               {bookmarked ? (
-                <Bookmark color="primary" fontSize="small" />
+                <Bookmark color="primary" fontSize="small" /> // Таңдаулыға қосылған кітап
               ) : (
-                <BookmarkBorder fontSize="small" />
+                <BookmarkBorder fontSize="small" /> // Таңдаулыға қосылмаған кітап
               )}
             </Button>
           </Box>
 
+          {/* Кітап атауы */}
           <Typography
             gutterBottom
             variant="h6"
@@ -85,7 +101,7 @@ const BookCard = ({ book }) => {
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               display: '-webkit-box',
-              WebkitLineClamp: 2,
+              WebkitLineClamp: 2, // Атау екі жолдан артық болмайды
               WebkitBoxOrient: 'vertical',
               height: '2.75rem',
             }}
@@ -93,6 +109,7 @@ const BookCard = ({ book }) => {
             {book.title}
           </Typography>
 
+          {/* Кітап авторы */}
           <Typography
             variant="body2"
             color="text.secondary"
@@ -101,13 +118,14 @@ const BookCard = ({ book }) => {
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               display: '-webkit-box',
-              WebkitLineClamp: 1,
+              WebkitLineClamp: 1, // Автор аты бір жолдан артық болмайды
               WebkitBoxOrient: 'vertical',
             }}
           >
             {book.author}
           </Typography>
 
+          {/* Кітаптың рейтингі */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
             <Rating
               name={`rating-${book.id}`}
@@ -121,12 +139,14 @@ const BookCard = ({ book }) => {
             </Typography>
           </Box>
 
+          {/* Кітаптың қолжетімділігі */}
           <Typography variant="body2" color="text.secondary">
             {book.available ? 'В наличии' : 'Нет в наличии'}
           </Typography>
         </CardContent>
       </CardActionArea>
 
+      {/* Кітапты алу түймесі */}
       <CardActions>
         {book.available ? (
           <Button

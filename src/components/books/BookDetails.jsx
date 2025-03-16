@@ -31,14 +31,31 @@ import {
   LocalLibrary,
 } from '@mui/icons-material';
 
+/**
+ * BookDetails компоненті - кітап туралы толық ақпаратты көрсету үшін
+ * 
+ * Бұл компонент кітаптың егжей-тегжейлі мәліметтерін көрсетеді:
+ * - Кітаптың мұқабасы
+ * - Кітаптың атауы және авторы
+ * - Рейтинг және пікірлер саны
+ * - Кітап сипаттамасы
+ * - Жылы, категориясы, тілі
+ * - Кітапты алу мүмкіндігі
+ * 
+ * @param {Object} book - Кітап туралы барлық ақпарат
+ */
 const BookDetails = ({ book }) => {
   const theme = useTheme();
+  // Кітаптың таңдаулы екенін бақылайтын күй
   const [bookmarked, setBookmarked] = useState(book.isBookmarked || false);
+  // Диалог терезесінің ашық/жабық күйі
   const [dialogOpen, setDialogOpen] = useState(false);
+  // Хабарламаларды көрсету үшін Snackbar күйлері
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
+  // Таңдаулыға қосу/алу функциясы
   const handleBookmarkToggle = () => {
     setBookmarked(!bookmarked);
     setSnackbarMessage(
@@ -50,6 +67,7 @@ const BookDetails = ({ book }) => {
     setSnackbarOpen(true);
   };
 
+  // Кітап сілтемесімен бөлісу функциясы
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setSnackbarMessage('Ссылка скопирована в буфер обмена');
@@ -57,14 +75,17 @@ const BookDetails = ({ book }) => {
     setSnackbarOpen(true);
   };
 
+  // Кітапты алу түймесін басқан кезде
   const handleBorrowClick = () => {
     setDialogOpen(true);
   };
 
+  // Диалог терезесін жабу
   const handleDialogClose = () => {
     setDialogOpen(false);
   };
 
+  // Кітапты алуды растау
   const handleConfirmBorrow = () => {
     setDialogOpen(false);
     setSnackbarMessage('Книга успешно заказана! Заберите её в библиотеке в течение 3 дней.');
@@ -72,6 +93,7 @@ const BookDetails = ({ book }) => {
     setSnackbarOpen(true);
   };
 
+  // Хабарламаны жабу
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
@@ -79,7 +101,7 @@ const BookDetails = ({ book }) => {
   return (
     <Box>
       <Grid container spacing={4}>
-        {/* Левая колонка - обложка и кнопки */}
+        {/* Сол жақ бағана - кітап мұқабасы және түймелер */}
         <Grid item xs={12} md={4}>
           <Card
             sx={{
@@ -88,7 +110,7 @@ const BookDetails = ({ book }) => {
               flexDirection: 'column',
               transition: 'transform 0.2s',
               '&:hover': {
-                transform: 'scale(1.02)',
+                transform: 'scale(1.02)', // Үстінен өткенде мұқаба аздап үлкейеді
               },
             }}
           >
@@ -105,7 +127,9 @@ const BookDetails = ({ book }) => {
             />
           </Card>
 
+          {/* Кітап әрекеттері түймелері */}
           <Stack spacing={2} sx={{ mt: 3 }}>
+            {/* Кітапты алу түймесі */}
             {book.available ? (
               <Button
                 variant="contained"
@@ -135,6 +159,7 @@ const BookDetails = ({ book }) => {
               </Button>
             )}
 
+            {/* Таңдаулыға қосу және бөлісу түймелері */}
             <Grid container spacing={2}>
               <Grid item xs={6}>
                 <Button
@@ -162,8 +187,9 @@ const BookDetails = ({ book }) => {
           </Stack>
         </Grid>
 
-        {/* Правая колонка - детали книги */}
+        {/* Оң жақ бағана - кітап мәліметтері */}
         <Grid item xs={12} md={8}>
+          {/* Кітап атауы мен авторы */}
           <Box sx={{ mb: 3 }}>
             <Chip
               label={book.category}
@@ -178,6 +204,7 @@ const BookDetails = ({ book }) => {
               {book.author}
             </Typography>
 
+            {/* Рейтинг және пікірлер саны */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Rating
                 value={book.rating || 0}
@@ -193,6 +220,7 @@ const BookDetails = ({ book }) => {
 
           <Divider sx={{ mb: 3 }} />
 
+          {/* Кітап сипаттамасы */}
           <Typography variant="h6" gutterBottom fontWeight="bold">
             О книге
           </Typography>
@@ -200,6 +228,7 @@ const BookDetails = ({ book }) => {
             {book.description || 'Описание отсутствует.'}
           </Typography>
 
+          {/* Кітаптың техникалық мәліметтері */}
           <Grid container spacing={2} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={6}>
               <Paper
@@ -211,6 +240,7 @@ const BookDetails = ({ book }) => {
                 }}
               >
                 <Stack spacing={2}>
+                  {/* Шығарылған жылы */}
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <CalendarToday
                       fontSize="small"
@@ -224,6 +254,7 @@ const BookDetails = ({ book }) => {
                     </Typography>
                   </Box>
 
+                  {/* Категориясы */}
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Category
                       fontSize="small"
@@ -237,6 +268,7 @@ const BookDetails = ({ book }) => {
                     </Typography>
                   </Box>
 
+                  {/* Тілі */}
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Language
                       fontSize="small"
@@ -263,6 +295,7 @@ const BookDetails = ({ book }) => {
                 }}
               >
                 <Stack spacing={2}>
+                  {/* Мамандық */}
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <School
                       fontSize="small"
@@ -280,6 +313,7 @@ const BookDetails = ({ book }) => {
                     </Typography>
                   </Box>
 
+                  {/* Қолжетімділігі */}
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <LocalLibrary
                       fontSize="small"
@@ -308,10 +342,12 @@ const BookDetails = ({ book }) => {
 
           <Divider sx={{ mb: 3 }} />
 
+          {/* Ұсынылатын курстар */}
           <Typography variant="h6" gutterBottom fontWeight="bold">
             Рекомендуется для курсов
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+            {/* Категорияға байланысты ұсынылатын курстар */}
             {book.category === 'Финансы' && (
               <>
                 <Chip label="Финансовый менеджмент" />
@@ -326,6 +362,7 @@ const BookDetails = ({ book }) => {
                 <Chip label="Стратегический маркетинг" />
               </>
             )}
+            {/* Басқа категориялар үшін ұқсас блоктар */}
             {book.category === 'Бизнес' && (
               <>
                 <Chip label="Стратегический менеджмент" />
@@ -365,7 +402,7 @@ const BookDetails = ({ book }) => {
         </Grid>
       </Grid>
 
-      {/* Диалог подтверждения заказа книги */}
+      {/* Кітапты алуды растау диалог терезесі */}
       <Dialog
         open={dialogOpen}
         onClose={handleDialogClose}
@@ -390,7 +427,7 @@ const BookDetails = ({ book }) => {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar для уведомлений */}
+      {/* Хабарламалар үшін Snackbar */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
