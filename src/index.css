@@ -47,11 +47,11 @@ a {
 
 /* Айналдыру жолағының басқару элементі */
 ::-webkit-scrollbar-thumb {
-  background: #1565c0;
+  background: #e30c0c;
   border-radius: 4px;
 }
 
 /* Айналдыру жолағының басқару элементіне тышқан тигенде */
 ::-webkit-scrollbar-thumb:hover {
-  background: #003c8f;
+  background: #8f0000;
 }
