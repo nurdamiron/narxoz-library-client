@@ -19,6 +19,7 @@ import {
   Tab,
   Skeleton,
   useTheme,
+  alpha,
 } from '@mui/material';
 import {
   History as HistoryIcon,
@@ -28,75 +29,8 @@ import {
   Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 
-/**
- * Жүктеу кідірісін имитациялау функциясы
- * 
- * Бұл функция серверден мәліметтер жүктеуді имитациялау үшін қолданылады
- * 
- * @param {number} ms - Миллисекундпен көрсетілген кідіріс уақыты
- * @returns {Promise<void>} - Кідіріс аяқталғаннан кейін орындалатын Promise
- */
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * Кітап беру тарихының тестілік деректері
- * 
- * Бұл массив пайдаланушының кітап беру тарихын сақтайды. Әр жазба келесі қасиеттерден тұрады:
- * - id: Жазбаның бірегей идентификаторы
- * - bookTitle: Кітаптың атауы
- * - author: Кітаптың авторы
- * - borrowDate: Кітапты алған күні
- * - dueDate: Кітапты қайтару мерзімі
- * - returnDate: Кітапты қайтарған күні (егер қайтарылмаған болса, null)
- * - status: Кітап берудің күйі ('active' - белсенді, 'returned' - қайтарылған, 'overdue' - мерзімі өткен)
- */
-const mockBorrows = [
-  {
-    id: 1,
-    bookTitle: 'Основы финансового менеджмента',
-    author: 'Джеймс С. Ван Хорн, Джон М. Вахович',
-    borrowDate: '01.03.2025',
-    dueDate: '15.03.2025',
-    returnDate: null,
-    status: 'active',
-  },
-  {
-    id: 2,
-    bookTitle: 'Маркетинг 5.0: Технологии следующего поколения',
-    author: 'Филип Котлер, Хермаван Картаджайя',
-    borrowDate: '15.02.2025',
-    dueDate: '01.03.2025',
-    returnDate: '28.02.2025',
-    status: 'returned',
-  },
-  {
-    id: 3,
-    bookTitle: 'Python для анализа данных',
-    author: 'Уэс Маккинни',
-    borrowDate: '10.01.2025',
-    dueDate: '24.01.2025',
-    returnDate: '22.01.2025',
-    status: 'returned',
-  },
-  {
-    id: 4,
-    bookTitle: 'Введение в экономическую теорию',
-    author: 'Пол Самуэльсон, Уильям Нордхаус',
-    borrowDate: '05.12.2024',
-    dueDate: '19.12.2024',
-    returnDate: '18.12.2024',
-    status: 'returned',
-  },
-  {
-    id: 5,
-    bookTitle: 'Корпоративное право: Учебник',
-    author: 'Ивана Сергеева',
-    borrowDate: '20.11.2024',
-    dueDate: '04.12.2024',
-    returnDate: '05.12.2024',
-    status: 'overdue',
-  },
-];
+// Import mock data
+import { mockBorrows, delay } from '../data/mockData';
 
 /**
  * BorrowHistoryPage компоненті - пайдаланушының кітап беру тарихын көрсететін бет
@@ -202,6 +136,11 @@ const BorrowHistoryPage = () => {
             label="Активна"
             color="primary"
             size="small"
+            sx={{ 
+              bgcolor: alpha('#2e7d32', 0.1), 
+              color: '#2e7d32',
+              fontWeight: 'medium'
+            }}
           />
         );
       case 'returned': // Қайтарылған
@@ -211,6 +150,11 @@ const BorrowHistoryPage = () => {
             label="Возвращена"
             color="success"
             size="small"
+            sx={{ 
+              bgcolor: alpha('#2e7d32', 0.1), 
+              color: '#2e7d32',
+              fontWeight: 'medium'
+            }}
           />
         );
       case 'overdue': // Мерзімі өткен
@@ -220,6 +164,11 @@ const BorrowHistoryPage = () => {
             label="Просрочена"
             color="error"
             size="small"
+            sx={{ 
+              bgcolor: alpha('#d32f2f', 0.1), 
+              color: '#d32f2f',
+              fontWeight: 'medium'
+            }}
           />
         );
       default:
@@ -228,11 +177,11 @@ const BorrowHistoryPage = () => {
   };
 
   return (
-    <Container>
+    <Container maxWidth="lg" sx={{ py: 3 }}>
       {/* Беттің тақырыбы */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-          <HistoryIcon sx={{ mr: 1, verticalAlign: 'text-bottom' }} />
+      <Box sx={{ mb: 5 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+          <HistoryIcon sx={{ mr: 1.5, color: '#d50032', fontSize: 34 }} />
           История заимствований
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
@@ -241,12 +190,22 @@ const BorrowHistoryPage = () => {
       </Box>
 
       {/* Қойындылар (фильтрлер) */}
-      <Paper sx={{ borderRadius: 2, overflow: 'hidden', mb: 4 }}>
+      <Paper sx={{ borderRadius: 3, overflow: 'hidden', mb: 5, boxShadow: theme.shadows[2] }}>
         <Tabs
           value={tab}
           onChange={handleTabChange}
           variant="fullWidth"
           aria-label="history tabs"
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#d50032',
+              height: 3,
+            },
+            '& .Mui-selected': {
+              color: '#d50032',
+              fontWeight: 'bold',
+            },
+          }}
         >
           <Tab label="Все" value="all" /> {/* Барлық жазбалар */}
           <Tab label="Активные" value="active" /> {/* Белсенді жазбалар */}
@@ -256,9 +215,9 @@ const BorrowHistoryPage = () => {
       </Paper>
 
       {/* Жазбалар кестесі */}
-      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, overflow: 'hidden', mb: 5, boxShadow: theme.shadows[2] }}>
         {loading ? ( // Жүктелу кезінде скелетондарды көрсету
-          <Box sx={{ p: 2 }}>
+          <Box sx={{ p: 3 }}>
             <Skeleton height={60} />
             <Skeleton height={60} />
             <Skeleton height={60} />
@@ -270,12 +229,12 @@ const BorrowHistoryPage = () => {
             <TableContainer>
               <Table sx={{ minWidth: 650 }}>
                 <TableHead>
-                  <TableRow>
-                    <TableCell>Книга</TableCell>
-                    <TableCell>Дата взятия</TableCell>
-                    <TableCell>Срок возврата</TableCell>
-                    <TableCell>Дата возврата</TableCell>
-                    <TableCell>Статус</TableCell>
+                  <TableRow sx={{ backgroundColor: alpha('#f5f5f5', 0.5) }}>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Книга</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Дата взятия</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Срок возврата</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Дата возврата</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Статус</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -283,10 +242,14 @@ const BorrowHistoryPage = () => {
                     paginatedBorrows.map((borrow) => (
                       <TableRow
                         key={borrow.id}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                        sx={{ 
+                          '&:last-child td, &:last-child th': { border: 0 },
+                          '&:hover': { backgroundColor: alpha('#f5f5f5', 0.5) },
+                          transition: 'background-color 0.2s',
+                        }}
                       >
                         <TableCell component="th" scope="row">
-                          <Typography variant="body2" fontWeight="medium">
+                          <Typography variant="body2" fontWeight="medium" color="#d50032">
                             {borrow.bookTitle}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -307,7 +270,7 @@ const BorrowHistoryPage = () => {
                     ))
                   ) : ( // Егер жазбалар болмаса, хабарлама көрсету
                     <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                         <Typography variant="body1" color="text.secondary">
                           Нет записей для отображения
                         </Typography>
@@ -330,47 +293,61 @@ const BorrowHistoryPage = () => {
               labelDisplayedRows={({ from, to, count }) =>
                 `${from}-${to} из ${count !== -1 ? count : `более чем ${to}`}`
               } // "Жазба статистикасы" жазуы
+              sx={{
+                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                  margin: 0,
+                },
+              }}
             />
           </>
         )}
       </Paper>
 
       {/* Қосымша ақпарат блоктары */}
-      <Grid container spacing={4} sx={{ mt: 4 }}>
+      <Grid container spacing={4} sx={{ mt: 2 }}>
         {/* Пайдалану ережелері */}
         <Grid item xs={12} md={6}>
           <Paper
             sx={{
-              p: 3,
-              borderRadius: 2,
-              backgroundColor: 'rgba(25, 118, 210, 0.05)', // Көк түсті фон
+              p: 4,
+              borderRadius: 3,
+              backgroundColor: alpha('#d50032', 0.03),
+              height: '100%',
+              boxShadow: theme.shadows[2],
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: theme.shadows[4],
+              },
             }}
           >
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                mb: 2,
+                mb: 3,
               }}
             >
-              <LibraryIcon color="primary" sx={{ mr: 1 }} />
-              <Typography variant="h6" fontWeight="bold">
+              <LibraryIcon sx={{ color: '#d50032', mr: 1.5, fontSize: 28 }} />
+              <Typography variant="h5" fontWeight="bold">
                 Правила пользования
               </Typography>
             </Box>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="body2" paragraph>
-              1. Книги выдаются на срок до 14 дней с возможностью продления, если на них нет очереди.
-            </Typography>
-            <Typography variant="body2" paragraph>
-              2. Для продления срока необходимо обратиться в библиотеку или воспользоваться личным кабинетом.
-            </Typography>
-            <Typography variant="body2" paragraph>
-              3. При несвоевременном возврате книг начисляется штраф согласно правилам библиотеки.
-            </Typography>
-            <Typography variant="body2">
-              4. Бережно относитесь к библиотечным материалам. В случае порчи или утери требуется возмещение.
-            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            <Box sx={{ px: 1 }}>
+              <Typography variant="body1" paragraph>
+                1. Книги выдаются на срок до 14 дней с возможностью продления, если на них нет очереди.
+              </Typography>
+              <Typography variant="body1" paragraph>
+                2. Для продления срока необходимо обратиться в библиотеку или воспользоваться личным кабинетом.
+              </Typography>
+              <Typography variant="body1" paragraph>
+                3. При несвоевременном возврате книг начисляется штраф согласно правилам библиотеки.
+              </Typography>
+              <Typography variant="body1">
+                4. Бережно относитесь к библиотечным материалам. В случае порчи или утери требуется возмещение.
+              </Typography>
+            </Box>
           </Paper>
         </Grid>
 
@@ -378,35 +355,48 @@ const BorrowHistoryPage = () => {
         <Grid item xs={12} md={6}>
           <Paper
             sx={{
-              p: 3,
-              borderRadius: 2,
-              backgroundColor: 'rgba(76, 175, 80, 0.05)', // Жасыл түсті фон
+              p: 4,
+              borderRadius: 3,
+              backgroundColor: alpha('#2e7d32', 0.03),
+              height: '100%',
+              boxShadow: theme.shadows[2],
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: theme.shadows[4],
+              },
             }}
           >
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                mb: 2,
+                mb: 3,
               }}
             >
-              <ReceiptIcon color="success" sx={{ mr: 1 }} />
-              <Typography variant="h6" fontWeight="bold">
+              <ReceiptIcon sx={{ color: '#2e7d32', mr: 1.5, fontSize: 28 }} />
+              <Typography variant="h5" fontWeight="bold">
                 Статистика
               </Typography>
             </Box>
-            <Divider sx={{ mb: 2 }} />
-            <Grid container spacing={2}>
+            <Divider sx={{ mb: 3 }} />
+            <Grid container spacing={3}>
               {/* Барлық алынған кітаптар саны */}
               <Grid item xs={6}>
                 <Paper
                   elevation={0}
-                  sx={{ p: 2, textAlign: 'center', height: '100%' }}
+                  sx={{ 
+                    p: 3, 
+                    textAlign: 'center', 
+                    height: '100%',
+                    borderRadius: 2,
+                    backgroundColor: alpha('#f5f5f5', 0.5),
+                  }}
                 >
                   <Typography
                     variant="h4"
                     fontWeight="bold"
-                    color="primary"
+                    color="#d50032"
                     gutterBottom
                   >
                     {loading ? <Skeleton width={40} /> : borrows.length}
@@ -420,12 +410,18 @@ const BorrowHistoryPage = () => {
               <Grid item xs={6}>
                 <Paper
                   elevation={0}
-                  sx={{ p: 2, textAlign: 'center', height: '100%' }}
+                  sx={{ 
+                    p: 3, 
+                    textAlign: 'center', 
+                    height: '100%',
+                    borderRadius: 2,
+                    backgroundColor: alpha('#f5f5f5', 0.5),
+                  }}
                 >
                   <Typography
                     variant="h4"
                     fontWeight="bold"
-                    color="success.main"
+                    color="#2e7d32"
                     gutterBottom
                   >
                     {loading ? (
@@ -443,12 +439,18 @@ const BorrowHistoryPage = () => {
               <Grid item xs={6}>
                 <Paper
                   elevation={0}
-                  sx={{ p: 2, textAlign: 'center', height: '100%' }}
+                  sx={{ 
+                    p: 3, 
+                    textAlign: 'center', 
+                    height: '100%',
+                    borderRadius: 2,
+                    backgroundColor: alpha('#f5f5f5', 0.5),
+                  }}
                 >
                   <Typography
                     variant="h4"
                     fontWeight="bold"
-                    color="primary"
+                    color="#1976d2"
                     gutterBottom
                   >
                     {loading ? (
@@ -466,12 +468,18 @@ const BorrowHistoryPage = () => {
               <Grid item xs={6}>
                 <Paper
                   elevation={0}
-                  sx={{ p: 2, textAlign: 'center', height: '100%' }}
+                  sx={{ 
+                    p: 3, 
+                    textAlign: 'center', 
+                    height: '100%',
+                    borderRadius: 2,
+                    backgroundColor: alpha('#f5f5f5', 0.5),
+                  }}
                 >
                   <Typography
                     variant="h4"
                     fontWeight="bold"
-                    color="error"
+                    color="#d32f2f"
                     gutterBottom
                   >
                     {loading ? (

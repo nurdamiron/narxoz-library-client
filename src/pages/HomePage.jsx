@@ -24,10 +24,12 @@ import {
   School as SchoolIcon,
 } from '@mui/icons-material';
 import BookCard from '../components/books/BookCard';
+
+// Import mock data from your data file
 import { 
   mockPopularBooks, 
   mockNewBooks, 
-  mockEvents,
+  mockEvents, 
   delay 
 } from '../data/mockData';
 
@@ -42,30 +44,15 @@ const HeroBanner = () => {
     <Paper
       sx={{
         position: 'relative',
-        height: { xs: 300, sm: 350, md: 400 },
-        backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+        height: { xs: 340, sm: 380, md: 420 },
+        background: 'linear-gradient(135deg, #d50032 0%, #d50032 50%,rgb(255, 142, 142) 50%, #ffffff 100%)',
         color: 'white',
-        borderRadius: { xs: 2, sm: 3, md: 4 },
+        borderRadius: { xs: 3, sm: 4, md: 4 },
         overflow: 'hidden',
-        mb: { xs: 4, md: 6 },
+        mb: { xs: 5, md: 7 },
         boxShadow: theme.shadows[4],
       }}
     >
-      {/* Фон с наложением */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundImage: 'url(https://via.placeholder.com/1500x500?text=Library+Background)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: 0.2,
-        }}
-      />
-      
       {/* Контент баннера */}
       <Container
         sx={{
@@ -79,7 +66,20 @@ const HeroBanner = () => {
         }}
       >
         {/* Иконка университета */}
-        <SchoolIcon sx={{ fontSize: { xs: 40, md: 60 }, mb: 2, opacity: 0.9 }} />
+        <SchoolIcon 
+          sx={{ 
+            fontSize: { xs: 40, md: 60 }, 
+            mb: 2, 
+            opacity: 0.9,
+            color: '#d50032',
+            position: 'absolute',
+            top: { xs: 20, md: 30 },
+            right: { xs: 20, md: 40 },
+            backgroundColor: 'white',
+            padding: 1,
+            borderRadius: '50%',
+          }} 
+        />
         
         {/* Заголовок */}
         <Typography
@@ -89,9 +89,12 @@ const HeroBanner = () => {
           gutterBottom
           sx={{ 
             textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-            fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.8rem' },
-            maxWidth: '100%',
-            wordWrap: 'break-word'
+            fontSize: { xs: '1.6rem', sm: '2.2rem', md: '2.8rem' },
+            maxWidth: { xs: '100%', md: '60%' },
+            wordWrap: 'break-word',
+            color: '#ffe6ea',
+            position: 'relative',
+            zIndex: 2,
           }}
         >
           Библиотека Университета Нархоз
@@ -101,11 +104,14 @@ const HeroBanner = () => {
         <Typography
           variant="body1"
           sx={{ 
-            maxWidth: 600,
+            maxWidth: { xs: '100%', md: '60%' },
             mb: { xs: 3, md: 4 },
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+            textShadow: '0px 0px 1px rgba(0,0,0,0.1)',
             fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
             opacity: 0.9,
+            color: '#fff',
+            position: 'relative',
+            zIndex: 2,
           }}
         >
           Доступ к тысячам учебников, научных работ и литературы для студентов и преподавателей
@@ -114,8 +120,12 @@ const HeroBanner = () => {
         {/* Кнопки */}
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
-          spacing={{ xs: 1, sm: 2 }}
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
+          spacing={{ xs: 2, sm: 3 }}
+          sx={{ 
+            width: { xs: '100%', sm: 'auto' },
+            position: 'relative',
+            zIndex: 2,
+          }}
         >
           <Button
             variant="contained"
@@ -125,11 +135,11 @@ const HeroBanner = () => {
             sx={{
               px: { xs: 3, md: 4 },
               py: { xs: 1, md: 1.5 },
-              backgroundColor: 'white',
-              color: theme.palette.primary.main,
+              backgroundColor: '#d50032',
+              color: 'white',
               fontWeight: 'bold',
               '&:hover': {
-                backgroundColor: alpha('#ffffff', 0.9),
+                backgroundColor: alpha('#d50032', 0.9),
                 transform: 'translateY(-2px)',
               },
               transition: 'transform 0.2s',
@@ -146,12 +156,12 @@ const HeroBanner = () => {
             sx={{
               px: { xs: 3, md: 4 },
               py: { xs: 1, md: 1.5 },
-              borderColor: 'white',
-              color: 'white',
+              borderColor: '#fff',
+              color: '#fff',
               fontWeight: 'bold',
               '&:hover': {
-                borderColor: 'white',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderColor: '#d50032',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 transform: 'translateY(-2px)',
               },
               transition: 'transform 0.2s',
@@ -179,15 +189,15 @@ const SectionTitle = ({ children, ...props }) => {
       sx={{
         position: 'relative',
         display: 'inline-block',
-        mb: 3,
+        mb: 4,
         '&:after': {
           content: '""',
           position: 'absolute',
           left: 0,
-          bottom: -8,
+          bottom: -10,
           width: 60,
           height: 4,
-          backgroundColor: theme.palette.primary.main,
+          backgroundColor: '#d50032',
           borderRadius: 2,
         },
         ...props.sx
@@ -210,7 +220,7 @@ const BooksGrid = ({ books, loading }) => {
       <Grid container spacing={isMobile ? 2 : 3}>
         {Array.from(new Array(4)).map((_, index) => (
           <Grid item xs={6} sm={6} md={3} key={index}>
-            <Skeleton variant="rectangular" height={300} />
+            <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
           </Grid>
         ))}
       </Grid>
@@ -252,12 +262,12 @@ const HomePage = () => {
   }, []);
 
   return (
-    <Box>
+    <Box sx={{ pt: 2 }}>
       {/* Основной баннер */}
       <HeroBanner />
 
       {/* Популярные книги */}
-      <Box sx={{ mb: { xs: 4, md: 6 } }}>
+      <Box sx={{ mb: { xs: 6, md: 8 } }}>
         <SectionTitle>
           Популярные книги
         </SectionTitle>
@@ -265,12 +275,17 @@ const HomePage = () => {
         <BooksGrid books={popularBooks} loading={loading} />
         
         {/* Кнопка "Смотреть все" */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <Button
             component={RouterLink}
             to="/books?popular=true"
             endIcon={<ArrowForwardIcon />}
-            color="primary"
+            sx={{ 
+              color: '#d50032',
+              '&:hover': {
+                backgroundColor: alpha('#d50032', 0.05),
+              },
+            }}
             size={isMobile ? "small" : "medium"}
           >
             Смотреть все популярные книги
@@ -279,7 +294,7 @@ const HomePage = () => {
       </Box>
 
       {/* Новые поступления */}
-      <Box sx={{ mb: { xs: 4, md: 6 } }}>
+      <Box sx={{ mb: { xs: 6, md: 8 } }}>
         <SectionTitle>
           Новые поступления
         </SectionTitle>
@@ -287,12 +302,17 @@ const HomePage = () => {
         <BooksGrid books={newBooks} loading={loading} />
         
         {/* Кнопка "Смотреть все" */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <Button
             component={RouterLink}
             to="/books"
             endIcon={<ArrowForwardIcon />}
-            color="primary"
+            sx={{ 
+              color: '#d50032',
+              '&:hover': {
+                backgroundColor: alpha('#d50032', 0.05),
+              },
+            }}
             size={isMobile ? "small" : "medium"}
           >
             Смотреть все новые поступления
@@ -301,13 +321,13 @@ const HomePage = () => {
       </Box>
 
       {/* События и информация */}
-      <Grid container spacing={isMobile ? 3 : 4} sx={{ mb: { xs: 4, md: 6 } }}>
+      <Grid container spacing={isMobile ? 4 : 5} sx={{ mb: { xs: 6, md: 8 } }}>
         {/* События */}
         <Grid item xs={12} md={7}>
           <SectionTitle>
             Предстоящие события
           </SectionTitle>
-          <Stack spacing={2}>
+          <Stack spacing={3}>
             {mockEvents.map((event) => (
               <Paper
                 key={event.id}
@@ -315,7 +335,7 @@ const HomePage = () => {
                 sx={{
                   display: 'flex',
                   flexDirection: { xs: 'column', sm: 'row' },
-                  borderRadius: 2,
+                  borderRadius: 3,
                   overflow: 'hidden',
                   transition: 'transform 0.3s, box-shadow 0.3s',
                   '&:hover': {
@@ -331,8 +351,8 @@ const HomePage = () => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    p: { xs: 1.5, sm: 2 },
-                    backgroundColor: theme.palette.primary.main,
+                    p: { xs: 2, sm: 3 },
+                    backgroundColor: '#d50032',
                     color: 'white',
                     width: { xs: '100%', sm: 120 },
                   }}
@@ -347,8 +367,8 @@ const HomePage = () => {
                 </Box>
                 
                 {/* Информация о событии */}
-                <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 2.5 } }}>
-                  <Typography variant="h6" gutterBottom fontWeight="bold" sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
+                <CardContent sx={{ flexGrow: 1, p: { xs: 2.5, sm: 3 } }}>
+                  <Typography variant="h6" gutterBottom fontWeight="bold" sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
                     {event.title}
                   </Typography>
                   <Stack
@@ -369,12 +389,17 @@ const HomePage = () => {
           </Stack>
           
           {/* Кнопка "Все события" */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <Button
               component={RouterLink}
               to="/events"
               endIcon={<ArrowForwardIcon />}
-              color="primary"
+              sx={{ 
+                color: '#d50032',
+                '&:hover': {
+                  backgroundColor: alpha('#d50032', 0.05),
+                },
+              }}
               size={isMobile ? "small" : "medium"}
             >
               Все события
@@ -393,21 +418,22 @@ const HomePage = () => {
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: 2,
+              borderRadius: 3,
               overflow: 'hidden',
+              boxShadow: theme.shadows[2],
             }}
           >
-            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <CardContent sx={{ p: { xs: 3, sm: 4 }, flexGrow: 1 }}>
               {/* Часы работы */}
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <AutoStoriesIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
+              <Box sx={{ mb: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <AutoStoriesIcon sx={{ color: '#d50032', mr: 1.5 }} />
+                  <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
                     Часы работы
                   </Typography>
                 </Box>
-                <Divider sx={{ mb: 2 }} />
-                <Grid container spacing={1}>
+                <Divider sx={{ mb: 2.5 }} />
+                <Grid container spacing={1.5}>
                   <Grid item xs={6}>
                     <Typography variant="body2">Понедельник - Пятница:</Typography>
                   </Grid>
@@ -437,15 +463,15 @@ const HomePage = () => {
 
               {/* Полезная информация */}
               <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <LightbulbIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <LightbulbIcon sx={{ color: '#d50032', mr: 1.5 }} />
+                  <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
                     Полезная информация
                   </Typography>
                 </Box>
-                <Divider sx={{ mb: 2 }} />
+                <Divider sx={{ mb: 2.5 }} />
                 <Typography variant="body2" paragraph>
-                  Для получения доступа к электронным ресурсам библиотеки необходимо авторизоваться используя свой студенческий ID.
+                  Для получения доступа к электронным ресурсам библиотеки необходимо авторизоваться, используя свой студенческий ID.
                 </Typography>
                 <Typography variant="body2" paragraph>
                   Книги выдаются на срок до 14 дней с возможностью продления, если на них нет очереди.
@@ -457,9 +483,15 @@ const HomePage = () => {
                   variant="outlined"
                   fullWidth
                   sx={{ 
-                    mt: 1,
+                    mt: 2,
                     fontWeight: 'medium',
-                    borderRadius: 2
+                    borderRadius: 2,
+                    borderColor: '#d50032',
+                    color: '#d50032',
+                    '&:hover': {
+                      borderColor: '#d50032',
+                      backgroundColor: alpha('#d50032', 0.05),
+                    },
                   }}
                 >
                   Справка

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Box,
@@ -16,6 +16,8 @@ import {
   useMediaQuery,
   useTheme,
   styled,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -26,40 +28,36 @@ import {
   Person,
   Book,
   History,
+  BookmarkBorder,
 } from '@mui/icons-material';
 
 /**
  * Іздеу компонентінің стильдері
- * 
- * Бұл компонент іздеу өрісінің сыртқы контейнері болып табылады
- * Жарқыраған фондық түсі бар дөңгелектелген жиектер қолданылады
  */
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: 'rgba(255, 255, 255, 0.15)', // Ашық ақ фон
+  backgroundColor: 'rgba(255, 255, 255, 0.15)',
   '&:hover': {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)', // Үстінен өткенде фон түсі
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
-  marginRight: theme.spacing(2),
+  marginRight: theme.spacing(1),
   marginLeft: 0,
   width: '100%',
   [theme.breakpoints.up('sm')]: {
-    marginLeft: theme.spacing(3),
+    marginLeft: theme.spacing(2),
     width: 'auto',
   },
 }));
 
 /**
  * Іздеу иконкасының контейнері
- * 
- * Іздеу иконкасын іздеу өрісінің сол жағына орналастырады
  */
 const SearchIconWrapper = styled('div')(({ theme }) => ({
-  padding: theme.spacing(0, 2),
+  padding: theme.spacing(0, 1.5),
   height: '100%',
   position: 'absolute',
-  pointerEvents: 'none', // Курсор әрекеттерін өткізеді
+  pointerEvents: 'none',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -67,21 +65,25 @@ const SearchIconWrapper = styled('div')(({ theme }) => ({
 
 /**
  * Іздеу енгізу өрісінің стильдері
- * 
- * Іздеу мәтінін енгізу өрісін стильдейді
- * Фокус кезінде өріс ені ұлғаяды
  */
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: 'inherit',
+  width: '100%',
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`, // Іздеу иконкасына орын қалдыру
+    paddingLeft: `calc(1em + ${theme.spacing(3)})`,
     transition: theme.transitions.create('width'),
     width: '100%',
     [theme.breakpoints.up('md')]: {
-      width: '20ch', // Әдепкі ені
+      width: '18ch',
       '&:focus': {
-        width: '30ch', // Фокус кезіндегі ені
+        width: '25ch',
+      },
+    },
+    [theme.breakpoints.down('sm')]: {
+      width: '12ch',
+      '&:focus': {
+        width: '16ch',
       },
     },
   },
@@ -89,109 +91,123 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 /**
  * Header компоненті - сайттың жоғарғы навигациялық панелі
- * 
- * Бұл компонент сайттың жоғарғы панелін (хедерін) құрайды және келесі элементтерді қамтиды:
- * - Сайт логотипі мен атауы
- * - Бүйір панелін ашатын түйме
- * - Іздеу өрісі
- * - Каталог түймесі (үлкен экрандарда)
- * - Хабарландырулар түймесі
- * - Пайдаланушы профиль түймесі мен меню
- * 
- * @param {Object} props - Компонент параметрлері
- * @param {Function} props.toggleSidebar - Бүйір панелін ашу/жабу функциясы
  */
 const Header = ({ toggleSidebar }) => {
-  const theme = useTheme(); // Material UI тақырыбын алу
-  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Экран өлшемін тексеру
-  const navigate = useNavigate(); // Маршруттау функциясы
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isVerySmall = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
+  const location = useLocation();
   
-  // Компонент күйлері (state)
-  const [anchorEl, setAnchorEl] = useState(null); // Пайдаланушы менюсінің орналасуы
-  const [searchQuery, setSearchQuery] = useState(''); // Іздеу сұранысы
-  
-  // Тестілік аутентификация деректері
-  // Шынайы қосымшада бұл деректер сервер жауабынан немесе Redux күйінен алынады
-  const [isAuthenticated] = useState(true); // Пайдаланушы кірген/кірмеген
+  // State
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isAuthenticated] = useState(true);
   const [user] = useState({
     name: 'Айдар Тестов',
     email: 'aidar@test.com',
-    avatar: null, // Аватар суреті
+    avatar: null,
   });
 
   /**
    * Пайдаланушы профилі менюсін ашу
-   * 
-   * @param {Event} event - Түйме басу оқиғасы
    */
   const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget); // Менюдің орналасуын орнату
+    setAnchorEl(event.currentTarget);
   };
 
   /**
    * Пайдаланушы профилі менюсін жабу
    */
   const handleMenuClose = () => {
-    setAnchorEl(null); // Меню орналасуын тазалау
+    setAnchorEl(null);
   };
 
   /**
    * Пайдаланушы жүйеден шығу функциясы
-   * 
-   * Бұл функция пайдаланушыны жүйеден шығарып, басты бетке бағыттайды
    */
   const handleLogout = () => {
-    // Жүйеден шығуды имитациялау (нақты қосымшада аутентификация қызметін шақыру керек)
-    handleMenuClose(); // Меню жабу
-    navigate('/'); // Басты бетке өту
+    handleMenuClose();
+    navigate('/');
   };
 
   /**
    * Іздеу функциясы
-   * 
-   * @param {Event} e - Пернетақта оқиғасы
-   * Егер Enter пернесі басылса және іздеу сұранысы бос болмаса,
-   * пайдаланушы іздеу нәтижелері бетіне бағытталады
    */
   const handleSearch = (e) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       navigate(`/books?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery(''); // Іздеу өрісін тазалау
+      setSearchQuery('');
     }
   };
 
+  // Get current page name for mobile display
+  const getCurrentPageName = () => {
+    const path = location.pathname;
+    if (path === '/') return 'Главная';
+    if (path === '/books') return 'Каталог';
+    if (path.startsWith('/books/')) return 'Книга';
+    if (path === '/profile') return 'Профиль';
+    if (path === '/history') return 'История';
+    if (path === '/about') return 'О библиотеке';
+    return 'НАРХОЗ';
+  };
+
   return (
-    <AppBar position="fixed"> {/* Бекітілген жоғарғы панель */}
-      <Toolbar>
+    <AppBar position="fixed" sx={{ 
+      backgroundColor: '#d50032',
+      backgroundImage: 'linear-gradient(to right,rgb(113, 4, 29),rgb(119, 5, 31) 30%,rgb(114, 5, 23))',
+    }}>
+      <Toolbar sx={{ 
+        minHeight: { xs: 56, sm: 64 },
+        px: { xs: 1, sm: 2 }
+      }}>
         {/* Бүйір панелін ашу түймесі */}
         <IconButton
           color="inherit"
           aria-label="open drawer"
           edge="start"
           onClick={toggleSidebar}
-          sx={{ mr: 2 }}
+          sx={{ mr: { xs: 1, sm: 2 } }}
         >
           <MenuIcon />
         </IconButton>
         
         {/* Сайт логотипі мен атауы */}
-        <Typography
-          variant="h6"
-          noWrap
-          component={RouterLink}
-          to="/"
-          sx={{
-            display: { xs: 'none', sm: 'block' }, // Кішкентай экрандарда жасыру
-            textDecoration: 'none',
-            color: 'inherit',
-            fontWeight: 'bold',
-          }}
-        >
-          НАРХОЗ Библиотека
-        </Typography>
+        {!isVerySmall ? (
+          <Typography
+            variant="h6"
+            noWrap
+            component={RouterLink}
+            to="/"
+            sx={{
+              textDecoration: 'none',
+              color: 'inherit',
+              fontWeight: 'bold',
+              mr: 1,
+              flexShrink: 0,
+            }}
+          >
+            НАРХОЗ
+          </Typography>
+        ) : (
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{
+              color: 'inherit',
+              fontWeight: 'bold',
+              mr: 1,
+              flexShrink: 0,
+            }}
+          >
+            {getCurrentPageName()}
+          </Typography>
+        )}
 
         {/* Іздеу компоненті */}
-        <Search>
+        <Search sx={{ flexGrow: 1, maxWidth: { xs: 180, sm: 'none' } }}>
           <SearchIconWrapper>
             <SearchIcon />
           </SearchIconWrapper>
@@ -199,12 +215,12 @@ const Header = ({ toggleSidebar }) => {
             placeholder="Поиск книг..."
             inputProps={{ 'aria-label': 'search' }}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)} // Іздеу сұранысын жаңарту
-            onKeyDown={handleSearch} // Enter пернесіне әрекет ету
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearch}
           />
         </Search>
 
-        {/* Бос орын - элементтерді оң жаққа итермелеу үшін */}
+        {/* Бос орын */}
         <Box sx={{ flexGrow: 1 }} />
 
         {/* Оң жақ элементтер тобы */}
@@ -227,12 +243,12 @@ const Header = ({ toggleSidebar }) => {
             <>
               {/* Хабарландырулар түймесі */}
               <IconButton
-                size="large"
+                size="medium"
                 aria-label="show notifications"
                 color="inherit"
                 sx={{ mr: 1 }}
               >
-                <Badge badgeContent={3} color="error"> {/* 3 оқылмаған хабарландыру */}
+                <Badge badgeContent={3} color="error">
                   <NotificationsIcon />
                 </Badge>
               </IconButton>
@@ -240,7 +256,7 @@ const Header = ({ toggleSidebar }) => {
               {/* Пайдаланушы профилі түймесі */}
               <Tooltip title="Аккаунт">
                 <IconButton
-                  size="large"
+                  size="medium"
                   edge="end"
                   aria-label="account of current user"
                   aria-haspopup="true"
@@ -254,7 +270,7 @@ const Header = ({ toggleSidebar }) => {
                       sx={{ width: 32, height: 32 }}
                     />
                   ) : (
-                    <AccountCircle /> // Әдепкі аватар иконкасы
+                    <AccountCircle />
                   )}
                 </IconButton>
               </Tooltip>
@@ -263,10 +279,17 @@ const Header = ({ toggleSidebar }) => {
               <Menu
                 anchorEl={anchorEl}
                 id="account-menu"
-                open={Boolean(anchorEl)} // Меню ашық/жабық күйі
+                open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                PaperProps={{
+                  elevation: 2,
+                  sx: {
+                    borderRadius: 2,
+                    width: 200,
+                  }
+                }}
               >
                 {/* Профиль бетіне сілтеме */}
                 <MenuItem
@@ -274,19 +297,44 @@ const Header = ({ toggleSidebar }) => {
                   to="/profile"
                   onClick={handleMenuClose}
                 >
-                  <Person sx={{ mr: 1 }} /> Профиль
+                  <ListItemIcon>
+                    <Person sx={{ color: '#d50032' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Профиль" />
                 </MenuItem>
+                
+                {/* Закладки */}
+                <MenuItem
+                  component={RouterLink}
+                  to="/profile?tab=2"
+                  onClick={handleMenuClose}
+                >
+                  <ListItemIcon>
+                    <BookmarkBorder sx={{ color: '#d50032' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Закладки" />
+                </MenuItem>
+                
                 {/* Тарих бетіне сілтеме */}
                 <MenuItem
                   component={RouterLink}
                   to="/history"
                   onClick={handleMenuClose}
                 >
-                  <History sx={{ mr: 1 }} /> История
+                  <ListItemIcon>
+                    <History sx={{ color: '#d50032' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="История" />
                 </MenuItem>
+                
+                <MenuItem sx={{ borderTop: '1px solid rgba(0,0,0,0.1)', mt: 1 }} />
+                
                 {/* Жүйеден шығу түймесі */}
                 <MenuItem onClick={handleLogout}>
-                  <Logout sx={{ mr: 1 }} /> Выйти
+                  <ListItemIcon>
+                    <Logout sx={{ color: '#d50032' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Выйти" />
                 </MenuItem>
               </Menu>
             </>

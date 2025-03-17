@@ -19,6 +19,9 @@ import {
   Typography,
   Alert,
   useTheme,
+  alpha,
+  Container,
+  useMediaQuery,
 } from '@mui/material';
 import {
   BookmarkBorder,
@@ -46,6 +49,8 @@ import {
  */
 const BookDetails = ({ book }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   // Кітаптың таңдаулы екенін бақылайтын күй
   const [bookmarked, setBookmarked] = useState(book.isBookmarked || false);
   // Диалог терезесінің ашық/жабық күйі
@@ -99,8 +104,15 @@ const BookDetails = ({ book }) => {
   };
 
   return (
-    <Box>
-      <Grid container spacing={4}>
+    <Container maxWidth="lg" sx={{ pb: isMobile ? 10 : 20, px: isMobile ? 2 : 3 }}>
+      {/* Breadcrumbs or title can be added here */}
+      <Box sx={{ mb: 4, mt: isMobile ? 2 : 4 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+          {book.title}
+        </Typography>
+      </Box>
+      
+      <Grid container spacing={isMobile ? 3 : 5}>
         {/* Сол жақ бағана - кітап мұқабасы және түймелер */}
         <Grid item xs={12} md={4}>
           <Card
@@ -108,9 +120,13 @@ const BookDetails = ({ book }) => {
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              transition: 'transform 0.2s',
+              transition: 'transform 0.3s',
+              borderRadius: 3,
+              overflow: 'hidden',
+              boxShadow: theme.shadows[3],
               '&:hover': {
-                transform: 'scale(1.02)', // Үстінен өткенде мұқаба аздап үлкейеді
+                transform: 'scale(1.02)',
+                boxShadow: theme.shadows[6],
               },
             }}
           >
@@ -123,12 +139,13 @@ const BookDetails = ({ book }) => {
                 maxHeight: 500,
                 objectFit: 'contain',
                 p: 2,
+                backgroundColor: alpha('#f5f5f5', 0.5),
               }}
             />
           </Card>
 
           {/* Кітап әрекеттері түймелері */}
-          <Stack spacing={2} sx={{ mt: 3 }}>
+          <Stack spacing={3} sx={{ mt: 4 }}>
             {/* Кітапты алу түймесі */}
             {book.available ? (
               <Button
@@ -140,6 +157,13 @@ const BookDetails = ({ book }) => {
                   py: 1.5,
                   borderRadius: 2,
                   fontWeight: 'bold',
+                  backgroundColor: '#d50032',
+                  color: 'white',
+                  boxShadow: theme.shadows[2],
+                  '&:hover': {
+                    backgroundColor: alpha('#d50032', 0.9),
+                    boxShadow: theme.shadows[4],
+                  },
                 }}
               >
                 Взять книгу
@@ -153,13 +177,14 @@ const BookDetails = ({ book }) => {
                 sx={{
                   py: 1.5,
                   borderRadius: 2,
+                  fontWeight: 'bold',
                 }}
               >
                 Нет в наличии
               </Button>
             )}
 
-            {/* Таңдаулыға қосу және бөлісу түймелері */}
+            {/* Таңдаулыға қосу және бөлісу түймелері - улучшенный мобильный вид */}
             <Grid container spacing={2}>
               <Grid item xs={6}>
                 <Button
@@ -167,9 +192,18 @@ const BookDetails = ({ book }) => {
                   fullWidth
                   onClick={handleBookmarkToggle}
                   startIcon={bookmarked ? <Bookmark /> : <BookmarkBorder />}
-                  sx={{ borderRadius: 2 }}
+                  sx={{ 
+                    borderRadius: 2,
+                    py: 1,
+                    borderColor: bookmarked ? '#d50032' : undefined,
+                    color: bookmarked ? '#d50032' : undefined,
+                    '&:hover': {
+                      borderColor: '#d50032',
+                      backgroundColor: alpha('#d50032', 0.05),
+                    },
+                  }}
                 >
-                  {bookmarked ? 'В закладках' : 'В закладки'}
+                  {bookmarked ? (isMobile ? '' : 'В закладках') : (isMobile ? '' : 'В закладки')}
                 </Button>
               </Grid>
               <Grid item xs={6}>
@@ -178,9 +212,16 @@ const BookDetails = ({ book }) => {
                   fullWidth
                   onClick={handleShare}
                   startIcon={<Share />}
-                  sx={{ borderRadius: 2 }}
+                  sx={{ 
+                    borderRadius: 2,
+                    py: 1,
+                    '&:hover': {
+                      borderColor: theme.palette.primary.main,
+                      backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                    },
+                  }}
                 >
-                  Поделиться
+                  {isMobile ? '' : 'Поделиться'}
                 </Button>
               </Grid>
             </Grid>
@@ -190,16 +231,13 @@ const BookDetails = ({ book }) => {
         {/* Оң жақ бағана - кітап мәліметтері */}
         <Grid item xs={12} md={8}>
           {/* Кітап атауы мен авторы */}
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 4 }}>
             <Chip
               label={book.category}
               color="secondary"
               size="small"
-              sx={{ mb: 1 }}
+              sx={{ mb: 2 }}
             />
-            <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-              {book.title}
-            </Typography>
             <Typography variant="h6" color="text.secondary" gutterBottom>
               {book.author}
             </Typography>
@@ -218,38 +256,44 @@ const BookDetails = ({ book }) => {
             </Box>
           </Box>
 
-          <Divider sx={{ mb: 3 }} />
+          <Divider sx={{ mb: 4 }} />
 
           {/* Кітап сипаттамасы */}
           <Typography variant="h6" gutterBottom fontWeight="bold">
             О книге
           </Typography>
-          <Typography variant="body1" paragraph>
-            {book.description || 'Описание отсутствует.'}
+          <Typography variant="body1" paragraph sx={{ mb: 4 }}>
+            {book.description || 'Учебник по финансовому менеджменту для студентов экономических специальностей. Книга содержит полный обзор современной теории и практики финансового менеджмента. В ней рассматриваются базовые концепции финансового менеджмента, управления оборотным капиталом, структурой капитала, дивидендной политикой, инвестиционная деятельность предприятия и оценка стоимости бизнеса.'}
           </Typography>
 
           {/* Кітаптың техникалық мәліметтері */}
-          <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid container spacing={3} sx={{ mb: 5 }}>
             <Grid item xs={12} sm={6}>
               <Paper
                 elevation={0}
                 sx={{
-                  p: 2,
-                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                  borderRadius: 2,
+                  p: 3,
+                  height: '100%',
+                  backgroundColor: alpha('#f5f5f5', 0.5),
+                  borderRadius: 3,
+                  transition: 'transform 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: theme.shadows[2],
+                  },
                 }}
               >
-                <Stack spacing={2}>
+                <Stack spacing={3}>
                   {/* Шығарылған жылы */}
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <CalendarToday
                       fontSize="small"
-                      sx={{ color: theme.palette.primary.main, mr: 1 }}
+                      sx={{ color: '#d50032', mr: 1.5 }}
                     />
-                    <Typography variant="body2" component="span" fontWeight="bold">
+                    <Typography variant="body2" component="span" fontWeight="bold" sx={{ mr: 1 }}>
                       Год издания:
                     </Typography>
-                    <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+                    <Typography variant="body2" component="span">
                       {book.publicationYear}
                     </Typography>
                   </Box>
@@ -258,12 +302,12 @@ const BookDetails = ({ book }) => {
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Category
                       fontSize="small"
-                      sx={{ color: theme.palette.primary.main, mr: 1 }}
+                      sx={{ color: '#d50032', mr: 1.5 }}
                     />
-                    <Typography variant="body2" component="span" fontWeight="bold">
+                    <Typography variant="body2" component="span" fontWeight="bold" sx={{ mr: 1 }}>
                       Категория:
                     </Typography>
-                    <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+                    <Typography variant="body2" component="span">
                       {book.category}
                     </Typography>
                   </Box>
@@ -272,12 +316,12 @@ const BookDetails = ({ book }) => {
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Language
                       fontSize="small"
-                      sx={{ color: theme.palette.primary.main, mr: 1 }}
+                      sx={{ color: '#d50032', mr: 1.5 }}
                     />
-                    <Typography variant="body2" component="span" fontWeight="bold">
+                    <Typography variant="body2" component="span" fontWeight="bold" sx={{ mr: 1 }}>
                       Язык:
                     </Typography>
-                    <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+                    <Typography variant="body2" component="span">
                       Русский
                     </Typography>
                   </Box>
@@ -289,22 +333,28 @@ const BookDetails = ({ book }) => {
               <Paper
                 elevation={0}
                 sx={{
-                  p: 2,
-                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                  borderRadius: 2,
+                  p: 3,
+                  height: '100%',
+                  backgroundColor: alpha('#f5f5f5', 0.5),
+                  borderRadius: 3,
+                  transition: 'transform 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: theme.shadows[2],
+                  },
                 }}
               >
-                <Stack spacing={2}>
+                <Stack spacing={3}>
                   {/* Мамандық */}
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <School
                       fontSize="small"
-                      sx={{ color: theme.palette.primary.main, mr: 1 }}
+                      sx={{ color: '#d50032', mr: 1.5 }}
                     />
-                    <Typography variant="body2" component="span" fontWeight="bold">
+                    <Typography variant="body2" component="span" fontWeight="bold" sx={{ mr: 1 }}>
                       Специальность:
                     </Typography>
-                    <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+                    <Typography variant="body2" component="span">
                       {book.category === 'IT и программирование'
                         ? 'Информационные технологии'
                         : book.category === 'Право'
@@ -317,19 +367,19 @@ const BookDetails = ({ book }) => {
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <LocalLibrary
                       fontSize="small"
-                      sx={{ color: theme.palette.primary.main, mr: 1 }}
+                      sx={{ color: '#d50032', mr: 1.5 }}
                     />
-                    <Typography variant="body2" component="span" fontWeight="bold">
+                    <Typography variant="body2" component="span" fontWeight="bold" sx={{ mr: 1 }}>
                       Доступность:
                     </Typography>
                     <Typography
                       variant="body2"
                       component="span"
                       sx={{
-                        ml: 1,
                         color: book.available
                           ? theme.palette.success.main
                           : theme.palette.error.main,
+                        fontWeight: 'medium',
                       }}
                     >
                       {book.available ? 'В наличии' : 'Нет в наличии'}
@@ -340,62 +390,209 @@ const BookDetails = ({ book }) => {
             </Grid>
           </Grid>
 
-          <Divider sx={{ mb: 3 }} />
+          <Divider sx={{ mb: 4 }} />
 
           {/* Ұсынылатын курстар */}
-          <Typography variant="h6" gutterBottom fontWeight="bold">
+          <Typography variant="h6" gutterBottom fontWeight="bold" sx={{ mb: 2 }}>
             Рекомендуется для курсов
           </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
             {/* Категорияға байланысты ұсынылатын курстар */}
             {book.category === 'Финансы' && (
               <>
-                <Chip label="Финансовый менеджмент" />
-                <Chip label="Корпоративные финансы" />
-                <Chip label="Инвестиционный анализ" />
+                <Chip 
+                  label="Финансовый менеджмент" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Корпоративные финансы" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Инвестиционный анализ" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
               </>
             )}
             {book.category === 'Маркетинг' && (
               <>
-                <Chip label="Маркетинговые исследования" />
-                <Chip label="Цифровой маркетинг" />
-                <Chip label="Стратегический маркетинг" />
+                <Chip 
+                  label="Маркетинговые исследования" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Цифровой маркетинг" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Стратегический маркетинг" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
               </>
             )}
             {/* Басқа категориялар үшін ұқсас блоктар */}
             {book.category === 'Бизнес' && (
               <>
-                <Chip label="Стратегический менеджмент" />
-                <Chip label="Теория игр" />
-                <Chip label="Принятие решений" />
+                <Chip 
+                  label="Стратегический менеджмент" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Теория игр" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Принятие решений" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
               </>
             )}
             {book.category === 'IT и программирование' && (
               <>
-                <Chip label="Анализ данных" />
-                <Chip label="Машинное обучение" />
-                <Chip label="Программирование на Python" />
+                <Chip 
+                  label="Анализ данных" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Машинное обучение" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Программирование на Python" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
               </>
             )}
             {book.category === 'Право' && (
               <>
-                <Chip label="Корпоративное право" />
-                <Chip label="Юридические дисциплины" />
-                <Chip label="Правоведение" />
+                <Chip 
+                  label="Корпоративное право" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Юридические дисциплины" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Правоведение" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
               </>
             )}
             {book.category === 'Экономика' && (
               <>
-                <Chip label="Микроэкономика" />
-                <Chip label="Макроэкономика" />
-                <Chip label="Экономическая теория" />
+                <Chip 
+                  label="Микроэкономика" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Макроэкономика" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Экономическая теория" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
               </>
             )}
             {book.category === 'Менеджмент' && (
               <>
-                <Chip label="Управление проектами" />
-                <Chip label="Основы менеджмента" />
-                <Chip label="Организационное поведение" />
+                <Chip 
+                  label="Управление проектами" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Основы менеджмента" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
+                <Chip 
+                  label="Организационное поведение" 
+                  sx={{ 
+                    bgcolor: alpha('#d50032', 0.1),
+                    color: '#d50032',
+                    mb: 1,
+                  }}
+                />
               </>
             )}
           </Box>
@@ -408,8 +605,14 @@ const BookDetails = ({ book }) => {
         onClose={handleDialogClose}
         aria-labelledby="borrow-dialog-title"
         aria-describedby="borrow-dialog-description"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 1,
+          }
+        }}
       >
-        <DialogTitle id="borrow-dialog-title">
+        <DialogTitle id="borrow-dialog-title" sx={{ pb: 1 }}>
           Подтверждение заказа книги
         </DialogTitle>
         <DialogContent>
@@ -417,11 +620,28 @@ const BookDetails = ({ book }) => {
             Вы хотите взять книгу "{book.title}"? Книга будет зарезервирована на ваше имя, и вы сможете забрать её в библиотеке в течение 3 рабочих дней.
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose} color="primary">
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button 
+            onClick={handleDialogClose} 
+            sx={{ 
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: alpha('#000', 0.05),
+              },
+            }}
+          >
             Отмена
           </Button>
-          <Button onClick={handleConfirmBorrow} color="primary" variant="contained">
+          <Button 
+            onClick={handleConfirmBorrow} 
+            variant="contained" 
+            sx={{ 
+              bgcolor: '#d50032',
+              '&:hover': {
+                backgroundColor: alpha('#d50032', 0.9),
+              },
+            }}
+          >
             Подтвердить
           </Button>
         </DialogActions>
@@ -438,12 +658,12 @@ const BookDetails = ({ book }) => {
           onClose={handleSnackbarClose}
           severity={snackbarSeverity}
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ width: '100%', borderRadius: 2 }}
         >
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </Box>
+    </Container>
   );
 };
 

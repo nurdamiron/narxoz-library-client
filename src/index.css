@@ -10,7 +10,7 @@ body {
   font-family: 'Roboto', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
+  background-color: #f8f8f8;
   color: #333;
 }
 
@@ -47,11 +47,183 @@ a {
 
 /* Айналдыру жолағының басқару элементі */
 ::-webkit-scrollbar-thumb {
-  background: #e30c0c;
+  background: #d50032;
   border-radius: 4px;
 }
 
 /* Айналдыру жолағының басқару элементіне тышқан тигенде */
 ::-webkit-scrollbar-thumb:hover {
-  background: #8f0000;
+  background: #b30029;
+}
+
+/* Брендтік түстер */
+.primary-color {
+  color: #d50032 !important;
+}
+
+.primary-bg {
+  background-color: #d50032 !important;
+}
+
+.secondary-color {
+  color: #ff5252 !important;
+}
+
+.secondary-bg {
+  background-color: #ff5252 !important;
+}
+
+/* Мобильді көрініс үшін арналған стильдер */
+@media (max-width: 600px) {
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  .mobile-container {
+    padding: 0.5rem !important;
+  }
+  
+  .mobile-padding {
+    padding: 0.5rem !important;
+  }
+  
+  .mobile-text-center {
+    text-align: center !important;
+  }
+}
+
+/* Профиль мобильді қойындылар үшін арналған стильдер */
+.profile-mobile-tabs {
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox үшін */
+}
+
+.profile-mobile-tabs::-webkit-scrollbar {
+  display: none; /* Chrome, Safari үшін */
+}
+
+.profile-mobile-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  margin-right: 8px;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.profile-mobile-tab.active {
+  background-color: #d50032;
+  color: white;
+  border-color: #d50032;
+}
+
+/* App Logo стильдері */
+.app-logo {
+  height: 40px;
+  pointer-events: none;
+}
+
+/* Бренд градиент */
+.brand-gradient {
+  background: linear-gradient(to right, #d50032, #ff5252);
+}
+
+/* Бренд кнопкалар */
+.brand-button {
+  background-color: #d50032 !important;
+  color: white !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  box-shadow: 0 2px 4px rgba(213, 0, 50, 0.25) !important;
+  transition: transform 0.2s !important;
+}
+
+.brand-button:hover {
+  background-color: #bf002d !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(213, 0, 50, 0.3) !important;
+}
+
+.brand-button-outline {
+  border: 1px solid #d50032 !important;
+  color: #d50032 !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  transition: background-color 0.2s !important;
+}
+
+.brand-button-outline:hover {
+  background-color: rgba(213, 0, 50, 0.05) !important;
+}
+
+/* Басты тақырып аймағының стильдері - өзгертілген брендтік түстермен */
+.app-header {
+  background-color: #d50032;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+/* Мобильді қойындылар үшін көрсеткіш */
+.mobile-tabs-indicator {
+  height: 4px;
+  background-color: #d50032;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s ease;
+}
+
+/* Радиус түс схемасы */
+.rounded-card {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.rounded-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Нархоз бренд баннер */
+.narxoz-banner {
+  background: linear-gradient(135deg, #d50032 0%, #d50032 40%, #ffffff 40%, #ffffff 100%);
+  color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.narxoz-banner-content {
+  position: relative;
+  z-index: 10;
+  padding: 2rem;
+}
+
+.narxoz-banner-title {
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #d50032;
+}
+
+.narxoz-banner-text {
+  margin-bottom: 1.5rem;
+  max-width: 600px;
+}
+
+/* Мобильді эккрандарда градиент өзгерту */
+@media (max-width: 600px) {
+  .narxoz-banner {
+    background: linear-gradient(180deg, #d50032 0%, #d50032 40%, #ffffff 40%, #ffffff 100%);
+  }
 }
