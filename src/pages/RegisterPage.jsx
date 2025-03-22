@@ -1,761 +1,532 @@
-import React, { useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+// src/pages/RegisterPage.jsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
   Container,
-  Divider,
-  Grid,
-  Link,
-  Paper,
-  TextField,
-  Typography,
-  InputAdornment,
-  IconButton,
-  Alert,
-  useTheme,
+  Box,
   Stepper,
   Step,
   StepLabel,
-  FormControl,
-  InputLabel,
-  Select,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  Grid,
+  Link,
+  InputAdornment,
+  IconButton,
   MenuItem,
-  FormHelperText,
-  useMediaQuery,
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import {
-  Visibility,
-  VisibilityOff,
-  School,
-  Lock,
-  Email,
-  Person,
-  ArrowBack,
-  ArrowForward,
-  Check,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  School as SchoolIcon,
+  Lock as LockIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+  NavigateNext as NextIcon,
+  NavigateBefore as BackIcon
 } from '@mui/icons-material';
 
-/**
- * RegisterPage компоненті - тіркелу беті
- * 
- * Бұл компонент пайдаланушының тіркелуі үшін форманы көрсетеді.
- * Тіркелу процесі бірнеше қадамдарға бөлінген:
- * - Жеке ақпарат (аты-жөні, туған күні, т.б.)
- * - Байланыс ақпараты (email, телефон)
- * - Оқу ақпараты (факультет, мамандық, т.б.)
- * - Құпия сөз құру
- */
+// Импорт хуков
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+
+// Шаги регистрации
+const steps = ['Жеке ақпарат', 'Байланыс ақпараты', 'Оқу ақпараты', 'Құпия сөз'];
+
+// Факультеты
+const faculties = [
+  'Бизнес мектебі',
+  'Құқық және мемлекеттік басқару мектебі',
+  'Цифрлық технологиялар мектебі',
+  'Экономика мектебі'
+];
+
+// Года обучения
+const years = ['1 курс', '2 курс', '3 курс', '4 курс', 'Магистратура', 'Докторантура'];
+
 const RegisterPage = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { register, isAuthenticated } = useAuth();
+  const { success, error: showError } = useToast();
   
-  // Stepper күйі
+  // Состояние UI
   const [activeStep, setActiveStep] = useState(0);
-  const steps = ['Личная информация', 'Контактные данные', 'Учебная информация', 'Создание пароля'];
-  
-  // Қате хабарламасы
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // Құпия сөзді көрсету/жасыру
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Валидация күйлері
-  const [formValid, setFormValid] = useState({
-    step0: false,
-    step1: false,
-    step2: false,
-    step3: false,
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [showPassword, setShowPassword] = useState({
+    password: false,
+    confirmPassword: false
   });
   
-  // Форма деректері
+  // Состояние формы
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    middleName: '',
-    birthDate: '',
-    gender: '',
-    
+    name: '',
     email: '',
     phone: '',
-    
     faculty: '',
     specialization: '',
     studentId: '',
     year: '',
-    
     password: '',
-    confirmPassword: '',
+    confirmPassword: ''
   });
-
-  // Валидация қателері
-  const [formErrors, setFormErrors] = useState({
-    firstName: '',
-    lastName: '',
-    birthDate: '',
-    gender: '',
-    
-    email: '',
-    phone: '',
-    
-    faculty: '',
-    specialization: '',
-    studentId: '',
-    year: '',
-    
-    password: '',
-    confirmPassword: '',
-  });
-
-  /**
-   * Құпия сөзді көрсету/жасыру функциясы
-   */
-  const handleToggleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
-
-  /**
-   * Растау құпия сөзін көрсету/жасыру функциясы
-   */
-  const handleToggleShowConfirmPassword = () => {
-    setShowConfirmPassword(!showConfirmPassword);
-  };
-
-  /**
-   * Формаға енгізілген деректерді өңдеу
-   * 
-   * @param {Event} e - Input өзгеру оқиғасы
-   */
-  const handleInputChange = (e) => {
+  
+  // Если пользователь уже авторизован, перенаправляем на главную
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+  
+  // Изменение поля формы
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: value
     });
-
-    // Енгізілген мәнді валидациялау
-    validateField(name, value);
-  };
-
-  /**
-   * Өрісті валидациялау функциясы
-   * 
-   * @param {string} name - Өріс аты
-   * @param {string} value - Өріс мәні
-   */
-  const validateField = (name, value) => {
-    let error = '';
-
-    switch (name) {
-      case 'firstName':
-      case 'lastName':
-        error = value.trim() === '' ? 'Поле обязательно для заполнения' : '';
-        break;
-      
-      case 'email':
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        error = !emailRegex.test(value) ? 'Введите корректный email' : '';
-        break;
-      
-      case 'phone':
-        const phoneRegex = /^\+?[0-9]{10,13}$/;
-        error = !phoneRegex.test(value) ? 'Введите корректный номер телефона' : '';
-        break;
-      
-      case 'faculty':
-      case 'specialization':
-      case 'studentId':
-      case 'year':
-        error = value.trim() === '' ? 'Поле обязательно для заполнения' : '';
-        break;
-      
-      case 'password':
-        if (value.length < 8) {
-          error = 'Пароль должен содержать не менее 8 символов';
-        } else if (!/[A-Z]/.test(value)) {
-          error = 'Пароль должен содержать хотя бы одну заглавную букву';
-        } else if (!/[0-9]/.test(value)) {
-          error = 'Пароль должен содержать хотя бы одну цифру';
-        } else if (!/[!@#$%^&*]/.test(value)) {
-          error = 'Пароль должен содержать хотя бы один специальный символ (!@#$%^&*)';
-        }
-        break;
-      
-      case 'confirmPassword':
-        error = value !== formData.password ? 'Пароли не совпадают' : '';
-        break;
-      
-      default:
-        break;
+    
+    // Очищаем ошибку поля при изменении
+    if (fieldErrors[name]) {
+      setFieldErrors({
+        ...fieldErrors,
+        [name]: ''
+      });
     }
-
-    setFormErrors({
-      ...formErrors,
-      [name]: error,
-    });
-
-    // Ағымдағы қадам валидациясын тексеру
-    updateStepValidation();
   };
   
-  /**
-   * Ағымдағы қадамды валидациялау
-   */
-  const updateStepValidation = () => {
-    switch (activeStep) {
-      case 0:
-        setFormValid({
-          ...formValid,
-          step0: 
-            formData.firstName.trim() !== '' && 
-            formData.lastName.trim() !== '' && 
-            !formErrors.firstName && 
-            !formErrors.lastName
-        });
+  // Отображение/скрытие пароля
+  const handleTogglePassword = (field) => {
+    setShowPassword({
+      ...showPassword,
+      [field]: !showPassword[field]
+    });
+  };
+  
+  // Переход к следующему шагу
+  const handleNext = () => {
+    if (validateStep(activeStep)) {
+      setActiveStep((prevStep) => prevStep + 1);
+    }
+  };
+  
+  // Возврат к предыдущему шагу
+  const handleBack = () => {
+    setActiveStep((prevStep) => prevStep - 1);
+  };
+  
+  // Валидация текущего шага
+  const validateStep = (step) => {
+    const errors = {};
+    
+    switch (step) {
+      case 0: // Жеке ақпарат
+        if (!formData.name) {
+          errors.name = 'Аты-жөні міндетті';
+        }
         break;
-      
-      case 1:
-        setFormValid({
-          ...formValid,
-          step1: 
-            formData.email.trim() !== '' && 
-            formData.phone.trim() !== '' && 
-            !formErrors.email && 
-            !formErrors.phone
-        });
+        
+      case 1: // Байланыс ақпараты
+        if (!formData.email) {
+          errors.email = 'Электрондық пошта міндетті';
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+          errors.email = 'Жарамды электрондық пошта енгізіңіз';
+        }
         break;
-      
-      case 2:
-        setFormValid({
-          ...formValid,
-          step2: 
-            formData.faculty.trim() !== '' && 
-            formData.specialization.trim() !== '' && 
-            formData.studentId.trim() !== '' && 
-            formData.year.trim() !== '' && 
-            !formErrors.faculty && 
-            !formErrors.specialization && 
-            !formErrors.studentId && 
-            !formErrors.year
-        });
+        
+      case 2: // Оқу ақпараты
+        if (!formData.faculty) {
+          errors.faculty = 'Факультет міндетті';
+        }
+        if (!formData.specialization) {
+          errors.specialization = 'Мамандық міндетті';
+        }
+        if (!formData.studentId) {
+          errors.studentId = 'Студенттік ID міндетті';
+        }
+        if (!formData.year) {
+          errors.year = 'Оқу жылы міндетті';
+        }
         break;
-      
-      case 3:
-        setFormValid({
-          ...formValid,
-          step3: 
-            formData.password.trim() !== '' && 
-            formData.confirmPassword.trim() !== '' && 
-            !formErrors.password && 
-            !formErrors.confirmPassword
-        });
+        
+      case 3: // Құпия сөз
+        if (!formData.password) {
+          errors.password = 'Құпия сөз міндетті';
+        } else if (formData.password.length < 6) {
+          errors.password = 'Құпия сөз кем дегенде 6 таңбадан тұруы керек';
+        }
+        
+        if (!formData.confirmPassword) {
+          errors.confirmPassword = 'Құпия сөзді растау міндетті';
+        } else if (formData.password !== formData.confirmPassword) {
+          errors.confirmPassword = 'Құпия сөздер сәйкес келмейді';
+        }
         break;
-      
+        
       default:
         break;
     }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
-
-  /**
-   * Келесі қадамға өту функциясы
-   */
-  const handleNext = () => {
-    if (activeStep < steps.length - 1) {
-      setActiveStep(activeStep + 1);
-    }
-  };
-
-  /**
-   * Алдыңғы қадамға қайту функциясы
-   */
-  const handleBack = () => {
-    if (activeStep > 0) {
-      setActiveStep(activeStep - 1);
-    }
-  };
-
-  /**
-   * Тіркелу формасын жіберу функциясы
-   * 
-   * @param {Event} e - Форма жіберу оқиғасы
-   */
+  
+  // Отправка формы
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Барлық қажетті өрістерді тексеру
-    if (!formValid.step3) {
-      setError('Пожалуйста, заполните все обязательные поля и исправьте ошибки');
+    if (!validateStep(activeStep)) {
       return;
     }
-
+    
     try {
-      // Тіркелуді имитациялау (кідіріс қосу)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setLoading(true);
+      setError('');
       
-      // Тіркеу сәтті аяқталған жағдайда кіру бетіне бағыттау
-      navigate('/login');
+      // Подготавливаем данные для отправки (без confirmPassword)
+      const { confirmPassword, ...registrationData } = formData;
+      
+      await register(registrationData);
+      success('Сіз сәтті тіркелдіңіз!');
+      navigate('/', { replace: true });
     } catch (err) {
-      // Қате болған жағдайда қате хабарламасын көрсету
-      setError('Ошибка регистрации. Пожалуйста, попробуйте еще раз.');
+      console.error('Registration error:', err);
+      
+      if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
+        // Обработка ошибок валидации с бэкенда
+        const backendErrors = {};
+        err.response.data.errors.forEach(error => {
+          backendErrors[error.param] = error.msg;
+        });
+        setFieldErrors(backendErrors);
+      } else if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else {
+        setError('Тіркелу кезінде қате орын алды. Әрекетті қайталап көріңіз.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
-
-  /**
-   * Ағымдағы қадамның мазмұнын көрсету функциясы
-   * 
-   * @returns {JSX.Element} - Қадам мазмұны
-   */
-  const getStepContent = () => {
-    switch (activeStep) {
-      case 0:
+  
+  // Рендеринг полей формы для текущего шага
+  const renderStepContent = (step) => {
+    switch (step) {
+      case 0: // Жеке ақпарат
         return (
-          <>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="firstName"
-                  label="Имя"
-                  name="firstName"
-                  autoComplete="given-name"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  error={!!formErrors.firstName}
-                  helperText={formErrors.firstName}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="lastName"
-                  label="Фамилия"
-                  name="lastName"
-                  autoComplete="family-name"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  error={!!formErrors.lastName}
-                  helperText={formErrors.lastName}
-                />
-              </Grid>
-            </Grid>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="middleName"
-              label="Отчество (если есть)"
-              name="middleName"
-              autoComplete="middle-name"
-              value={formData.middleName}
-              onChange={handleInputChange}
-            />
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  margin="normal"
-                  fullWidth
-                  id="birthDate"
-                  label="Дата рождения"
-                  name="birthDate"
-                  type="date"
-                  value={formData.birthDate}
-                  onChange={handleInputChange}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth margin="normal">
-                  <InputLabel id="gender-label">Пол</InputLabel>
-                  <Select
-                    labelId="gender-label"
-                    id="gender"
-                    name="gender"
-                    value={formData.gender}
-                    label="Пол"
-                    onChange={handleInputChange}
-                  >
-                    <MenuItem value="male">Мужской</MenuItem>
-                    <MenuItem value="female">Женский</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </>
-        );
-      
-      case 1:
-        return (
-          <>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email"
-              name="email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              error={!!formErrors.email}
-              helperText={formErrors.email}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email color="action" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="phone"
-              label="Телефон"
-              name="phone"
-              autoComplete="tel"
-              value={formData.phone}
-              onChange={handleInputChange}
-              error={!!formErrors.phone}
-              helperText={formErrors.phone || "Например: +77771234567"}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Person color="action" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </>
-        );
-      
-      case 2:
-        return (
-          <>
-            <FormControl fullWidth margin="normal" required error={!!formErrors.faculty}>
-              <InputLabel id="faculty-label">Факультет</InputLabel>
-              <Select
-                labelId="faculty-label"
-                id="faculty"
-                name="faculty"
-                value={formData.faculty}
-                label="Факультет"
-                onChange={handleInputChange}
-              >
-                <MenuItem value="economic">Экономический факультет</MenuItem>
-                <MenuItem value="law">Юридический факультет</MenuItem>
-                <MenuItem value="business">Высшая школа бизнеса</MenuItem>
-                <MenuItem value="it">Факультет информационных технологий</MenuItem>
-              </Select>
-              {formErrors.faculty && <FormHelperText>{formErrors.faculty}</FormHelperText>}
-            </FormControl>
-            
-            <FormControl fullWidth margin="normal" required error={!!formErrors.specialization}>
-              <InputLabel id="specialization-label">Специализация</InputLabel>
-              <Select
-                labelId="specialization-label"
-                id="specialization"
-                name="specialization"
-                value={formData.specialization}
-                label="Специализация"
-                onChange={handleInputChange}
-              >
-                <MenuItem value="finance">Финансы и кредит</MenuItem>
-                <MenuItem value="accounting">Бухгалтерский учет</MenuItem>
-                <MenuItem value="marketing">Маркетинг</MenuItem>
-                <MenuItem value="management">Менеджмент</MenuItem>
-                <MenuItem value="law">Юриспруденция</MenuItem>
-                <MenuItem value="it">Информационные системы</MenuItem>
-              </Select>
-              {formErrors.specialization && <FormHelperText>{formErrors.specialization}</FormHelperText>}
-            </FormControl>
-            
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="studentId"
-              label="Студенческий ID"
-              name="studentId"
-              value={formData.studentId}
-              onChange={handleInputChange}
-              error={!!formErrors.studentId}
-              helperText={formErrors.studentId}
-            />
-            
-            <FormControl fullWidth margin="normal" required error={!!formErrors.year}>
-              <InputLabel id="year-label">Курс</InputLabel>
-              <Select
-                labelId="year-label"
-                id="year"
-                name="year"
-                value={formData.year}
-                label="Курс"
-                onChange={handleInputChange}
-              >
-                <MenuItem value="1">1 курс</MenuItem>
-                <MenuItem value="2">2 курс</MenuItem>
-                <MenuItem value="3">3 курс</MenuItem>
-                <MenuItem value="4">4 курс</MenuItem>
-                <MenuItem value="masters">Магистратура</MenuItem>
-                <MenuItem value="phd">Докторантура</MenuItem>
-              </Select>
-              {formErrors.year && <FormHelperText>{formErrors.year}</FormHelperText>}
-            </FormControl>
-          </>
-        );
-      
-      case 3:
-        return (
-          <>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Создайте надежный пароль, содержащий минимум 8 символов, включая заглавные буквы, цифры и специальные символы.
-            </Typography>
-            
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Пароль"
-              id="password"
-              autoComplete="new-password"
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={handleInputChange}
-              error={!!formErrors.password}
-              helperText={formErrors.password}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleToggleShowPassword}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="confirmPassword"
-              label="Подтвердите пароль"
-              id="confirmPassword"
-              autoComplete="new-password"
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              error={!!formErrors.confirmPassword}
-              helperText={formErrors.confirmPassword}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle confirm password visibility"
-                      onClick={handleToggleShowConfirmPassword}
-                      edge="end"
-                    >
-                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </>
-        );
-      
-      default:
-        return 'Unknown step';
-    }
-  };
-
-  return (
-    <Container maxWidth="md">
-      <Grid
-        container
-        spacing={0}
-        direction="row"
-        alignItems="center"
-        justifyContent="center"
-        sx={{ minHeight: '80vh' }}
-      >
-        <Grid item xs={12} md={10}>
-          <Paper
-            elevation={3}
-            sx={{
-              p: 4,
-              borderRadius: 2,
-              overflow: 'hidden',
-              position: 'relative',
-            }}
-          >
-            {/* Жоғарғы түрлі-түсті жолақ */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 8,
-                backgroundColor: theme.palette.primary.main,
-              }}
-            />
-            
-            {/* Тақырып және сипаттама */}
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                mb: 4,
-              }}
-            >
-              <School
-                sx={{
-                  fontSize: 50,
-                  color: theme.palette.primary.main,
-                  mb: 1,
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Аты-жөні"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                error={!!fieldErrors.name}
+                helperText={fieldErrors.name}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonIcon />
+                    </InputAdornment>
+                  ),
                 }}
               />
-              <Typography
-                variant="h5"
-                component="h1"
-                fontWeight="bold"
-                gutterBottom
-              >
-                Регистрация
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                align="center"
-              >
-                Создайте учетную запись для доступа к библиотеке Нархоз
-              </Typography>
-            </Box>
-            
-            {/* Stepper компоненті */}
-            <Stepper 
-              activeStep={activeStep} 
-              alternativeLabel={!isMobile}
-              orientation={isMobile ? "vertical" : "horizontal"}
-              sx={{ mb: 4 }}
-            >
-              {steps.map((label, index) => (
-                <Step key={label}>
-                  <StepLabel>{!isMobile && label}</StepLabel>
-                  {isMobile && (
-                    <Typography variant="body2" sx={{ ml: 2 }}>
-                      {label}
-                    </Typography>
-                  )}
-                </Step>
-              ))}
-            </Stepper>
-
-            {/* Қате хабарламасы (егер бар болса) */}
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
-            
-            {/* Тіркелу формасы */}
-            <form onSubmit={handleSubmit}>
-              {/* Қадам мазмұны */}
-              <Box sx={{ mb: 3 }}>
-                {getStepContent()}
-              </Box>
-              
-              {/* Навигация түймелері */}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-                <Button
-                  onClick={handleBack}
-                  disabled={activeStep === 0}
-                  startIcon={<ArrowBack />}
-                >
-                  Назад
-                </Button>
-                
-                <Box>
-                  {activeStep === steps.length - 1 ? (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      type="submit"
-                      disabled={!formValid.step3}
-                      endIcon={<Check />}
-                    >
-                      Зарегистрироваться
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleNext}
-                      disabled={
-                        (activeStep === 0 && !formValid.step0) ||
-                        (activeStep === 1 && !formValid.step1) ||
-                        (activeStep === 2 && !formValid.step2)
-                      }
-                      endIcon={<ArrowForward />}
-                    >
-                      Далее
-                    </Button>
-                  )}
-                </Box>
-              </Box>
-            </form>
-            
-            <Divider sx={{ my: 3 }}>
-              <Typography variant="body2" color="text.secondary">
-                ИЛИ
-              </Typography>
-            </Divider>
-            
-            {/* Кіру бетіне сілтеме */}
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                Уже есть аккаунт?
-              </Typography>
-              <Button
-                component={RouterLink}
-                to="/login"
-                variant="outlined"
+            </Grid>
+          </Grid>
+        );
+        
+      case 1: // Байланыс ақпараты
+        return (
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
                 fullWidth
-                sx={{ borderRadius: 2 }}
+                label="Электрондық пошта"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                error={!!fieldErrors.email}
+                helperText={fieldErrors.email}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Телефон"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                error={!!fieldErrors.phone}
+                helperText={fieldErrors.phone}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PhoneIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+          </Grid>
+        );
+        
+      case 2: // Оқу ақпараты
+        return (
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                select
+                label="Факультет"
+                name="faculty"
+                value={formData.faculty}
+                onChange={handleChange}
+                error={!!fieldErrors.faculty}
+                helperText={fieldErrors.faculty}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SchoolIcon />
+                    </InputAdornment>
+                  ),
+                }}
               >
-                Войти
+                {faculties.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                select
+                label="Оқу жылы"
+                name="year"
+                value={formData.year}
+                onChange={handleChange}
+                error={!!fieldErrors.year}
+                helperText={fieldErrors.year}
+              >
+                {years.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Мамандық"
+                name="specialization"
+                value={formData.specialization}
+                onChange={handleChange}
+                error={!!fieldErrors.specialization}
+                helperText={fieldErrors.specialization}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Студенттік ID"
+                name="studentId"
+                value={formData.studentId}
+                onChange={handleChange}
+                error={!!fieldErrors.studentId}
+                helperText={fieldErrors.studentId}
+              />
+            </Grid>
+          </Grid>
+        );
+        
+      case 3: // Құпия сөз
+        return (
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Құпия сөз"
+                name="password"
+                type={showPassword.password ? 'text' : 'password'}
+                value={formData.password}
+                onChange={handleChange}
+                error={!!fieldErrors.password}
+                helperText={fieldErrors.password}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => handleTogglePassword('password')}
+                        edge="end"
+                      >
+                        {showPassword.password ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Құпия сөзді растау"
+                name="confirmPassword"
+                type={showPassword.confirmPassword ? 'text' : 'password'}
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                error={!!fieldErrors.confirmPassword}
+                helperText={fieldErrors.confirmPassword}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => handleTogglePassword('confirmPassword')}
+                        edge="end"
+                      >
+                        {showPassword.confirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+          </Grid>
+        );
+        
+      default:
+        return null;
+    }
+  };
+  
+  // Анимации
+  const pageVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    },
+    exit: { 
+      opacity: 0,
+      y: 20,
+      transition: {
+        duration: 0.3
+      }
+    }
+  };
+  
+  return (
+    <Container maxWidth="md">
+      <motion.div
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+      >
+        <Box sx={{ mt: 8, mb: 4, textAlign: 'center' }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Нархоз кітапханасына тіркелу
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Кітапханалық қызметтерге қол жеткізу үшін тіркеліңіз
+          </Typography>
+        </Box>
+        
+        <Paper elevation={3} sx={{ p: 4 }}>
+          {/* Stepper */}
+          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+          
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error}
+            </Alert>
+          )}
+          
+          <Box component="form" onSubmit={handleSubmit}>
+            {/* Форма */}
+            {renderStepContent(activeStep)}
+            
+            {/* Кнопки навигации */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+              <Button
+                variant="outlined"
+                disabled={activeStep === 0}
+                onClick={handleBack}
+                startIcon={<BackIcon />}
+              >
+                Артқа
               </Button>
+              
+              {activeStep === steps.length - 1 ? (
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={loading}
+                  startIcon={loading && <CircularProgress size={20} />}
+                >
+                  {loading ? 'Тіркелу...' : 'Тіркелу'}
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleNext}
+                  endIcon={<NextIcon />}
+                >
+                  Келесі
+                </Button>
+              )}
             </Box>
-          </Paper>
-        </Grid>
-      </Grid>
+          </Box>
+          
+          <Box sx={{ mt: 4, textAlign: 'center' }}>
+            <Typography variant="body2">
+              Тіркелгіңіз бар ма?{' '}
+              <Link component={RouterLink} to="/login" variant="body2">
+                Кіру
+              </Link>
+            </Typography>
+          </Box>
+        </Paper>
+      </motion.div>
     </Container>
   );
 };

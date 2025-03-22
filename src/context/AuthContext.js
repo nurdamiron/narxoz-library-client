@@ -1,165 +1,154 @@
-import React, { createContext, useState } from 'react';
+// src/context/AuthContext.js
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { authService } from '../services';
 
-/**
- * AuthContext - аутентификация контексті
- * 
- * Бұл контекст пайдаланушының аутентификация күйін және оған қатысты функцияларды
- * барлық қосымша компоненттеріне қол жетімді етеді. Бұл React Context API арқылы жүзеге асырылады.
- * 
- * Контекст келесі мәліметтерді сақтайды және ұсынады:
- * - user: Аутентификацияланған пайдаланушы туралы ақпарат
- * - loading: Аутентификация процесінің жүктелу күйі
- * - error: Аутентификация қатесі (егер болса)
- * - isAuthenticated: Пайдаланушының аутентификацияланған/аутентификацияланбаған күйі
- * - login: Жүйеге кіру функциясы
- * - register: Тіркелу функциясы
- * - logout: Жүйеден шығу функциясы
- */
-export const AuthContext = createContext();
+// Create context
+const AuthContext = createContext();
 
-/**
- * AuthProvider компоненті - аутентификация контекстін ұсынады
- * 
- * Бұл компонент AuthContext мәліметтерін басқаратын және оларды барлық бала 
- * компоненттерге ұсынатын провайдер функциясын атқарады.
- * 
- * @param {Object} props - Компонент параметрлері
- * @param {React.ReactNode} props.children - Бала компоненттер
- */
+// Provider component
 export const AuthProvider = ({ children }) => {
-  /**
-   * Пайдаланушы туралы ақпарат күйі
-   * 
-   * Бұл күй пайдаланушы туралы барлық мәліметтерді сақтайды:
-   * - name: Пайдаланушы аты-жөні
-   * - email: Электрондық пошта
-   * - avatar: Профиль суреті (аватар)
-   * - phone: Телефон нөмірі
-   * - faculty: Факультет
-   * - specialization: Мамандық
-   * - studentId: Студенттік билет/ID нөмірі
-   * - year: Оқу курсы
-   */
-  const [user, setUser] = useState({
-    name: 'Айдар Тестов',
-    email: 'aidar@test.com',
-    avatar: null,
-    phone: '+7 (777) 123-45-67',
-    faculty: 'Экономический факультет',
-    specialization: 'Финансы и кредит',
-    studentId: '2023-1234',
-    year: '3 курс',
-  });
-  
-  // Жүктелу күйі (сұрау жіберу немесе күту кезінде)
-  const [loading, setLoading] = useState(false);
-  
-  // Қате туралы ақпарат күйі
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Пайдаланушының аутентификацияланған күйі
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
-  /**
-   * Жүйеге кіру функциясы
-   * 
-   * @param {Object} credentials - Кіру деректемелері
-   * @param {string} credentials.email - Пайдаланушы электрондық поштасы
-   * @param {string} credentials.password - Пайдаланушы құпия сөзі
-   * @returns {Promise<Object>} - Пайдаланушы объектісі (жетістік жағдайында)
-   * @throws {Error} - Кіру қатесі
-   */
+  // Load user from local storage on initial render
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        // Check for token in localStorage
+        if (authService.isAuthenticated()) {
+          // Get user from localStorage initially to prevent loading flash
+          const storedUser = authService.getUser();
+          if (storedUser) {
+            setUser(storedUser);
+          }
+          
+          // Then fetch fresh user data from API
+          try {
+            const response = await authService.getCurrentUser();
+            if (response.success) {
+              setUser(response.data);
+              // Update localStorage with fresh data
+              localStorage.setItem('user', JSON.stringify(response.data));
+            }
+          } catch (err) {
+            console.error('Failed to refresh user data:', err);
+            // If API call fails but we have stored user, keep using that
+            // If API call fails and no stored user, handle as if not authenticated
+            if (!storedUser) {
+              localStorage.removeItem('token');
+              setUser(null);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+        setError('Аутентификация қатесі орын алды.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  // Login user
   const login = async (credentials) => {
     try {
-      setLoading(true); // Жүктелу күйін қосу
-      
-      // Желі кідірісін имитациялау (шынайы қосымшада API сұрауы болады)
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Тестілік тексеру - шынайы қосымшада API сұрауы болады
-      if (credentials.email === 'test@test.com' && credentials.password === 'password') {
-        // Сәтті кіру жағдайында пайдаланушы деректерін орнату
-        setUser({
-          name: 'Айдар Тестов',
-          email: credentials.email,
-          avatar: null,
-          phone: '+7 (777) 123-45-67',
-          faculty: 'Экономический факультет',
-          specialization: 'Финансы и кредит',
-          studentId: '2023-1234',
-          year: '3 курс',
-        });
-        setIsAuthenticated(true); // Аутентификация күйін жаңарту
-        setError(null); // Қателерді тазалау
-        return user;
-      } else {
-        // Қате кіру деректемелері жағдайында қате шығару
-        throw new Error('Неверный email или пароль');
-      }
+      setLoading(true);
+      setError(null);
+      const response = await authService.login(credentials);
+      setUser(response.data);
+      return response;
     } catch (err) {
-      // Қате болған жағдайда қате күйін жаңарту
-      setError(err.message || 'Ошибка входа');
-      throw err; // Қатені жоғары деңгейге жіберу
+      const errorMessage = err.response?.data?.error || 'Кіру кезінде қате орын алды';
+      setError(errorMessage);
+      throw err;
     } finally {
-      // Әрқашан орындалатын код
-      setLoading(false); // Жүктелу күйін өшіру
+      setLoading(false);
     }
   };
 
-  /**
-   * Тіркелу функциясы
-   * 
-   * @param {Object} userData - Пайдаланушы деректері
-   * @returns {Promise<Object>} - Пайдаланушы объектісі (жетістік жағдайында)
-   * @throws {Error} - Тіркелу қатесі
-   */
+  // Register user
   const register = async (userData) => {
     try {
-      setLoading(true); // Жүктелу күйін қосу
-      
-      // Желі кідірісін имитациялау (шынайы қосымшада API сұрауы болады)
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Пайдаланушы деректерін орнату (шынайы қосымшада API жауабы болады)
-      setUser({
-        ...userData,
-        avatar: null
-      });
-      setIsAuthenticated(true); // Аутентификация күйін жаңарту
-      setError(null); // Қателерді тазалау
-      return userData;
+      setLoading(true);
+      setError(null);
+      const response = await authService.register(userData);
+      setUser(response.data);
+      return response;
     } catch (err) {
-      // Қате болған жағдайда қате күйін жаңарту
-      setError(err.message || 'Ошибка регистрации');
-      throw err; // Қатені жоғары деңгейге жіберу
+      const errorMessage = err.response?.data?.error || 'Тіркелу кезінде қате орын алды';
+      setError(errorMessage);
+      throw err;
     } finally {
-      // Әрқашан орындалатын код
-      setLoading(false); // Жүктелу күйін өшіру
+      setLoading(false);
     }
   };
 
-  /**
-   * Жүйеден шығу функциясы
-   */
-  const logout = () => {
-    setIsAuthenticated(false); // Аутентификация күйін өшіру
-    setUser(null); // Пайдаланушы деректерін тазалау
+  // Logout user
+  const logout = async () => {
+    try {
+      setLoading(true);
+      await authService.logout();
+      setUser(null);
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  /**
-   * Контекст мәні - барлық компоненттерге ұсынылатын мәліметтер
-   */
-  const value = {
-    user,             // Пайдаланушы туралы ақпарат
-    loading,          // Жүктелу күйі
-    error,            // Қате туралы ақпарат
-    login,            // Жүйеге кіру функциясы
-    register,         // Тіркелу функциясы
-    logout,           // Жүйеден шығу функциясы
-    isAuthenticated,  // Аутентификация күйі
+  // Update user profile
+  const updateProfile = async (userData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authService.updateUserDetails(userData);
+      setUser(response.data);
+      return response;
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || 'Профильді жаңарту кезінде қате орын алды';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Контекст провайдерін қайтару - бала компоненттерді value мәліметтерімен қамтамасыз етеді
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  // Clear any auth errors
+  const clearError = () => {
+    setError(null);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        register,
+        logout,
+        updateProfile,
+        clearError,
+        isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
+        isLibrarian: user?.role === 'librarian'
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
+// Custom hook to use the auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export default AuthContext;

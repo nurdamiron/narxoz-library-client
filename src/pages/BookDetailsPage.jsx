@@ -1,271 +1,610 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link as RouterLink } from 'react-router-dom';
+/**
+ * src/pages/BookDetailsPage.jsx
+ * 
+ * Кітап толық мәліметтері беті
+ * 
+ * Бұл компонент кітаптың толық ақпаратын көрсетеді және кітапты алу/қайтару функционалын қамтамасыз етеді.
+ * Ол bookController.js және borrowController.js бэкенд контроллерлерімен интеграцияланады.
+ */
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
+  Container,
   Box,
+  Grid,
+  Typography,
+  Divider,
+  Button,
+  Paper,
+  Chip,
+  Rating,
+  IconButton,
   Breadcrumbs,
   Link,
-  Typography,
   Skeleton,
-  Divider,
+  Alert,
+  Snackbar,
+  useMediaQuery,
+  useTheme,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions
 } from '@mui/material';
-import BookDetails from '../components/books/BookDetails';
+import {
+  ArrowBack,
+  BookmarkBorder,
+  Bookmark,
+  LocalLibrary,
+  CalendarToday,
+  Language,
+  Category,
+  Check,
+  ExpandMore,
+  ExpandLess,
+  Home
+} from '@mui/icons-material';
+import { motion } from 'framer-motion';
+import  useAuth  from '../context/AuthContext';
+import  getBookById  from '../services/bookService';
+import  toggleBookmark from '../services/bookmarkService';
+import  borrowBook from '../services/borrowService';
 
 /**
- * Жүктеу кідірісін имитациялау функциясы
+ * BookDetailsPage компоненті
  * 
- * Бұл функция серверден мәліметтер жүктеуді имитациялау үшін қолданылады
- * 
- * @param {number} ms - Миллисекундпен көрсетілген кідіріс уақыты
- * @returns {Promise<void>} - Кідіріс аяқталғаннан кейін орындалатын Promise
+ * @returns {JSX.Element} - Кітап толық мәліметтері беті
  */
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * Тестілік кітаптар тізімі
- * 
- * Бұл массив кітаптардың деректерін сақтайды. Әр кітап объектісі келесі қасиеттерді қамтиды:
- * - id: Кітаптың бірегей идентификаторы
- * - title: Кітаптың атауы
- * - author: Автор аты-жөні
- * - category: Кітап категориясы
- * - cover: Кітап мұқабасының суреті (URL)
- * - rating: Рейтинг (1-ден 5-ке дейін)
- * - reviewCount: Пікірлер саны
- * - available: Қолжетімділік (true/false)
- * - isBookmarked: Таңдаулыларға қосылған-қосылмағаны (true/false)
- * - publicationYear: Жарияланған жылы
- * - description: Кітаптың сипаттамасы
- */
-
-// Тестовые данные книг
-const mockBooks = [
-  {
-    id: 1,
-    title: 'Основы финансового менеджмента',
-    author: 'Джеймс С. Ван Хорн, Джон М. Вахович',
-    category: 'Финансы',
-    cover: 'https://via.placeholder.com/150x220?text=Finance+Management',
-    rating: 4.5,
-    reviewCount: 123,
-    available: true,
-    isBookmarked: false,
-    publicationYear: 2021,
-    description: 'Учебник по финансовому менеджменту для студентов экономических специальностей. Книга содержит полный обзор современной теории и практики финансового менеджмента. В ней рассматриваются базовые концепции финансового менеджмента, управления оборотным капиталом, структурой капитала, дивидендной политикой, инвестиционная деятельность предприятия и оценка стоимости бизнеса.',
-  },
-  {
-    id: 2,
-    title: 'Маркетинг 5.0: Технологии следующего поколения',
-    author: 'Филип Котлер, Хермаван Картаджайя',
-    category: 'Маркетинг',
-    cover: 'https://via.placeholder.com/150x220?text=Marketing+5.0',
-    rating: 4.2,
-    reviewCount: 87,
-    available: true,
-    isBookmarked: true,
-    publicationYear: 2022,
-    description: 'Книга о новейших технологиях в маркетинге и их применении в бизнесе. Авторы рассматривают основные тенденции развития маркетинга в эпоху цифровизации, включая использование искусственного интеллекта, больших данных, интернета вещей и других технологий. Книга содержит практические рекомендации по внедрению инновационных маркетинговых стратегий и инструментов.',
-  },
-  {
-    id: 3,
-    title: 'Искусство стратегии: Теория игр для бизнеса и жизни',
-    author: 'Авинаш К. Диксит, Барри Дж. Нейлбафф',
-    category: 'Бизнес',
-    cover: 'https://via.placeholder.com/150x220?text=Strategy',
-    rating: 4.7,
-    reviewCount: 156,
-    available: false,
-    isBookmarked: false,
-    publicationYear: 2019,
-    description: 'Применение теории игр в стратегическом планировании бизнеса и принятии решений. Авторы представляют теорию игр как мощный инструмент для анализа стратегических решений в бизнесе и повседневной жизни. В книге рассматриваются такие концепции, как доминирующие стратегии, равновесие Нэша, кооперативные и некооперативные игры, а также приводятся многочисленные примеры их применения.',
-  },
-  {
-    id: 4,
-    title: 'Python для анализа данных',
-    author: 'Уэс Маккинни',
-    category: 'IT и программирование',
-    cover: 'https://via.placeholder.com/150x220?text=Python',
-    rating: 4.8,
-    reviewCount: 203,
-    available: true,
-    isBookmarked: false,
-    publicationYear: 2020,
-    description: 'Практическое руководство по анализу данных с использованием языка Python. Книга представляет собой исчерпывающее руководство по использованию Python для решения задач обработки и анализа данных. Автор - создатель библиотеки pandas - подробно рассматривает инструменты экосистемы Python для анализа данных, включая NumPy, pandas, Matplotlib и Jupyter Notebook. Издание содержит множество практических примеров и решений типичных задач обработки данных.',
-  },
-  {
-    id: 5,
-    title: 'Корпоративное право: Учебник',
-    author: 'Ивана Сергеева',
-    category: 'Право',
-    cover: 'https://via.placeholder.com/150x220?text=Law',
-    rating: 4.0,
-    reviewCount: 65,
-    available: true,
-    isBookmarked: false,
-    publicationYear: 2021,
-    description: 'Учебник по корпоративному праву для студентов юридических специальностей. В учебнике рассматриваются основные институты корпоративного права, включая понятие и виды корпораций, порядок их создания и ликвидации, корпоративное управление, права и обязанности участников корпораций, особенности ответственности в корпоративных правоотношениях. Особое внимание уделяется практическим аспектам применения корпоративного законодательства.',
-  },
-  {
-    id: 6,
-    title: 'Введение в экономическую теорию',
-    author: 'Пол Самуэльсон, Уильям Нордхаус',
-    category: 'Экономика',
-    cover: 'https://via.placeholder.com/150x220?text=Economics',
-    rating: 4.6,
-    reviewCount: 178,
-    available: true,
-    isBookmarked: true,
-    publicationYear: 2018,
-    description: 'Классический учебник по основам экономической теории. Книга представляет собой фундаментальный учебник по экономической теории, охватывающий все ключевые концепции микро- и макроэкономики. Авторы подробно объясняют принципы функционирования рыночной экономики, теорию спроса и предложения, поведение потребителей и фирм, макроэкономические показатели, модели экономического роста, денежно-кредитную и фискальную политику и многие другие темы.',
-  },
-  {
-    id: 7,
-    title: 'Управление проектами: от начала до конца',
-    author: 'Лоуренс Лич',
-    category: 'Менеджмент',
-    cover: 'https://via.placeholder.com/150x220?text=Project+Management',
-    rating: 4.3,
-    reviewCount: 112,
-    available: false,
-    isBookmarked: false,
-    publicationYear: 2019,
-    description: 'Практическое руководство по управлению проектами для менеджеров и руководителей. Книга предлагает системный подход к управлению проектами, основанный на методологии критической цепи. Автор рассматривает все этапы жизненного цикла проекта, начиная от инициации и планирования, заканчивая реализацией и завершением. Особое внимание уделяется методам управления рисками, ресурсами и сроками проекта, а также вопросам формирования и развития проектных команд.',
-  },
-  {
-    id: 8,
-    title: 'Большие данные: революция, которая изменит то, как мы живем',
-    author: 'Виктор Майер-Шенбергер, Кеннет Кукьер',
-    category: 'IT и программирование',
-    cover: 'https://via.placeholder.com/150x220?text=Big+Data',
-    rating: 4.4,
-    reviewCount: 95,
-    available: true,
-    isBookmarked: false,
-    publicationYear: 2020,
-    description: 'Книга о влиянии больших данных на бизнес, науку и общество. Авторы исследуют феномен больших данных и его влияние на экономику, политику, образование, здравоохранение и другие сферы жизни. В книге объясняется, как анализ огромных массивов информации меняет наши представления о мире и открывает новые возможности для бизнеса и научных исследований. Также рассматриваются социальные, правовые и этические проблемы, связанные с использованием больших данных.',
-  },
-];
-
-/**
- * BookDetailsPage компоненті - жеке кітаптың толық ақпаратын көрсететін бет
- * 
- * Бұл компонент URL параметрінен кітаптың идентификаторын алып,
- * оған сәйкес кітаптың толық ақпаратын көрсетеді.
- * 
- * Компонент келесі күйлерді қолданады:
- * - loading: Кітап деректерінің жүктелу күйі
- * - book: Кітап туралы ақпарат
- * - error: Қате туралы ақпарат (егер қате орын алса)
- */
-
 const BookDetailsPage = () => {
-  const { id } = useParams(); // URL-ден кітап идентификаторын алу
-  const [book, setBook] = useState(null); // Кітап деректері күйі
-  const [loading, setLoading] = useState(true); // Жүктелу күйі
-  const [error, setError] = useState(null); // Қате күйі
-
+  const { id } = useParams();
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // AuthContext мәліметтері
+  const { isAuthenticated } = useAuth();
+  
+  // Кітап мәліметтері күйі
+  const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // Бетбелгі күйі
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  
+  // Қарызға алу күйі
+  const [borrowLoading, setBorrowLoading] = useState(false);
+  const [borrowSuccess, setBorrowSuccess] = useState(false);
+  const [borrowError, setBorrowError] = useState(null);
+  
+  // Сипаттама күйі
+  const [expanded, setExpanded] = useState(false);
+  
+  // Диалог күйі
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  
   /**
-   * Кітап деректерін жүктеу
-   * 
-   * useEffect қолдану арқылы компонент жүктелгенде
-   * немесе кітап идентификаторы өзгергенде орындалады
+   * Кітапты жүктеу функциясы
    */
-  useEffect(() => {
-    const fetchBook = async () => {
-      setLoading(true); // Жүктелу күйін қосу
-      setError(null); // Қате күйін тазалау
+  const fetchBook = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
       
-      try {
-        // API жауабының кідірісін имитациялау
-        await delay(800);
-        
-        // ID бойынша кітапты іздеу
-        const bookId = parseInt(id, 10);
-        const foundBook = mockBooks.find(b => b.id === bookId);
-        
-        if (foundBook) {
-          setBook(foundBook); // Кітап табылса, оны күйге сақтау
-        } else {
-          setError('Книга не найдена'); // Кітап табылмаса, қате күйін орнату
-        }
-      } catch (err) {
-        setError('Ошибка при загрузке данных'); // Басқа қате болса, қате күйін орнату
-        console.error(err);
-      } finally {
-        setLoading(false); // Жүктелу күйін өшіру
-      }
-    };
+      // Кітап туралы мәліметтерді алу
+      const bookData = await getBookById(id);
+      setBook(bookData);
+      
+      // Кітап бетбелгіге қосылған ба, тексеру
+      setIsBookmarked(bookData.isBookmarked);
+    } catch (err) {
+      console.error('Кітапты жүктеу қатесі:', err);
+      setError('Кітап туралы ақпаратты жүктеу кезінде қате орын алды');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+  
+  useEffect(() => {
+    fetchBook();
+  }, [fetchBook]);
+  
+  /**
+   * Бетбелгіні ауыстыру функциясы
+   */
+  const handleToggleBookmark = async () => {
+    if (!isAuthenticated) {
+      setLoginDialogOpen(true);
+      return;
+    }
     
-    fetchBook(); // Функцияны шақыру
-  }, [id]); // Тек id өзгергенде қайта орындау
-
+    try {
+      setBookmarkLoading(true);
+      
+      // API арқылы бетбелгіні ауыстыру
+      const response = await toggleBookmark(id);
+      setIsBookmarked(response.bookmarked);
+    } catch (error) {
+      console.error('Бетбелгі ауыстыру қатесі:', error);
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+  
+  /**
+   * Кітапты қарызға алу функциясы
+   */
+  const handleBorrowBook = async () => {
+    if (!isAuthenticated) {
+      setLoginDialogOpen(true);
+      return;
+    }
+    
+    try {
+      setBorrowLoading(true);
+      setBorrowError(null);
+      
+      // API арқылы кітапты қарызға алу
+      await borrowBook(id);
+      
+      // Сәтті болған жағдайда кітапты қайта жүктеу
+      await fetchBook();
+      
+      // Сәтті хабарламаны көрсету
+      setBorrowSuccess(true);
+    } catch (error) {
+      console.error('Кітапты қарызға алу қатесі:', error);
+      setBorrowError(error.message || 'Кітапты қарызға алу кезінде қате орын алды');
+    } finally {
+      setBorrowLoading(false);
+    }
+  };
+  
+  /**
+   * Сипаттаманы кеңейту/жию
+   */
+  const handleExpandDescription = () => {
+    setExpanded(!expanded);
+  };
+  
+  /**
+   * Сәтті хабарламаны жабу
+   */
+  const handleCloseSuccess = () => {
+    setBorrowSuccess(false);
+  };
+  
+  /**
+   * Кіру диалогын жабу
+   */
+  const handleCloseLoginDialog = () => {
+    setLoginDialogOpen(false);
+  };
+  
+  /**
+   * Кіру бетіне бағыттау
+   */
+  const handleNavigateToLogin = () => {
+    setLoginDialogOpen(false);
+    navigate('/login', { state: { from: { pathname: `/books/${id}` } } });
+  };
+  
+  // Мұқаба URL-ін дайындау
+  const coverUrl = book?.cover
+    ? `/uploads/books/${book.cover}`
+    : '/images/default-book-cover.jpg';
+  
+  // Мұқаба суретінің жүктелу оқиғасын өңдеу
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+  
   return (
-    <Box>
-      {/* Breadcrumbs - навигация сілтемелері */}
-      <Breadcrumbs sx={{ mb: 2 }}>
-        <Link component={RouterLink} underline="hover" color="inherit" to="/">
-          Главная
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Нан қиқымдары (Breadcrumbs) */}
+      <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3 }}>
+        <Link component={RouterLink} to="/" color="inherit" sx={{ display: 'flex', alignItems: 'center' }}>
+          <Home sx={{ mr: 0.5, fontSize: 20 }} />
+          Басты бет
         </Link>
-        <Link component={RouterLink} underline="hover" color="inherit" to="/books">
-          Каталог
+        <Link component={RouterLink} to="/books" color="inherit">
+          Кітаптар
         </Link>
-        {/* Кітап атауын тек жүктелу аяқталған соң және кітап табылған жағдайда көрсету */}
-        {!loading && book && (
-          <Typography color="text.primary">
-            {book.title}
-          </Typography>
-        )}
+        <Typography color="text.primary" noWrap>
+          {loading ? <Skeleton width={100} /> : book?.title}
+        </Typography>
       </Breadcrumbs>
       
-      {/* Жүктелу кезінде скелетон көрсету */}
+      {/* Артқа қайту түймесі */}
+      <Button
+        startIcon={<ArrowBack />}
+        onClick={() => navigate(-1)}
+        sx={{ mb: 3 }}
+      >
+        Артқа қайту
+      </Button>
+      
+      {/* Қате хабарламасы */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+      
       {loading ? (
-        <Box>
-          <Skeleton variant="text" width="40%" height={40} sx={{ mb: 1 }} />
-          <Skeleton variant="text" width="20%" height={30} sx={{ mb: 2 }} />
-          <Box sx={{ display: 'flex', gap: 4 }}>
-            <Skeleton variant="rectangular" width={300} height={400} />
-            <Box sx={{ flex: 1 }}>
-              <Skeleton variant="text" width="80%" height={30} sx={{ mb: 1 }} />
-              <Skeleton variant="text" width="70%" height={30} sx={{ mb: 1 }} />
-              <Skeleton variant="text" width="60%" height={30} sx={{ mb: 2 }} />
-              <Divider sx={{ my: 2 }} />
-              <Skeleton variant="text" width="100%" height={20} />
-              <Skeleton variant="text" width="100%" height={20} />
-              <Skeleton variant="text" width="90%" height={20} />
-              <Skeleton variant="text" width="95%" height={20} />
-              <Skeleton variant="text" width="100%" height={20} />
-            </Box>
-          </Box>
-        </Box>
-      ) : error ? (
-        // Қате болған жағдайда қате туралы хабарлама көрсету
-        <Box
-          sx={{
-            p: 4,
-            textAlign: 'center',
-            border: '1px dashed',
-            borderColor: 'divider',
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="h5" color="error" gutterBottom>
-            {error}
-          </Typography>
-          <Typography variant="body1">
-            К сожалению, запрашиваемая книга не найдена или произошла ошибка при загрузке данных.
-          </Typography>
-          <Link
-            component={RouterLink}
-            to="/books"
-            sx={{ display: 'block', mt: 2 }}
-          >
-            Вернуться в каталог
-          </Link>
-        </Box>
+        // Жүктелу күйі
+        <Paper sx={{ p: 3, borderRadius: 2 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={4}>
+              <Skeleton variant="rectangular" height={400} width="100%" sx={{ borderRadius: 2 }} />
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <Skeleton variant="text" height={60} width="80%" />
+              <Skeleton variant="text" height={30} width="60%" sx={{ mb: 2 }} />
+              <Skeleton variant="text" height={24} width="40%" sx={{ mb: 1 }} />
+              <Skeleton variant="text" height={24} width="30%" sx={{ mb: 2 }} />
+              <Skeleton variant="rectangular" height={200} width="100%" sx={{ mb: 2 }} />
+              <Skeleton variant="rectangular" height={50} width={150} />
+            </Grid>
+          </Grid>
+        </Paper>
       ) : book ? (
-        // Кітап туралы ақпаратты көрсету - BookDetails компонентін қолдану
-        <BookDetails book={book} />
-      ) : null}
-    </Box>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Paper sx={{ 
+            p: { xs: 2, md: 3 }, 
+            borderRadius: 2,
+            overflow: 'hidden',
+            boxShadow: theme.shadows[2]
+          }}>
+            <Grid container spacing={3}>
+              {/* Кітап мұқабасы */}
+              <Grid item xs={12} md={4}>
+                <Box sx={{ 
+                  position: 'relative',
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  boxShadow: theme.shadows[3],
+                  aspectRatio: '2/3',
+                  height: { xs: '350px', md: '450px' },
+                  width: '100%'
+                }}>
+                  {!imageLoaded && (
+                    <Skeleton 
+                      variant="rectangular" 
+                      animation="wave"
+                      sx={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%'
+                      }}
+                    />
+                  )}
+                  <Box
+                    component="img"
+                    src={coverUrl}
+                    alt={book.title}
+                    onLoad={handleImageLoad}
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      opacity: imageLoaded ? 1 : 0,
+                      transition: 'opacity 0.3s ease-in-out'
+                    }}
+                  />
+                </Box>
+                
+                {/* Кітапты қарызға алу түймесі - мобильді көрініс */}
+                {isMobile && (
+                  <Box sx={{ mt: 3 }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      fullWidth
+                      size="large"
+                      startIcon={<LocalLibrary />}
+                      onClick={handleBorrowBook}
+                      disabled={
+                        borrowLoading || 
+                        book.availableCopies <= 0
+                      }
+                      sx={{ mb: 1 }}
+                    >
+                      {borrowLoading ? 'Жүктелуде...' : 'Кітапты алу'}
+                    </Button>
+                    
+                    {book.availableCopies <= 0 && (
+                      <Typography 
+                        variant="body2" 
+                        color="error"
+                        align="center"
+                        sx={{ mt: 1 }}
+                      >
+                        Қазіргі уақытта қолжетімсіз
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+              </Grid>
+              
+              {/* Кітап туралы ақпарат */}
+              <Grid item xs={12} md={8}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'flex-start',
+                  mb: 1
+                }}>
+                  <Typography 
+                    variant="h4" 
+                    component="h1"
+                    sx={{ 
+                      fontWeight: 'bold',
+                      mb: 1
+                    }}
+                  >
+                    {book.title}
+                  </Typography>
+                  
+                  {/* Бетбелгі түймесі */}
+                                      <Tooltip title={isBookmarked ? "Бетбелгіден алып тастау" : "Бетбелгіге қосу"}>
+                    <IconButton
+                      onClick={handleToggleBookmark}
+                      disabled={bookmarkLoading}
+                      color="primary"
+                      size="large"
+                    >
+                      {isBookmarked ? <Bookmark /> : <BookmarkBorder />}
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                
+                {/* Автор */}
+                <Typography 
+                  variant="h6" 
+                  component="div"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
+                  {book.author}
+                </Typography>
+                
+                {/* Рейтинг */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  mb: 3
+                }}>
+                  <Rating 
+                    value={book.rating || 0} 
+                    precision={0.5}
+                    readOnly 
+                  />
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ ml: 1 }}
+                  >
+                    ({book.reviewCount || 0} пікір)
+                  </Typography>
+                </Box>
+                
+                {/* Негізгі ақпарат */}
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  {/* Категория */}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Category sx={{ color: 'primary.main', mr: 1 }} />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Категория
+                        </Typography>
+                        <Typography variant="body1">
+                          {book.category?.name || 'Көрсетілмеген'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  
+                  {/* Жыл */}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <CalendarToday sx={{ color: 'primary.main', mr: 1 }} />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Жарияланған жыл
+                        </Typography>
+                        <Typography variant="body1">
+                          {book.publicationYear || 'Көрсетілмеген'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  
+                  {/* Тіл */}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Language sx={{ color: 'primary.main', mr: 1 }} />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Тіл
+                        </Typography>
+                        <Typography variant="body1">
+                          {book.language || 'Көрсетілмеген'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  
+                  {/* ISBN */}
+                  {book.isbn && (
+                    <Grid item xs={12} sm={6} md={4}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            ISBN
+                          </Typography>
+                          <Typography variant="body1">
+                            {book.isbn}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  )}
+                  
+                  {/* Қолжетімділік */}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <LocalLibrary sx={{ 
+                        color: book.availableCopies > 0 ? 'success.main' : 'error.main',
+                        mr: 1
+                      }} />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Қолжетімді даналар
+                        </Typography>
+                        <Typography 
+                          variant="body1"
+                          color={book.availableCopies > 0 ? 'success.main' : 'error.main'}
+                        >
+                          {book.availableCopies} / {book.totalCopies}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+                
+                {/* Сипаттама */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography 
+                    variant="h6" 
+                    component="h2"
+                    sx={{ 
+                      fontWeight: 'bold',
+                      mb: 1
+                    }}
+                  >
+                    Сипаттама
+                  </Typography>
+                  
+                  <Typography 
+                    variant="body1"
+                    sx={{
+                      maxHeight: expanded ? 'none' : '100px',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      mb: 1
+                    }}
+                  >
+                    {book.description}
+                  </Typography>
+                  
+                  {book.description && book.description.length > 300 && (
+                    <Button
+                      endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
+                      onClick={handleExpandDescription}
+                      sx={{ mt: 1 }}
+                    >
+                      {expanded ? 'Жию' : 'Толығырақ'}
+                    </Button>
+                  )}
+                </Box>
+                
+                {/* Кітапты қарызға алу түймесі - десктоп көрініс */}
+                {!isMobile && (
+                  <Box>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="large"
+                      startIcon={<LocalLibrary />}
+                      onClick={handleBorrowBook}
+                      disabled={
+                        borrowLoading || 
+                        book.availableCopies <= 0
+                      }
+                      sx={{ 
+                        minWidth: '200px',
+                        py: 1.5
+                      }}
+                    >
+                      {borrowLoading ? 'Жүктелуде...' : 'Кітапты алу'}
+                    </Button>
+                    
+                    {book.availableCopies <= 0 && (
+                      <Typography 
+                        variant="body2" 
+                        color="error"
+                        sx={{ mt: 1 }}
+                      >
+                        Қазіргі уақытта қолжетімсіз
+                      </Typography>
+                    )}
+                    
+                    {borrowError && (
+                      <Alert severity="error" sx={{ mt: 2 }}>
+                        {borrowError}
+                      </Alert>
+                    )}
+                  </Box>
+                )}
+              </Grid>
+            </Grid>
+          </Paper>
+        </motion.div>
+      ) : (
+        <Alert severity="info">
+          Кітап табылмады.
+        </Alert>
+      )}
+      
+      {/* Сәтті қарызға алу туралы хабарлама */}
+      <Snackbar
+        open={borrowSuccess}
+        autoHideDuration={6000}
+        onClose={handleCloseSuccess}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSuccess}
+          severity="success"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          Кітап сәтті қарызға алынды!
+        </Alert>
+      </Snackbar>
+      
+      {/* Кіру диалогы */}
+      <Dialog
+        open={loginDialogOpen}
+        onClose={handleCloseLoginDialog}
+      >
+        <DialogTitle>Жүйеге кіру қажет</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Бұл әрекетті орындау үшін жүйеге кіру керек. Жүйеге кіру бетіне өткіңіз келе ме?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseLoginDialog}>Жоқ</Button>
+          <Button onClick={handleNavigateToLogin} color="primary" variant="contained">
+            Жүйеге кіру
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
   );
 };
 

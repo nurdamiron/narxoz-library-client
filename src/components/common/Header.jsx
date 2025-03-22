@@ -1,4 +1,12 @@
-import React, { useState } from 'react';
+/**
+ * src/components/common/Header.jsx
+ * 
+ * Header компоненті - сайттың жоғарғы навигациялық панелі
+ * 
+ * Бұл компонент қосымшаның жоғарғы навигациялық тақтасын көрсетеді,
+ * хабарландырулар санауышын интеграциялайды және пайдаланушы менюсін басқарады.
+ */
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -30,6 +38,8 @@ import {
   History,
   BookmarkBorder,
 } from '@mui/icons-material';
+import { useAuth } from '../../context/AuthContext';
+import { getNotifications } from '../../api/notificationService';
 
 /**
  * Іздеу компонентінің стильдері
@@ -90,7 +100,11 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 /**
- * Header компоненті - сайттың жоғарғы навигациялық панелі
+ * Header компоненті
+ * 
+ * @param {Object} props - Компонент параметрлері
+ * @param {Function} props.toggleSidebar - Бүйір панелін ашу/жабу функциясы
+ * @returns {JSX.Element} - Header компоненті
  */
 const Header = ({ toggleSidebar }) => {
   const theme = useTheme();
@@ -99,15 +113,14 @@ const Header = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // AuthContext-тен пайдаланушы мәліметтерін алу
+  const { user, isAuthenticated, logout } = useAuth();
+  
   // State
   const [anchorEl, setAnchorEl] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAuthenticated] = useState(true);
-  const [user] = useState({
-    name: 'Айдар Тестов',
-    email: 'aidar@test.com',
-    avatar: null,
-  });
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   /**
    * Пайдаланушы профилі менюсін ашу
@@ -126,9 +139,14 @@ const Header = ({ toggleSidebar }) => {
   /**
    * Пайдаланушы жүйеден шығу функциясы
    */
-  const handleLogout = () => {
-    handleMenuClose();
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      handleMenuClose();
+      navigate('/login');
+    } catch (error) {
+      console.error('Жүйеден шығу кезінде қате орын алды:', error);
+    }
   };
 
   /**
@@ -141,15 +159,43 @@ const Header = ({ toggleSidebar }) => {
     }
   };
 
-  // Get current page name for mobile display
+  /**
+   * Оқылмаған хабарландыруларды жүктеу функциясы
+   */
+  useEffect(() => {
+    const fetchUnreadNotifications = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        setLoading(true);
+        const notificationsData = await getNotifications();
+        const unreadCount = notificationsData.filter(notification => !notification.read).length;
+        setUnreadNotifications(unreadCount);
+      } catch (error) {
+        console.error('Хабарландыруларды жүктеу кезінде қате орын алды:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUnreadNotifications();
+    
+    // Хабарландыруларды белгілі бір уақыт аралығында жаңарту
+    const interval = setInterval(fetchUnreadNotifications, 60000); // әр минут сайын
+    
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
+  // Ағымдағы беттің атауын алу (мобильді көрініс үшін)
   const getCurrentPageName = () => {
     const path = location.pathname;
-    if (path === '/') return 'Главная';
+    if (path === '/') return 'Басты бет';
     if (path === '/books') return 'Каталог';
-    if (path.startsWith('/books/')) return 'Книга';
+    if (path.startsWith('/books/')) return 'Кітап';
     if (path === '/profile') return 'Профиль';
-    if (path === '/history') return 'История';
-    if (path === '/about') return 'О библиотеке';
+    if (path === '/bookmarks') return 'Бетбелгілер';
+    if (path === '/borrows') return 'Қарыздар';
+    if (path === '/notifications') return 'Хабарландырулар';
     return 'НАРХОЗ';
   };
 
@@ -212,7 +258,7 @@ const Header = ({ toggleSidebar }) => {
             <SearchIcon />
           </SearchIconWrapper>
           <StyledInputBase
-            placeholder="Поиск книг..."
+            placeholder="Кітаптарды іздеу..."
             inputProps={{ 'aria-label': 'search' }}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -246,9 +292,11 @@ const Header = ({ toggleSidebar }) => {
                 size="medium"
                 aria-label="show notifications"
                 color="inherit"
+                component={RouterLink}
+                to="/notifications"
                 sx={{ mr: 1 }}
               >
-                <Badge badgeContent={3} color="error">
+                <Badge badgeContent={unreadNotifications} color="error">
                   <NotificationsIcon />
                 </Badge>
               </IconButton>
@@ -263,7 +311,7 @@ const Header = ({ toggleSidebar }) => {
                   onClick={handleProfileMenuOpen}
                   color="inherit"
                 >
-                  {user.avatar ? (
+                  {user?.avatar ? (
                     <Avatar
                       alt={user.name}
                       src={user.avatar}
@@ -303,28 +351,28 @@ const Header = ({ toggleSidebar }) => {
                   <ListItemText primary="Профиль" />
                 </MenuItem>
                 
-                {/* Закладки */}
+                {/* Бетбелгілер */}
                 <MenuItem
                   component={RouterLink}
-                  to="/profile?tab=2"
+                  to="/bookmarks"
                   onClick={handleMenuClose}
                 >
                   <ListItemIcon>
                     <BookmarkBorder sx={{ color: '#d50032' }} />
                   </ListItemIcon>
-                  <ListItemText primary="Закладки" />
+                  <ListItemText primary="Бетбелгілер" />
                 </MenuItem>
                 
-                {/* Тарих бетіне сілтеме */}
+                {/* Қарыздар тарихы */}
                 <MenuItem
                   component={RouterLink}
-                  to="/history"
+                  to="/borrows"
                   onClick={handleMenuClose}
                 >
                   <ListItemIcon>
                     <History sx={{ color: '#d50032' }} />
                   </ListItemIcon>
-                  <ListItemText primary="История" />
+                  <ListItemText primary="Қарыздар" />
                 </MenuItem>
                 
                 <MenuItem sx={{ borderTop: '1px solid rgba(0,0,0,0.1)', mt: 1 }} />
@@ -334,14 +382,14 @@ const Header = ({ toggleSidebar }) => {
                   <ListItemIcon>
                     <Logout sx={{ color: '#d50032' }} />
                   </ListItemIcon>
-                  <ListItemText primary="Выйти" />
+                  <ListItemText primary="Шығу" />
                 </MenuItem>
               </Menu>
             </>
           ) : (
             // Аутентификацияланбаған пайдаланушы үшін кіру түймесі
             <Button color="inherit" component={RouterLink} to="/login">
-              Войти
+              Кіру
             </Button>
           )}
         </Box>

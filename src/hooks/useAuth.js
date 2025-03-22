@@ -1,21 +1,32 @@
 import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import  AuthContext from '../context/AuthContext';
 
 /**
- * useAuth Hook - аутентификация контекстін пайдалануды жеңілдетеді
+ * useAuth хук - аутентификация контекстін пайдалану
  * 
- * Бұл hook компоненттерге AuthContext мәліметтеріне оңай қол жеткізуге мүмкіндік береді.
- * Егер компонент AuthProvider-дің сыртында болса, қате шығарады.
+ * Бұл хук AuthContext контекстін пайдалануды жеңілдетеді.
+ * Хукты пайдалану арқылы компоненттер аутентификация күйін және
+ * оған қатысты функцияларды оңай ала алады.
  * 
- * @returns {Object} - AuthContext мәні (пайдаланушы, күй, функциялар)
- * @throws {Error} - Егер контекст AuthProvider сыртында пайдаланылса
+ * @returns {Object} AuthContext мәні
+ * @returns {Object} AuthContext.user - Аутентификацияланған пайдаланушы туралы ақпарат
+ * @returns {boolean} AuthContext.loading - Аутентификация процесінің жүктелу күйі
+ * @returns {string} AuthContext.error - Аутентификация қатесі (егер болса)
+ * @returns {boolean} AuthContext.isAuthenticated - Пайдаланушының аутентификацияланған/аутентификацияланбаған күйі
+ * @returns {Function} AuthContext.login - Жүйеге кіру функциясы
+ * @returns {Function} AuthContext.register - Тіркелу функциясы
+ * @returns {Function} AuthContext.logout - Жүйеден шығу функциясы
  */
 export const useAuth = () => {
+  // AuthContext контекстін пайдалану
   const context = useContext(AuthContext);
   
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  // Егер контекст табылмаса, қате шығару
+  if (context === undefined) {
+    throw new Error('useAuth хукты AuthProvider ішінде пайдалану керек');
   }
   
   return context;
 };
+
+export default useAuth;
