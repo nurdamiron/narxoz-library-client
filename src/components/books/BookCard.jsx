@@ -45,7 +45,7 @@ const BookCard = ({ book }) => {
   const theme = useTheme();
   
   // AuthContext-тен мәліметтерді алу
-  const { isAuthenticated } = useAuth();
+  const isAuthenticated = useAuth();
   
   // Бетбелгі күйі
   const [isBookmarked, setIsBookmarked] = useState(book.isBookmarked);

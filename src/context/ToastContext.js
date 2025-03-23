@@ -75,4 +75,5 @@ export const useToast = () => {
   return context;
 };
 
+// Экспортируем и ToastContext как default, и хук useToast как именованный экспорт
 export default ToastContext;

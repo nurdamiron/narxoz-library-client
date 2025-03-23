@@ -38,8 +38,8 @@ import {
 // Импорт хуков и сервисов
 import useBooks  from '../hooks/useBooks';
 import useBookmarks from '../hooks/useBookmarks';
-import useAuth from '../context/AuthContext';
-import useToast from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext'; // Исправлено с default на именованный импорт
+import { useToast } from '../context/ToastContext';
 import { getBookCoverUrl } from '../utils';
 
 const BooksPage = () => {

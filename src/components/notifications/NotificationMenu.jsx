@@ -32,7 +32,7 @@ import {
 
 // Импорт хуков
 import useNotifications from '../../hooks/useNotifications';
-import useToast from '../../context/ToastContext';
+import { useToast } from '../../context/ToastContext'; // Исправлено с default на именованный импорт
 import { formatDateTime, truncateString } from '../../utils';
 
 const NotificationMenu = () => {

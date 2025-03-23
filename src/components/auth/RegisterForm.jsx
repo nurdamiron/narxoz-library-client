@@ -1,15 +1,4 @@
-/**
- * src/components/auth/RegisterForm.jsx
- * 
- * Тіркелу формасы компоненті
- * 
- * Бұл компонент пайдаланушының жүйеге тіркелуі үшін қадамдық форманы ұсынады.
- * Форма бірнеше қадамнан тұрады:
- * - Жеке ақпарат (аты-жөні)
- * - Байланыс ақпарат (email, телефон)
- * - Оқу туралы ақпарат (факультет, мамандық)
- * - Құпия сөз құру
- */
+// src/components/auth/RegisterForm.jsx
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
@@ -22,7 +11,6 @@ import {
   InputAdornment,
   IconButton,
   Alert,
-  useTheme,
   Stepper,
   Step,
   StepLabel,
@@ -33,7 +21,9 @@ import {
   FormHelperText,
   Grid,
   Divider,
-  useMediaQuery
+  useTheme,
+  useMediaQuery,
+  CircularProgress
 } from '@mui/material';
 import {
   Visibility,
@@ -86,42 +76,33 @@ const RegisterForm = () => {
   
   // Форма деректері
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    middleName: '',
-    
+    name: '',
     email: '',
     phone: '',
-    
     faculty: '',
     specialization: '',
     studentId: '',
     year: '',
-    
     password: '',
     confirmPassword: '',
   });
 
   // Валидация қателері
   const [formErrors, setFormErrors] = useState({
-    firstName: '',
-    lastName: '',
-    
+    name: '',
     email: '',
     phone: '',
-    
     faculty: '',
     specialization: '',
     studentId: '',
     year: '',
-    
     password: '',
     confirmPassword: '',
   });
 
   // Компонент ашылғанда және AuthContext ауысқанда қателерді тазарту
   useEffect(() => {
-    clearError();
+    if (clearError) clearError();
     setError('');
   }, [clearError]);
   
@@ -172,9 +153,8 @@ const RegisterForm = () => {
     let error = '';
 
     switch (name) {
-      case 'firstName':
-      case 'lastName':
-        error = value.trim() === '' ? 'Бұл өріс міндетті' : '';
+      case 'name':
+        error = value.trim() === '' ? 'Аты-жөні міндетті' : '';
         break;
       
       case 'email':
@@ -188,9 +168,7 @@ const RegisterForm = () => {
       
       case 'phone':
         const phoneRegex = /^\+?[0-9]{10,13}$/;
-        if (value.trim() === '') {
-          error = 'Телефон нөмірі міндетті түрде енгізілуі керек';
-        } else if (!phoneRegex.test(value)) {
+        if (value && !phoneRegex.test(value)) {
           error = 'Жарамды телефон нөмірін енгізіңіз';
         }
         break;
@@ -205,14 +183,8 @@ const RegisterForm = () => {
       case 'password':
         if (value.trim() === '') {
           error = 'Құпия сөз міндетті түрде енгізілуі керек';
-        } else if (value.length < 8) {
-          error = 'Құпия сөз кемінде 8 таңбадан тұруы керек';
-        } else if (!/[A-Z]/.test(value)) {
-          error = 'Құпия сөзде кем дегенде бір бас әріп болуы керек';
-        } else if (!/[0-9]/.test(value)) {
-          error = 'Құпия сөзде кем дегенде бір сан болуы керек';
-        } else if (!/[!@#$%^&*]/.test(value)) {
-          error = 'Құпия сөзде кем дегенде бір арнайы таңба болуы керек (!@#$%^&*)';
+        } else if (value.length < 6) {
+          error = 'Құпия сөз кемінде 6 таңбадан тұруы керек';
         }
         
         // Егер құпия сөз өзгерсе, растауды да тексеру
@@ -243,7 +215,7 @@ const RegisterForm = () => {
     }));
 
     // Ағымдағы қадам валидациясын тексеру
-    updateStepValidation();
+    setTimeout(() => updateStepValidation(), 0);
   };
   
   /**
@@ -254,11 +226,7 @@ const RegisterForm = () => {
       case 0:
         setFormValid(prev => ({
           ...prev,
-          step0: 
-            formData.firstName.trim() !== '' && 
-            formData.lastName.trim() !== '' && 
-            !formErrors.firstName && 
-            !formErrors.lastName
+          step0: formData.name.trim() !== '' && !formErrors.name
         }));
         break;
       
@@ -267,7 +235,6 @@ const RegisterForm = () => {
           ...prev,
           step1: 
             formData.email.trim() !== '' && 
-            formData.phone.trim() !== '' && 
             !formErrors.email && 
             !formErrors.phone
         }));
@@ -340,17 +307,8 @@ const RegisterForm = () => {
     setError('');
     
     try {
-      // Бэкендке жіберілетін форматқа өзгерту
-      const userData = {
-        name: `${formData.lastName} ${formData.firstName} ${formData.middleName}`.trim(),
-        email: formData.email,
-        password: formData.password,
-        phone: formData.phone,
-        faculty: formData.faculty,
-        specialization: formData.specialization,
-        studentId: formData.studentId,
-        year: formData.year
-      };
+      // Бэкендке жіберілетін деректерді дайындау
+      const { confirmPassword, ...userData } = formData;
       
       // AuthContext арқылы тіркелу
       await register(userData);
@@ -360,6 +318,12 @@ const RegisterForm = () => {
     } catch (err) {
       // Қате жағдайында оны күйге сақтау
       console.error('Тіркелу қатесі:', err);
+      
+      if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else {
+        setError('Тіркелу кезінде қате орын алды. Әрекетті қайталап көріңіз.');
+      }
     } finally {
       setLoading(false);
     }
@@ -394,58 +358,26 @@ const RegisterForm = () => {
               Жеке ақпарат
             </Typography>
             
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="lastName"
-                  label="Тегі"
-                  name="lastName"
-                  autoComplete="family-name"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  error={!!formErrors.lastName}
-                  helperText={formErrors.lastName}
-                  disabled={isLoading}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <AccountCircle color="action" />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="firstName"
-                  label="Аты"
-                  name="firstName"
-                  autoComplete="given-name"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  error={!!formErrors.firstName}
-                  helperText={formErrors.firstName}
-                  disabled={isLoading}
-                />
-              </Grid>
-            </Grid>
-            
             <TextField
               margin="normal"
+              required
               fullWidth
-              id="middleName"
-              label="Әкесінің аты (болса)"
-              name="middleName"
-              autoComplete="middle-name"
-              value={formData.middleName}
+              id="name"
+              label="Аты-жөні"
+              name="name"
+              autoComplete="name"
+              value={formData.name}
               onChange={handleInputChange}
+              error={!!formErrors.name}
+              helperText={formErrors.name}
               disabled={isLoading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <AccountCircle color="action" />
+                  </InputAdornment>
+                ),
+              }}
             />
           </motion.div>
         );
@@ -487,7 +419,6 @@ const RegisterForm = () => {
             
             <TextField
               margin="normal"
-              required
               fullWidth
               id="phone"
               label="Телефон"
@@ -533,10 +464,10 @@ const RegisterForm = () => {
                 onChange={handleInputChange}
                 disabled={isLoading}
               >
-                <MenuItem value="economic">Экономика факультеті</MenuItem>
-                <MenuItem value="law">Заң факультеті</MenuItem>
-                <MenuItem value="business">Жоғары бизнес мектебі</MenuItem>
-                <MenuItem value="it">Ақпараттық технологиялар факультеті</MenuItem>
+                <MenuItem value="Бизнес мектебі">Бизнес мектебі</MenuItem>
+                <MenuItem value="Құқық және мемлекеттік басқару мектебі">Құқық және мемлекеттік басқару мектебі</MenuItem>
+                <MenuItem value="Цифрлық технологиялар мектебі">Цифрлық технологиялар мектебі</MenuItem>
+                <MenuItem value="Экономика мектебі">Экономика мектебі</MenuItem>
               </Select>
               {formErrors.faculty && <FormHelperText>{formErrors.faculty}</FormHelperText>}
             </FormControl>
@@ -552,12 +483,12 @@ const RegisterForm = () => {
                 onChange={handleInputChange}
                 disabled={isLoading}
               >
-                <MenuItem value="finance">Қаржы және несие</MenuItem>
-                <MenuItem value="accounting">Бухгалтерлік есеп</MenuItem>
-                <MenuItem value="marketing">Маркетинг</MenuItem>
-                <MenuItem value="management">Менеджмент</MenuItem>
-                <MenuItem value="law">Заңтану</MenuItem>
-                <MenuItem value="it">Ақпараттық жүйелер</MenuItem>
+                <MenuItem value="Қаржы">Қаржы</MenuItem>
+                <MenuItem value="Бухгалтерлік есеп">Бухгалтерлік есеп</MenuItem>
+                <MenuItem value="Маркетинг">Маркетинг</MenuItem>
+                <MenuItem value="Менеджмент">Менеджмент</MenuItem>
+                <MenuItem value="Заңтану">Заңтану</MenuItem>
+                <MenuItem value="Ақпараттық жүйелер">Ақпараттық жүйелер</MenuItem>
               </Select>
               {formErrors.specialization && <FormHelperText>{formErrors.specialization}</FormHelperText>}
             </FormControl>
@@ -591,8 +522,8 @@ const RegisterForm = () => {
                 <MenuItem value="2">2 курс</MenuItem>
                 <MenuItem value="3">3 курс</MenuItem>
                 <MenuItem value="4">4 курс</MenuItem>
-                <MenuItem value="masters">Магистратура</MenuItem>
-                <MenuItem value="phd">Докторантура</MenuItem>
+                <MenuItem value="Магистратура">Магистратура</MenuItem>
+                <MenuItem value="Докторантура">Докторантура</MenuItem>
               </Select>
               {formErrors.year && <FormHelperText>{formErrors.year}</FormHelperText>}
             </FormControl>
@@ -613,7 +544,7 @@ const RegisterForm = () => {
             </Typography>
             
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Күшті құпия сөз кемінде 8 таңба, бас әріп, сан және арнайы таңбалардан тұруы керек.
+              Құпия сөз кемінде 6 таңбадан тұруы керек.
             </Typography>
             
             <TextField
@@ -735,8 +666,7 @@ const RegisterForm = () => {
               left: 0,
               right: 0,
               height: 8,
-              backgroundColor: theme.palette.primary.main,
-              backgroundImage: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
             }}
           />
           
@@ -769,7 +699,7 @@ const RegisterForm = () => {
               fontWeight="bold"
               gutterBottom
             >
-              Тіркелу
+              Нархоз кітапханасына тіркелу
             </Typography>
             
             <Typography
@@ -777,7 +707,7 @@ const RegisterForm = () => {
               color="text.secondary"
               align="center"
             >
-              Нархоз кітапхана жүйесінде тіркелу
+              Кітапханалық қызметтерге қол жеткізу үшін тіркеліңіз
             </Typography>
           </Box>
           
@@ -790,12 +720,7 @@ const RegisterForm = () => {
           >
             {steps.map(label => (
               <Step key={label}>
-                <StepLabel>{!isMobile && label}</StepLabel>
-                {isMobile && (
-                  <Typography variant="body2" sx={{ ml: 2 }}>
-                    {label}
-                  </Typography>
-                )}
+                <StepLabel>{label}</StepLabel>
               </Step>
             ))}
           </Stepper>
@@ -833,7 +758,7 @@ const RegisterForm = () => {
                   color="primary"
                   type="submit"
                   disabled={getNextButtonDisabled() || isLoading}
-                  startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <Check />}
+                  endIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <Check />}
                 >
                   {isLoading ? 'Тіркелуде...' : 'Тіркелу'}
                 </Button>

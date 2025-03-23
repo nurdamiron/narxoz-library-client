@@ -47,10 +47,10 @@ import {
   Home
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import  useAuth  from '../context/AuthContext';
-import  getBookById  from '../services/bookService';
-import  toggleBookmark from '../services/bookmarkService';
-import  borrowBook from '../services/borrowService';
+import { useAuth } from '../context/AuthContext';
+import bookService from '../services/bookService';
+import bookmarkService from '../services/bookmarkService';
+import borrowService from '../services/borrowService';
 
 /**
  * BookDetailsPage компоненті
@@ -97,7 +97,7 @@ const BookDetailsPage = () => {
       setError(null);
       
       // Кітап туралы мәліметтерді алу
-      const bookData = await getBookById(id);
+      const bookData = await bookService.getBook(id);
       setBook(bookData);
       
       // Кітап бетбелгіге қосылған ба, тексеру
@@ -127,7 +127,7 @@ const BookDetailsPage = () => {
       setBookmarkLoading(true);
       
       // API арқылы бетбелгіні ауыстыру
-      const response = await toggleBookmark(id);
+      const response = await bookmarkService.toggleBookmark(id);
       setIsBookmarked(response.bookmarked);
     } catch (error) {
       console.error('Бетбелгі ауыстыру қатесі:', error);
@@ -150,7 +150,7 @@ const BookDetailsPage = () => {
       setBorrowError(null);
       
       // API арқылы кітапты қарызға алу
-      await borrowBook(id);
+      await borrowService.borrowBook({ bookId: id });
       
       // Сәтті болған жағдайда кітапты қайта жүктеу
       await fetchBook();
