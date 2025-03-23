@@ -333,7 +333,7 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
 
       {/* Категориялар бөлімі */}
       <Box sx={{ px: 2, py: 1.5 }}>
-        <ListItemButton 
+        {/* <ListItemButton 
           onClick={handleToggleCategories}
           sx={{
             borderRadius: 1.5,
@@ -353,7 +353,7 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
             }}
           />
           {categoriesOpen ? <ExpandLess /> : <ExpandMore />}
-        </ListItemButton>
+        </ListItemButton> */}
       </Box>
 
       {/* Категориялар тізімі */}

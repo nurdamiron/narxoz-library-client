@@ -56,6 +56,9 @@ import {
   Visibility as VisibilityIcon
 } from '@mui/icons-material';
 
+
+import { motion } from 'framer-motion';
+
 const BookDetails = ({ book }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
