@@ -179,12 +179,31 @@ const LoginForm = () => {
   // Жүктелу күйі (компонент немесе аутентификация)
   const isLoading = loading || authLoading;
   
+  // Анимация вариантары
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.5,
+        when: "beforeChildren",
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
+  
   return (
     <Container maxWidth="xs">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
       >
         <Paper
           elevation={3}
@@ -218,8 +237,7 @@ const LoginForm = () => {
             mb: 3 
           }}>
             <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              variants={itemVariants}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <School
@@ -258,141 +276,160 @@ const LoginForm = () => {
           
           {/* Кіру формасы */}
           <form onSubmit={handleSubmit}>
-            {/* Email өрісі */}
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email"
-              name="email"
-              autoComplete="email"
-              value={email}
-              onChange={handleEmailChange}
-              error={!!errors.email}
-              helperText={errors.email}
-              disabled={isLoading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email color="action" />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 2 }}
-            />
-            
-            {/* Құпия сөз өрісі */}
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Құпия сөз"
-              id="password"
-              autoComplete="current-password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={handlePasswordChange}
-              error={!!errors.password}
-              helperText={errors.password}
-              disabled={isLoading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleToggleShowPassword}
-                      edge="end"
-                      disabled={isLoading}
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 2 }}
-            />
-            
-            {/* Қосымша опциялар */}
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                mb: 2 
-              }}
-            >
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={rememberMe}
-                    onChange={handleRememberMeChange}
-                    color="primary"
-                    disabled={isLoading}
-                  />
-                }
-                label="Мені есте сақтау"
+            <motion.div variants={itemVariants}>
+              {/* Email өрісі */}
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="Email"
+                name="email"
+                autoComplete="email"
+                value={email}
+                onChange={handleEmailChange}
+                error={!!errors.email}
+                helperText={errors.email}
+                disabled={isLoading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 2 }}
               />
-              
-              <Link
-                component={RouterLink}
-                to="/forgot-password"
-                variant="body2"
-                color="primary"
+            </motion.div>
+            
+            <motion.div variants={itemVariants}>
+              {/* Құпия сөз өрісі */}
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Құпия сөз"
+                id="password"
+                autoComplete="current-password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={handlePasswordChange}
+                error={!!errors.password}
+                helperText={errors.password}
+                disabled={isLoading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleToggleShowPassword}
+                        edge="end"
+                        disabled={isLoading}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 2 }}
+              />
+            </motion.div>
+            
+            <motion.div variants={itemVariants}>
+              {/* Қосымша опциялар */}
+              <Box 
                 sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  mb: 2 
+                }}
+              >
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={rememberMe}
+                      onChange={handleRememberMeChange}
+                      color="primary"
+                      disabled={isLoading}
+                    />
+                  }
+                  label="Мені есте сақтау"
+                />
+                
+                <Link
+                  component={RouterLink}
+                  to="/forgot-password"
+                  variant="body2"
+                  color="primary"
+                  sx={{ 
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    }
+                  }}
+                >
+                  Құпия сөзді ұмыттыңыз ба?
+                </Link>
+              </Box>
+            </motion.div>
+            
+            <motion.div variants={itemVariants}>
+              {/* Кіру түймесі */}
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary"
+                disabled={isLoading}
+                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
+                sx={{ 
+                  mt: 2, 
+                  py: 1.5, 
+                  borderRadius: 2,
+                  fontWeight: 'bold',
+                  position: 'relative',
+                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
                   '&:hover': {
-                    textDecoration: 'underline',
+                    transform: 'translateY(-2px)',
+                    boxShadow: (theme) => `0 6px 12px ${theme.palette.primary.main}30`
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                    boxShadow: (theme) => `0 3px 6px ${theme.palette.primary.main}30`
                   }
                 }}
               >
-                Құпия сөзді ұмыттыңыз ба?
-              </Link>
-            </Box>
+                {isLoading ? 'Жүктелуде...' : 'Кіру'}
+              </Button>
+            </motion.div>
             
-            {/* Кіру түймесі */}
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              color="primary"
-              disabled={isLoading}
-              startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
-              sx={{ 
-                mt: 2, 
-                py: 1.5, 
-                borderRadius: 2,
-                fontWeight: 'bold',
-                position: 'relative',
-              }}
-            >
-              {isLoading ? 'Жүктелуде...' : 'Кіру'}
-            </Button>
-            
-            {/* Тіркелу сілтемесі */}
-            <Box sx={{ mt: 3, textAlign: 'center' }}>
-              <Typography variant="body2">
-                Аккаунтыңыз жоқ па?{' '}
-                <Link 
-                  component={RouterLink} 
-                  to="/register" 
-                  color="primary"
-                  sx={{ 
-                    fontWeight: 'medium',
-                    '&:hover': {
-                      textDecoration: 'underline',
-                    } 
-                  }}
-                >
-                  Тіркелу
-                </Link>
-              </Typography>
-            </Box>
+            <motion.div variants={itemVariants}>
+              {/* Тіркелу сілтемесі */}
+              <Box sx={{ mt: 3, textAlign: 'center' }}>
+                <Typography variant="body2">
+                  Аккаунтыңыз жоқ па?{' '}
+                  <Link 
+                    component={RouterLink} 
+                    to="/register" 
+                    color="primary"
+                    sx={{ 
+                      fontWeight: 'medium',
+                      '&:hover': {
+                        textDecoration: 'underline',
+                      } 
+                    }}
+                  >
+                    Тіркелу
+                  </Link>
+                </Typography>
+              </Box>
+            </motion.div>
           </form>
         </Paper>
       </motion.div>

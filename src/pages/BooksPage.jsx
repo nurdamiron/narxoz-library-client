@@ -1,470 +1,459 @@
-// src/pages/BooksPage.jsx
-import React, { useState, useEffect } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import { motion } from 'framer-motion';
+/**
+ * src/pages/BooksPage.jsx
+ * 
+ * Кітаптар каталогы беті (Жаңартылған нұсқа)
+ * 
+ * Бұл компонент кітаптар каталогын көрсетеді, іздеу, сүзгілеу және беттеу функционалын қамтамасыз етеді.
+ * Жаңартылған дизайн мен анимациялар қосылған.
+ */
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Container,
+  Box,
   Typography,
   Grid,
-  Card,
-  CardMedia,
-  CardContent,
-  CardActions,
-  Button,
-  Chip,
-  Divider,
-  Box,
   Paper,
+  Divider,
   TextField,
   InputAdornment,
   IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Pagination,
-  CircularProgress,
-  Alert
+  Chip,
+  Fade,
+  useTheme,
+  useMediaQuery,
+  alpha
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  FilterList as FilterIcon,
-  Clear as ClearIcon,
-  BookmarkBorder as BookmarkBorderIcon,
-  Bookmark as BookmarkIcon,
-  Sort as SortIcon
+  Clear as ClearIcon
 } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 
-// Импорт хуков и сервисов
-import useBooks  from '../hooks/useBooks';
-import useBookmarks from '../hooks/useBookmarks';
-import { useAuth } from '../context/AuthContext'; // Исправлено с default на именованный импорт
+// Локальные компоненты
+import BookGrid from '../components/books/BookGrid';
+import BookFilters from '../components/books/BookFilters';
+import AlertDialog from '../components/common/AlertDialog';
+
+// Контексты и хуки
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { getBookCoverUrl } from '../utils';
 
+// Сервисы
+import bookService from '../services/bookService';
+import bookmarkService from '../services/bookmarkService';
+import borrowService from '../services/borrowService';
+
+/**
+ * BooksPage компоненті
+ * 
+ * @returns {JSX.Element} - Кітаптар каталогы беті
+ */
 const BooksPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
-  const { 
-    books, 
-    categories, 
-    totalItems, 
-    totalPages, 
-    filters, 
-    loading, 
-    error,
-    updateFilters
-  } = useBooks({
-    page: 1,
-    limit: 12,
-    sort: '-publicationYear'
-  });
-  
-  const { toggleBookmark } = useBookmarks();
   const { success, error: showError } = useToast();
   
-  // Состояние UI
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [loadingBookmark, setLoadingBookmark] = useState(false);
+  // URL параметрлерін алу
+  const queryParams = new URLSearchParams(location.search);
   
-  // Состояние фильтров
-  const [filterValues, setFilterValues] = useState({
-    categoryId: '',
-    year: '',
-    language: '',
-    sort: '-publicationYear'
+  // Күйлер
+  const [books, setBooks] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [borrowDialog, setBorrowDialog] = useState({
+    open: false,
+    book: null
+  });
+  const [borrowing, setBorrowing] = useState(false);
+  
+  // Фильтрлер
+  const [filters, setFilters] = useState({
+    page: parseInt(queryParams.get('page')) || 1,
+    limit: parseInt(queryParams.get('limit')) || 12,
+    search: queryParams.get('search') || '',
+    categoryId: queryParams.get('categoryId') || '',
+    year: queryParams.get('year') || '',
+    language: queryParams.get('language') || '',
+    available: queryParams.get('available') === 'true',
+    sort: queryParams.get('sort') || '-createdAt'
   });
   
-  // Изменение фильтров
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilterValues({
-      ...filterValues,
-      [name]: value
+  // Жылдар тізімі
+  const currentYear = new Date().getFullYear();
+  const yearOptions = [currentYear, currentYear-1, currentYear-2, currentYear-3, currentYear-4, 2020, 2019, 2018, 2017, 2016, 2015, 2010, 2005, 2000];
+  
+  /**
+   * Категориялар тізімін жүктеу
+   */
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categoriesData = await bookService();
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error('Категорияларды жүктеу қатесі:', err);
+        showError('Категорияларды жүктеу кезінде қате орын алды');
+      }
+    };
+    
+    fetchCategories();
+  }, [showError]);
+  
+  /**
+   * URL параметрлерін жаңарту
+   * 
+   * @param {Object} params - URL параметрлері
+   */
+  const updateURLParams = useCallback((params) => {
+    const queryString = new URLSearchParams();
+    
+    // Тек бос емес параметрлерді қосу
+    if (params.page > 1) queryString.set('page', params.page);
+    if (params.limit !== 12) queryString.set('limit', params.limit);
+    if (params.search) queryString.set('search', params.search);
+    if (params.categoryId) queryString.set('categoryId', params.categoryId);
+    if (params.year) queryString.set('year', params.year);
+    if (params.language) queryString.set('language', params.language);
+    if (params.available) queryString.set('available', 'true');
+    if (params.sort && params.sort !== '-createdAt') queryString.set('sort', params.sort);
+    
+    // URL-ді жаңарту
+    const newURL = queryString.toString() ? `?${queryString.toString()}` : '';
+    navigate(`/books${newURL}`, { replace: true });
+  }, [navigate]);
+  
+  /**
+   * Фильтрлер өзгергенде кітаптарды жүктеу
+   */
+  useEffect(() => {
+    const fetchBooks = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const result = await bookService.getBooks(filters);
+        setBooks(result.data);
+        setTotalPages(result.totalPages);
+        setTotalItems(result.totalItems);
+      } catch (err) {
+        console.error('Кітаптарды жүктеу қатесі:', err);
+        setError('Кітаптарды жүктеу кезінде қате орын алды');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchBooks();
+    updateURLParams(filters);
+  }, [filters, updateURLParams]);
+  
+  /**
+   * Фильтрлерді қолдану
+   * 
+   * @param {Object} newFilters - Жаңа фильтрлер
+   */
+  const handleApplyFilters = (newFilters) => {
+    setFilters({
+      ...filters,
+      ...newFilters,
+      page: 1 // Фильтрлер өзгергенде бірінші бетке оралу
     });
   };
   
-  // Применение фильтров
-  const applyFilters = () => {
-    updateFilters({
-      ...filterValues,
+  /**
+   * Фильтрлерді тазалау
+   */
+  const handleClearFilters = () => {
+    setFilters({
       page: 1,
-      search: searchTerm
-    });
-  };
-  
-  // Сброс фильтров
-  const resetFilters = () => {
-    setFilterValues({
+      limit: 12,
+      search: '',
       categoryId: '',
       year: '',
       language: '',
-      sort: '-publicationYear'
-    });
-    setSearchTerm('');
-    updateFilters({
-      page: 1,
-      limit: 12,
-      sort: '-publicationYear'
+      available: false,
+      sort: '-createdAt'
     });
   };
   
-  // Изменение страницы
+  /**
+   * Бет өзгерісін өңдеу
+   * 
+   * @param {Event} event - Оқиға объектісі
+   * @param {number} value - Жаңа бет нөмірі
+   */
   const handlePageChange = (event, value) => {
-    updateFilters({ page: value });
+    setFilters({
+      ...filters,
+      page: value
+    });
+    
+    // Беттің жоғарғы жағына айналдыру
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
   
-  // Поиск при нажатии Enter
-  const handleSearchKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      applyFilters();
-    }
-  };
-  
-  // Добавление/удаление закладки
-  const handleToggleBookmark = async (book, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      showError('Бетбелгі қосу үшін жүйеге кіру қажет');
-      return;
-    }
-    
+  /**
+   * Бетбелгіні ауыстыру
+   * 
+   * @param {Object} book - Кітап объектісі
+   */
+  const handleToggleBookmark = async (book) => {
     try {
-      setLoadingBookmark(true);
-      const isBookmarked = await toggleBookmark(book.id);
+      const isBookmarked = await bookmarkService.toggleBookmark(book.id);
       
-      // Обновляем состояние книги
-      book.isBookmarked = isBookmarked;
+      // Кітаптар тізімінде бетбелгі күйін жаңарту
+      setBooks(prevBooks => 
+        prevBooks.map(b => 
+          b.id === book.id 
+            ? { ...b, isBookmarked } 
+            : b
+        )
+      );
       
-      success(isBookmarked 
-        ? 'Кітап бетбелгілерге қосылды' 
-        : 'Кітап бетбелгілерден алынды'
+      // Сәтті хабарламаны көрсету
+      success(isBookmarked
+        ? 'Кітап бетбелгілерге қосылды'
+        : 'Кітап бетбелгілерден алып тасталды'
       );
     } catch (err) {
-      console.error('Error toggling bookmark:', err);
+      console.error('Бетбелгі ауыстыру қатесі:', err);
       showError('Бетбелгіні өзгерту кезінде қате орын алды');
+    }
+  };
+  
+  /**
+   * Кітапты алу түймесін басқанда
+   * 
+   * @param {Object} book - Кітап объектісі
+   */
+  const handleBorrowClick = (book) => {
+    setBorrowDialog({
+      open: true,
+      book
+    });
+  };
+  
+  /**
+   * Кітапты алу диалогын жабу
+   */
+  const handleCloseBorrowDialog = () => {
+    setBorrowDialog({
+      open: false,
+      book: null
+    });
+  };
+  
+  /**
+   * Кітапты алуды растау
+   */
+  const handleConfirmBorrow = async () => {
+    if (!borrowDialog.book) return;
+    
+    try {
+      setBorrowing(true);
+      
+      // Кітапты алу API сұрауы
+      await borrowService.borrowBook({ bookId: borrowDialog.book.id });
+      
+      // Кітаптар тізімінде қолжетімділік санын жаңарту
+      setBooks(prevBooks => 
+        prevBooks.map(b => 
+          b.id === borrowDialog.book.id 
+            ? { 
+                ...b, 
+                availableCopies: Math.max(0, b.availableCopies - 1)
+              } 
+            : b
+        )
+      );
+      
+      // Сәтті хабарламаны көрсету
+      success('Кітап сәтті алынды! Кітапханадан алуыңызға болады.');
+      
+      // Диалогты жабу
+      handleCloseBorrowDialog();
+    } catch (err) {
+      console.error('Кітапты алу қатесі:', err);
+      showError('Кітапты алу кезінде қате орын алды');
     } finally {
-      setLoadingBookmark(false);
+      setBorrowing(false);
     }
   };
   
-  // Анимации
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
+  /**
+   * Кіру бетіне бағыттау
+   */
+  const handleNavigateToLogin = () => {
+    navigate('/login', { 
+      state: { from: location.pathname + location.search } 
+    });
+  };
+  
+  // Анимация конфигурациясы
+  const pageVariants = {
+    initial: { opacity: 0 },
+    animate: { 
       opacity: 1,
-      transition: {
-        staggerChildren: 0.05
+      transition: { 
+        duration: 0.5
+      }
+    },
+    exit: { 
+      opacity: 0,
+      transition: { 
+        duration: 0.3
       }
     }
   };
-  
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: {
-        duration: 0.3,
-        ease: "easeOut"
-      }
-    }
-  };
-  
-  // Рендеринг книги
-  const renderBook = (book) => (
-    <Card 
-      elevation={2} 
-      sx={{ 
-        height: '100%', 
-        display: 'flex', 
-        flexDirection: 'column',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        '&:hover': {
-          transform: 'translateY(-5px)',
-          boxShadow: 6
-        }
-      }}
-    >
-      <CardMedia
-        component="img"
-        height="200"
-        image={getBookCoverUrl(book.cover)}
-        alt={book.title}
-        sx={{ objectFit: 'contain' }}
-      />
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Typography variant="h6" component="div" gutterBottom noWrap>
-          {book.title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          {book.author}
-        </Typography>
-        
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-          {book.category && (
-            <Chip 
-              label={book.category.name} 
-              size="small" 
-              variant="outlined"
-            />
-          )}
-          <Chip 
-            label={`${book.publicationYear} ж.`} 
-            size="small" 
-            variant="outlined"
-            color="secondary"
-          />
-        </Box>
-      </CardContent>
-      <Divider />
-      <CardActions>
-        <Button 
-          size="small" 
-          component={RouterLink} 
-          to={`/books/${book.id}`}
-        >
-          Толығырақ
-        </Button>
-        
-        <IconButton
-          color={book.isBookmarked ? "secondary" : "default"}
-          size="small"
-          onClick={(e) => handleToggleBookmark(book, e)}
-          disabled={loadingBookmark}
-          sx={{ ml: 'auto' }}
-          aria-label={book.isBookmarked ? "Бетбелгіден алу" : "Бетбелгіге қосу"}
-        >
-          {book.isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-        </IconButton>
-      </CardActions>
-    </Card>
-  );
-  
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={pageVariants}
     >
-      <Container sx={{ py: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Кітаптар каталогы
-        </Typography>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        {/* Тақырып */}
+        <Box sx={{ mb: 4 }}>
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            gutterBottom
+            sx={{ fontWeight: 'bold' }}
+          >
+            Кітаптар каталогы
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Нархоз университеті кітапханасының кітаптар жинағын қараңыз
+          </Typography>
+        </Box>
         
-        {/* Поиск и фильтры */}
-        <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+        {/* Іздеу және сүзгілер */}
+        <Grid container spacing={3}>
+          {/* Сүзгілер панелі */}
+          <Grid item xs={12} md={3}>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <BookFilters
+                categories={categories}
+                filters={filters}
+                onApplyFilters={handleApplyFilters}
+                onClearFilters={handleClearFilters}
+                years={yearOptions}
+              />
+            </motion.div>
+          </Grid>
+          
+          {/* Кітаптар тізімі */}
+          <Grid item xs={12} md={9}>
+            {/* Іздеу құралы */}
+            <Paper
+              component="form"
+              elevation={2}
+              sx={{
+                p: 2,
+                mb: 3,
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleApplyFilters(filters);
+              }}
+            >
               <TextField
                 fullWidth
-                label="Іздеу"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
+                variant="outlined"
+                placeholder="Кітаптарды атауы, авторы немесе сипаттамасы бойынша іздеу"
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                size="small"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon />
+                      <SearchIcon color="action" />
                     </InputAdornment>
                   ),
-                  endAdornment: searchTerm && (
+                  endAdornment: filters.search && (
                     <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => {
-                          setSearchTerm('');
-                          if (filters.search) {
-                            updateFilters({ search: '', page: 1 });
-                          }
-                        }}
-                        edge="end"
+                      <IconButton 
+                        edge="end" 
+                        onClick={() => handleApplyFilters({ search: '' })}
+                        size="small"
                       >
                         <ClearIcon />
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
+                }}
               />
-            </Grid>
+            </Paper>
             
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<FilterIcon />}
-                  onClick={() => setFilterOpen(!filterOpen)}
-                  sx={{ flexGrow: 1 }}
-                >
-                  {filterOpen ? 'Фильтрлерді жасыру' : 'Фильтрлер'}
-                </Button>
-                
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  startIcon={<ClearIcon />}
-                  onClick={resetFilters}
-                >
-                  Тазалау
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-          
-          {filterOpen && (
-            <Grid container spacing={2} sx={{ mt: 2 }}>
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth>
-                  <InputLabel>Категория</InputLabel>
-                  <Select
-                    name="categoryId"
-                    value={filterValues.categoryId}
-                    onChange={handleFilterChange}
-                    label="Категория"
-                  >
-                    <MenuItem value="">Барлығы</MenuItem>
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <TextField
-                  fullWidth
-                  label="Жыл"
-                  name="year"
-                  value={filterValues.year}
-                  onChange={handleFilterChange}
-                  placeholder="мысалы: 2020"
+            {/* Кітаптар торы */}
+            <Fade in={true} timeout={500}>
+              <Box>
+                <BookGrid
+                  books={books}
+                  onToggleBookmark={handleToggleBookmark}
+                  onBorrow={handleBorrowClick}
+                  loading={loading}
+                  error={error}
+                  currentPage={filters.page}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  isAuthenticated={isAuthenticated}
+                  onLoginClick={handleNavigateToLogin}
                 />
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth>
-                  <InputLabel>Тіл</InputLabel>
-                  <Select
-                    name="language"
-                    value={filterValues.language}
-                    onChange={handleFilterChange}
-                    label="Тіл"
-                  >
-                    <MenuItem value="">Барлығы</MenuItem>
-                    <MenuItem value="Қазақша">Қазақша</MenuItem>
-                    <MenuItem value="Русский">Русский</MenuItem>
-                    <MenuItem value="English">English</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth>
-                  <InputLabel>Сұрыптау</InputLabel>
-                  <Select
-                    name="sort"
-                    value={filterValues.sort}
-                    onChange={handleFilterChange}
-                    label="Сұрыптау"
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <SortIcon />
-                      </InputAdornment>
-                    }
-                  >
-                    <MenuItem value="-publicationYear">Жаңадан ескіге</MenuItem>
-                    <MenuItem value="publicationYear">Ескіден жаңаға</MenuItem>
-                    <MenuItem value="title">Атауы (А-Я)</MenuItem>
-                    <MenuItem value="-title">Атауы (Я-А)</MenuItem>
-                    <MenuItem value="author">Автор (А-Я)</MenuItem>
-                    <MenuItem value="-author">Автор (Я-А)</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={applyFilters}
-                  fullWidth
-                >
-                  Іздеу
-                </Button>
-              </Grid>
-            </Grid>
-          )}
-        </Paper>
+              </Box>
+            </Fade>
+          </Grid>
+        </Grid>
         
-        {/* Результаты поиска */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-        
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
-            <CircularProgress />
-          </Box>
-        ) : books.length === 0 ? (
-          <Paper elevation={2} sx={{ p: 4, textAlign: 'center', my: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Кітаптар табылмады
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Іздеу параметрлерін өзгертіп көріңіз
-            </Typography>
-            <Button
-              variant="outlined"
-              onClick={resetFilters}
-              sx={{ mt: 2 }}
-              startIcon={<ClearIcon />}
-            >
-              Фильтрлерді тазалау
-            </Button>
-          </Paper>
-        ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <Grid container spacing={3}>
-              {books.map((book) => (
-                <Grid item key={book.id} xs={12} sm={6} md={4} lg={3}>
-                  <motion.div variants={itemVariants}>
-                    {renderBook(book)}
-                  </motion.div>
-                </Grid>
-              ))}
-            </Grid>
-          </motion.div>
-        )}
-        
-        {/* Пагинация */}
-        {!loading && books.length > 0 && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-            <Pagination
-              count={totalPages}
-              page={filters.page || 1}
-              onChange={handlePageChange}
-              color="primary"
-              showFirstButton
-              showLastButton
-            />
-          </Box>
-        )}
-        
-        {/* Информация о количестве */}
-        {!loading && books.length > 0 && (
-          <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
-            Көрсетілген: {books.length} из {totalItems} кітап
-          </Typography>
-        )}
+        {/* Кітапты алу диалогы */}
+        <AlertDialog
+          open={borrowDialog.open}
+          onClose={handleCloseBorrowDialog}
+          title="Кітапты алуды растау"
+          content={
+            borrowDialog.book && (
+              <Box>
+                <Typography variant="body1" paragraph>
+                  Сіз "{borrowDialog.book.title}" кітабын алғыңыз келе ме?
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Кітап сіздің атыңызға 3 күнге (72 сағат) сақталады. Осы мерзім ішінде кітапханаға келіп, кітапты алуыңыз керек.
+                </Typography>
+              </Box>
+            )
+          }
+          type="info"
+          confirmText="Растау"
+          cancelText="Болдырмау"
+          onConfirm={handleConfirmBorrow}
+          loading={borrowing}
+        />
       </Container>
     </motion.div>
   );

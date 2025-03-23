@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { SnackbarProvider } from 'notistack';
 
@@ -26,26 +26,13 @@ import Layout from './components/layout/Layout';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 
-// Создаем тему Material UI
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#f50057',
-    },
-    error: {
-      main: '#f44336',
-      lighter: '#ffebee'
-    }
-  },
-  typography: {
-    fontFamily: 'Roboto, Arial, sans-serif',
-  },
-});
+// Импорт обновленной темы
+import theme from './styles/theme';
 
-// Компонент для отслеживания изменения маршрутов (для прокрутки вверх)
+/**
+ * Компонент для отслеживания изменения маршрутов (для прокрутки вверх)
+ * Автоматически прокручивает страницу вверх при изменении маршрута
+ */
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -56,6 +43,14 @@ function ScrollToTop() {
   return null;
 }
 
+/**
+ * Основной компонент приложения, который настраивает:
+ * - Тему оформления через ThemeProvider
+ * - Базовые стили через CssBaseline
+ * - Систему уведомлений через SnackbarProvider
+ * - Контексты авторизации и уведомлений
+ * - Маршрутизацию через Routes
+ */
 function App() {
   return (
     <ThemeProvider theme={theme}>

@@ -18,7 +18,7 @@
 
 /* Басты тақырып аймағының стильдері */
 .App-header {
-  background-color: #282c34;
+  background-color: #d50032;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -30,7 +30,7 @@
 
 /* Сілтеме стильдері */
 .App-link {
-  color: #61dafb;
+  color: #ff5252;
 }
 
 /* Логотип айналу анимациясы */

@@ -10,19 +10,22 @@ import { createTheme } from '@mui/material/styles';
 
 /**
  * Тақырып палитрасын жасау
+ * 
+ * Негізгі түс: #d50032 (қызыл) - Нархоз университетінің бренд түсі
+ * Қосымша түс: #ff5252 (ашық қызыл) - акценттер үшін
  */
 const theme = createTheme({
   palette: {
     primary: {
-      light: '#ff355b', // Светлее основного
-      main: '#d50032', // Основной цвет, который вы хотите использовать
-      dark: '#9e0025', // Темнее основного
+      light: '#ff355b', // Негізгіден ашығырақ
+      main: '#d50032', // Негізгі бренд түсі
+      dark: '#9e0025', // Негізгіден қоюырақ
       contrastText: '#ffffff',
     },
     secondary: {
-      light: '#5e6ad2',
-      main: '#3f4db8', // Дополнительный синий цвет
-      dark: '#2c3580',
+      light: '#ff867f',
+      main: '#ff5252', // Қосымша түс
+      dark: '#c50e29',
       contrastText: '#ffffff',
     },
     background: {
@@ -141,12 +144,18 @@ const theme = createTheme({
         root: {
           borderRadius: 8,
           padding: '8px 16px',
+          transition: 'all 0.2s ease-in-out',
         },
         containedPrimary: {
           boxShadow: '0px 4px 10px rgba(213, 0, 50, 0.3)',
           '&:hover': {
             boxShadow: '0px 6px 15px rgba(213, 0, 50, 0.4)',
-            backgroundColor: '#bf002d', // Немного темнее при наведении
+            transform: 'translateY(-2px)',
+            backgroundColor: '#bf002d', // Hover кезінде қоюрақ түске өзгереді
+          },
+          '&:active': {
+            boxShadow: '0px 2px 5px rgba(213, 0, 50, 0.3)',
+            transform: 'translateY(0)',
           },
         },
         outlinedPrimary: {
@@ -183,6 +192,11 @@ const theme = createTheme({
         root: {
           borderRadius: 12,
           overflow: 'hidden',
+          transition: 'transform 0.3s, box-shadow 0.3s',
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.12)',
+          },
         },
       },
     },
@@ -203,6 +217,7 @@ const theme = createTheme({
             borderRadius: 8,
             '&.Mui-focused fieldset': {
               borderColor: '#d50032',
+              borderWidth: 2,
             },
             '&:hover fieldset': {
               borderColor: '#d50032',
@@ -267,6 +282,75 @@ const theme = createTheme({
         },
         barColorPrimary: {
           backgroundColor: '#d50032',
+        },
+      },
+    },
+    MuiLink: {
+      styleOverrides: {
+        root: {
+          textDecoration: 'none',
+          '&:hover': {
+            textDecoration: 'underline',
+          },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 16,
+          '&.MuiChip-colorPrimary': {
+            backgroundColor: 'rgba(213, 0, 50, 0.1)',
+            color: '#d50032',
+            fontWeight: 500,
+          },
+        },
+      },
+    },
+    MuiAvatar: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          border: '2px solid #fff',
+        },
+      },
+    },
+    MuiAlert: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+        standardSuccess: {
+          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          color: '#2e7d32',
+        },
+        standardError: {
+          backgroundColor: 'rgba(211, 47, 47, 0.1)',
+          color: '#d32f2f',
+        },
+        standardWarning: {
+          backgroundColor: 'rgba(237, 108, 2, 0.1)',
+          color: '#ed6c02',
+        },
+        standardInfo: {
+          backgroundColor: 'rgba(2, 136, 209, 0.1)',
+          color: '#0288d1',
+        },
+      },
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(213, 0, 50, 0.1)',
+            '&:hover': {
+              backgroundColor: 'rgba(213, 0, 50, 0.15)',
+            },
+          },
+          '&:hover': {
+            backgroundColor: 'rgba(213, 0, 50, 0.05)',
+          },
         },
       },
     },

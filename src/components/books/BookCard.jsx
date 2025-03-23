@@ -1,12 +1,13 @@
 /**
  * src/components/books/BookCard.jsx
  * 
- * Кітап карточкасы компоненті
+ * Жақсартылған кітап карточкасы компоненті
  * 
- * Бұл компонент әр кітаптың қысқаша ақпаратын карточка түрінде көрсетеді.
- * Ол бетбелгіні ауыстыру функционалын да қамтиды.
+ * Бұл компонент кітаптың толық мәліметтерін карточка түрінде көрсетеді.
+ * Анимациялар, микровзаимодействия және кеңейтілген функционал қосылған.
  */
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Card,
@@ -18,74 +19,136 @@ import {
   Box,
   IconButton,
   Chip,
-  Rating,
+  Button,
   Tooltip,
+  Divider,
   useTheme,
   alpha,
-  Skeleton
+  Skeleton,
+  Collapse
 } from '@mui/material';
 import {
   BookmarkBorder as BookmarkBorderIcon,
   Bookmark as BookmarkIcon,
-  VisibilityOff,
-  LocalLibrary
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  LocalLibrary as LocalLibraryIcon,
+  VisibilityOff as VisibilityOffIcon,
+  CalendarToday as CalendarIcon,
+  Language as LanguageIcon,
+  InfoOutlined as InfoIcon
 } from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
-import toggleBookmark from '../../services/bookmarkService';
 import { motion } from 'framer-motion';
+
+// Локальные компоненты
+import BookRating from './BookRating';
 
 /**
  * BookCard компоненті
  * 
  * @param {Object} props - Компонент параметрлері
  * @param {Object} props.book - Кітап объектісі
+ * @param {Function} props.onToggleBookmark - Бетбелгі ауысқанда шақырылатын функция
+ * @param {Function} props.onBorrow - Кітапты алу түймесі басылғанда шақырылатын функция
+ * @param {boolean} props.isDetails - Толық мәліметтер көрсетілсін бе?
+ * @param {boolean} props.isLoading - Жүктелу күйі
+ * @param {Object} props.sx - Қосымша Material UI стильдері
  * @returns {JSX.Element} - Кітап карточкасы
  */
-const BookCard = ({ book }) => {
+const BookCard = ({
+  book,
+  onToggleBookmark,
+  onBorrow,
+  isDetails = false,
+  isLoading = false,
+  sx = {}
+}) => {
   const theme = useTheme();
   
-  // AuthContext-тен мәліметтерді алу
-  const isAuthenticated = useAuth();
-  
-  // Бетбелгі күйі
-  const [isBookmarked, setIsBookmarked] = useState(book.isBookmarked);
-  const [loading, setLoading] = useState(false);
+  // Күйлер
+  const [expanded, setExpanded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   
+  // Кітап объектісі бос болса немесе жүктелу күйінде болса
+  if (isLoading || !book) {
+    return (
+      <Card 
+        sx={{ 
+          height: '100%', 
+          display: 'flex', 
+          flexDirection: 'column',
+          position: 'relative',
+          borderRadius: 2,
+          overflow: 'hidden',
+          ...sx
+        }}
+      >
+        <Skeleton variant="rectangular" height={200} animation="wave" />
+        <CardContent>
+          <Skeleton variant="text" height={32} animation="wave" />
+          <Skeleton variant="text" width="60%" height={24} animation="wave" />
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+            <Skeleton variant="text" width="40%" height={24} animation="wave" />
+            <Skeleton variant="circular" width={24} height={24} animation="wave" />
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   /**
-   * Бетбелгі ауыстыру функциясы
+   * Бетбелгі қосу/алу функциясы
    * 
    * @param {Event} e - Оқиға объектісі
    */
-  const handleToggleBookmark = async (e) => {
+  const handleToggleBookmark = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      // Кіруді талап ету
-      // Note: Бұл жерде модальді немесе туындыны көрсетуіңізге болады
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      
-      // API арқылы бетбелгіні ауыстыру
-      const response = await toggleBookmark(book.id);
-      setIsBookmarked(response.bookmarked);
-    } catch (error) {
-      console.error('Бетбелгі ауыстыру қатесі:', error);
-    } finally {
-      setLoading(false);
+    if (onToggleBookmark) {
+      onToggleBookmark(book);
     }
   };
   
-  // Мұқаба URL-ін дайындау
+  /**
+   * Кітапты алу функциясы
+   * 
+   * @param {Event} e - Оқиға объектісі
+   */
+  const handleBorrow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onBorrow) {
+      onBorrow(book);
+    }
+  };
+  
+  /**
+   * Карточканы кеңейту/жию функциясы
+   * 
+   * @param {Event} e - Оқиға объектісі
+   */
+  const handleExpandClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpanded(!expanded);
+  };
+  
+  // Мұқаба URL
   const coverUrl = book.cover
     ? `/uploads/books/${book.cover}`
     : '/images/default-book-cover.jpg';
   
-  // Мұқаба суретінің жүктелу оқиғасын өңдеу
+  // Кітаптың қысқаша сипаттамасы
+  const shortDescription = book.description
+    ? book.description.length > 120
+      ? `${book.description.substring(0, 120)}...`
+      : book.description
+    : '';
+  
+  // Кітап категориясының аты
+  const categoryName = book.category?.name || '';
+  
+  // Мұқаба суретінің жүктелу оқиғасы
   const handleImageLoad = () => {
     setImageLoaded(true);
   };
@@ -93,8 +156,8 @@ const BookCard = ({ book }) => {
   return (
     <motion.div
       whileHover={{ 
-        y: -5, 
-        transition: { duration: 0.2 } 
+        y: -5,
+        transition: { duration: 0.2 }
       }}
     >
       <Card 
@@ -110,6 +173,7 @@ const BookCard = ({ book }) => {
           '&:hover': {
             boxShadow: theme.shadows[6],
           },
+          ...sx
         }}
       >
         <CardActionArea 
@@ -123,6 +187,7 @@ const BookCard = ({ book }) => {
             height: '100%'
           }}
         >
+          {/* Кітап мұқабасы */}
           <Box sx={{ position: 'relative', width: '100%', paddingTop: '140%' }}>
             {!imageLoaded && (
               <Skeleton 
@@ -156,9 +221,9 @@ const BookCard = ({ book }) => {
             />
             
             {/* Категория чипі */}
-            {book.category && (
+            {categoryName && (
               <Chip
-                label={book.category.name}
+                label={categoryName}
                 size="small"
                 sx={{
                   position: 'absolute',
@@ -181,14 +246,14 @@ const BookCard = ({ book }) => {
                   left: 0,
                   width: '100%',
                   height: '100%',
-                  backgroundColor: alpha(theme.palette.background.paper, 0.6),
+                  backgroundColor: alpha(theme.palette.background.paper, 0.7),
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <VisibilityOff 
+                <VisibilityOffIcon 
                   sx={{ 
                     fontSize: 60, 
                     color: alpha(theme.palette.error.main, 0.8)
@@ -208,6 +273,7 @@ const BookCard = ({ book }) => {
             )}
           </Box>
           
+          {/* Кітап мәліметтері */}
           <CardContent sx={{ flexGrow: 1, width: '100%' }}>
             <Typography 
               gutterBottom 
@@ -235,86 +301,156 @@ const BookCard = ({ book }) => {
               {book.author}
             </Typography>
             
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              mb: 1
-            }}>
-              <Rating 
-                value={book.rating || 0} 
-                precision={0.5}
+            {/* Рейтинг */}
+            <Box sx={{ mb: 1 }}>
+              <BookRating 
+                rating={book.rating || 0} 
+                reviewCount={book.reviewCount || 0}
                 size="small"
-                readOnly 
               />
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-                sx={{ ml: 1 }}
-              >
-                ({book.reviewCount || 0})
-              </Typography>
             </Box>
 
+            {/* Жыл және тіл */}
             <Box sx={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
-              alignItems: 'center' 
+              alignItems: 'center',
+              mb: 1
             }}>
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-              >
-                {book.publicationYear}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <CalendarIcon sx={{ fontSize: '0.875rem', color: 'text.secondary', mr: 0.5 }} />
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                >
+                  {book.publicationYear}
+                </Typography>
+              </Box>
               
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-              >
-                {book.language}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <LanguageIcon sx={{ fontSize: '0.875rem', color: 'text.secondary', mr: 0.5 }} />
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                >
+                  {book.language}
+                </Typography>
+              </Box>
             </Box>
+            
+            {/* Сипаттама (егер isDetails=true болса) */}
+            {isDetails && (
+              <>
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    mb: 1
+                  }}
+                >
+                  <Typography 
+                    variant="body2" 
+                    sx={{ fontWeight: 'medium' }}
+                  >
+                    Сипаттама
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={handleExpandClick}
+                    aria-expanded={expanded}
+                    aria-label="сипаттаманы көрсету"
+                  >
+                    {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                  </IconButton>
+                </Box>
+                
+                <Collapse in={expanded} timeout="auto" unmountOnExit>
+                  <Typography variant="body2" paragraph>
+                    {book.description}
+                  </Typography>
+                </Collapse>
+                
+                {!expanded && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                    }}
+                  >
+                    {shortDescription}
+                  </Typography>
+                )}
+              </>
+            )}
           </CardContent>
         </CardActionArea>
         
-        <CardActions sx={{ p: 2, pt: 0 }}>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            width: '100%'
-          }}>
-            {/* Қолжетімділік ақпараты */}
-            <Tooltip title={book.availableCopies > 0 ? "Қолжетімді" : "Қолжетімсіз"}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center'
-              }}>
-                <LocalLibrary color={book.availableCopies > 0 ? "success" : "disabled"} />
+        {/* Төменгі панель және әрекеттер */}
+        <Divider />
+        <CardActions sx={{ p: 2, pt: 1.5, pb: 1.5, justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Tooltip 
+              title={book.availableCopies > 0 ? "Қолжетімді" : "Қолжетімсіз"}
+              arrow
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <LocalLibraryIcon 
+                  fontSize="small" 
+                  color={book.availableCopies > 0 ? "success" : "disabled"} 
+                  sx={{ mr: 0.5 }} 
+                />
                 <Typography 
                   variant="body2" 
                   color={book.availableCopies > 0 ? "success.main" : "text.disabled"}
-                  sx={{ ml: 0.5 }}
                 >
-                  {book.availableCopies} дана
+                  {book.availableCopies || 0} дана
                 </Typography>
               </Box>
             </Tooltip>
-            
-            {/* Бетбелгі түймесі */}
-            <Tooltip title={isBookmarked ? "Бетбелгіден алып тастау" : "Бетбелгіге қосу"}>
-              <IconButton 
-                onClick={handleToggleBookmark}
-                disabled={loading}
+          </Box>
+          
+          {/* Бетбелгі түймесі */}
+          <Box>
+            {book.availableCopies > 0 && onBorrow && (
+              <Button
                 size="small"
-                color="primary"
-                sx={{
+                variant="contained"
+                startIcon={<LocalLibraryIcon />}
+                onClick={handleBorrow}
+                sx={{ 
+                  mr: 1,
+                  borderRadius: 2,
+                  boxShadow: 'none',
                   '&:hover': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  },
+                    boxShadow: theme.shadows[2]
+                  }
                 }}
               >
-                {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                Алу
+              </Button>
+            )}
+            
+            <Tooltip 
+              title={book.isBookmarked ? "Бетбелгіден алып тастау" : "Бетбелгіге қосу"}
+              arrow
+            >
+              <IconButton
+                onClick={handleToggleBookmark}
+                size="small"
+                color="primary"
+                aria-label={book.isBookmarked ? "Бетбелгіден алып тастау" : "Бетбелгіге қосу"}
+              >
+                {book.isBookmarked ? (
+                  <BookmarkIcon color="primary" />
+                ) : (
+                  <BookmarkBorderIcon />
+                )}
               </IconButton>
             </Tooltip>
           </Box>
@@ -322,6 +458,15 @@ const BookCard = ({ book }) => {
       </Card>
     </motion.div>
   );
+};
+
+BookCard.propTypes = {
+  book: PropTypes.object,
+  onToggleBookmark: PropTypes.func,
+  onBorrow: PropTypes.func,
+  isDetails: PropTypes.bool,
+  isLoading: PropTypes.bool,
+  sx: PropTypes.object
 };
 
 export default BookCard;
