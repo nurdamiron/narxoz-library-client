@@ -1,3 +1,17 @@
+/**
+ * src/components/layout/MainLayout.jsx
+ * 
+ * MainLayout компоненті - сайттың негізгі макеті
+ * 
+ * Бұл компонент бүкіл қосымшаның құрылымын анықтайды және келесі элементтерді біріктіреді:
+ * - Жоғарғы панель (Header)
+ * - Бүйір панелі (Sidebar) - только на десктопных устройствах
+ * - Негізгі контент аймағы (Outlet арқылы көрсетіледі)
+ * - Төменгі панель (Footer)
+ * 
+ * @version 2.0
+ * @author Нархоз Library Team
+ */
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { 
@@ -11,25 +25,52 @@ import {
   Slide, 
   AppBar, 
   Toolbar,
-  IconButton
+  IconButton,
+  useScrollTrigger,
+  CssBaseline,
+  alpha
 } from '@mui/material';
 import { 
   KeyboardArrowUp as KeyboardArrowUpIcon,
   Menu as MenuIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Импортируем компоненты
 import Header from '../common/Header';
 import Footer from '../common/Footer';
 import Sidebar from '../common/Sidebar';
+import ScrollToTop from '../common/ScrollToTop';
 
 /**
- * MainLayout компоненті - сайттың негізгі макеті
+ * Скролл позициясын бақылау функциясы
+ * AppBar жасыру/көрсету үшін қолданылады
  * 
- * Бұл компонент бүкіл қосымшаның құрылымын анықтайды және келесі элементтерді біріктіреді:
- * - Жоғарғы панель (Header)
- * - Бүйір панелі (Sidebar) - только на десктопных устройствах
- * - Негізгі контент аймағы (Outlet арқылы көрсетіледі)
- * - Төменгі панель (Footer)
+ * @param {Object} props - Свойства
+ * @returns {boolean} - Скролл триггерінің күйі
+ */
+function HideOnScroll(props) {
+  const { children } = props;
+  const trigger = useScrollTrigger({
+    threshold: 100, // Скроллдан кейін жасыру
+    disableHysteresis: false // Скролл бағытын өзгерткенде жылдам әрекет етпеу
+  });
+  
+  return (
+    <Slide appear={false} direction="down" in={!trigger}>
+      {children}
+    </Slide>
+  );
+}
+
+/**
+ * MainLayout компоненті
+ * 
+ * @param {Object} props - Компонент параметрлері
+ * @param {boolean} props.darkMode - Қараңғы режим күйі
+ * @param {Function} props.toggleDarkMode - Қараңғы режим күйін ауыстыру функциясы
+ * @returns {JSX.Element} - MainLayout компоненті
  */
 const MainLayout = ({ darkMode, toggleDarkMode }) => {
   const theme = useTheme();
@@ -38,59 +79,19 @@ const MainLayout = ({ darkMode, toggleDarkMode }) => {
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
   
   // Бүйір панелінің күйі - мобильді құрылғыларда әдепкі бойынша жабық
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Изменено на false для всех устройств по умолчанию
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   
   // Жоғары скролл түймесінің көрінуі
-  const [showScrollTop, setShowScrollTop] = useState(false);
+  const showScrollTop = useScrollTrigger({
+    disableHysteresis: true,
+    threshold: 400
+  });
   
-  // Хедердің көрінуі (мобильді құрылғыларда скролл кезінде жасыру)
-  const [showHeader, setShowHeader] = useState(true);
-  
-  // Соңғы скролл позициясы
-  const [lastScrollY, setLastScrollY] = useState(0);
-
   /**
    * Бүйір панелінің күйін ауыстыру (ашу/жабу)
    */
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
-  };
-
-  /**
-   * Беттің жоғарғы бөлігіне скролл жасау
-   */
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
-  /**
-   * Скролл оқиғасын өңдеу
-   */
-  const handleScroll = () => {
-    const currentScrollY = window.scrollY;
-    
-    // Жоғары скролл түймесін көрсету/жасыру
-    if (currentScrollY > 400) {
-      setShowScrollTop(true);
-    } else {
-      setShowScrollTop(false);
-    }
-    
-    // Хедерді скролл бағытына байланысты көрсету/жасыру (тек мобильді құрылғыларда)
-    if (isMobile) {
-      if (currentScrollY > 100 && currentScrollY > lastScrollY) {
-        setShowHeader(false); // Төмен скролл - хедерді жасыру
-      } else {
-        setShowHeader(true); // Жоғары скролл - хедерді көрсету
-      }
-    } else {
-      setShowHeader(true); // Десктопта әрқашан көрсету
-    }
-    
-    setLastScrollY(currentScrollY);
   };
 
   /**
@@ -103,72 +104,82 @@ const MainLayout = ({ darkMode, toggleDarkMode }) => {
   }, [location.pathname, isMobile]);
 
   /**
-   * Скролл оқиғасын тіркеу және тазалау
+   * Экран өлшемі өзгергенде бүйір панелінің күйін жаңарту
    */
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [lastScrollY]);
+    if (!isMobile) {
+      setSidebarOpen(true);
+    } else {
+      setSidebarOpen(false);
+    }
+  }, [isMobile]);
+
+  // Анимация конфигурациясы
+  const pageTransitionVariants = {
+    initial: { opacity: 0 },
+    animate: { 
+      opacity: 1,
+      transition: { duration: 0.3 }
+    },
+    exit: { 
+      opacity: 0,
+      transition: { duration: 0.2 }
+    }
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <CssBaseline />
+      
+      {/* ScrollToTop компоненті - URL өзгергенде беттің үстіне скролл жасайды */}
+      <ScrollToTop />
+      
       {/* Жоғарғы панель - анимациясы бар (скролл кезінде жоғары/төмен) */}
-      <Slide appear={false} direction="down" in={showHeader}>
+      <HideOnScroll>
         <AppBar 
           position="fixed" 
-          elevation={showHeader && lastScrollY > 50 ? 4 : 0}
+          elevation={0}
           sx={{
-            transition: theme.transitions.create(['box-shadow'], {
-              duration: theme.transitions.duration.standard,
-            }),
-            backgroundColor: theme.palette.primary.main,
             zIndex: theme.zIndex.drawer + 1,
+            backgroundColor: theme.palette.primary.main,
+            backgroundImage: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+            borderBottom: `1px solid ${alpha(theme.palette.primary.dark, 0.1)}`
           }}
         >
-          <Toolbar>
+          <Toolbar sx={{ minHeight: { xs: 64, sm: 70 } }}>
             {/* Мобильді меню түймесі */}
             <IconButton
               color="inherit"
               aria-label={sidebarOpen ? "close menu" : "open menu"}
               edge="start"
               onClick={toggleSidebar}
-              sx={{ mr: 2 }}
+              sx={{ 
+                mr: 2,
+                ...(sidebarOpen && !isMobile && { display: 'none' })
+              }}
             >
               {sidebarOpen ? <CloseIcon /> : <MenuIcon />}
             </IconButton>
             
             {/* Хедер мазмұны */}
-            <Header toggleSidebar={toggleSidebar} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+            <Header 
+              toggleSidebar={toggleSidebar} 
+              darkMode={darkMode} 
+              toggleDarkMode={toggleDarkMode} 
+            />
           </Toolbar>
         </AppBar>
-      </Slide>
+      </HideOnScroll>
       
-      {/* Негізгі контент аймағы - боковая панель теперь во временном Drawer */}
+      {/* Toolbar placeholder */}
+      <Toolbar sx={{ minHeight: { xs: 64, sm: 70 } }} />
+      
+      {/* Негізгі контент аймағы */}
       <Box sx={{ display: 'flex', flex: 1 }}>
-        {/* Бүйір панелі - только через Drawer */}
-        <Drawer
-          variant="temporary"
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          ModalProps={{
-            keepMounted: true, // Better mobile performance
-          }}
-          sx={{
-            display: { xs: 'block' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
-              width: 240,
-              borderRadius: { xs: 0, sm: '0 16px 16px 0' } 
-            },
-          }}
-        >
-          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        </Drawer>
+        {/* Бүйір панелі */}
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         
-        {/* Басты контент аймағы - всегда на полной ширине */}
+        {/* Басты контент аймағы */}
         <Box
           component="main"
           id="main-content"
@@ -176,49 +187,53 @@ const MainLayout = ({ darkMode, toggleDarkMode }) => {
           sx={{
             flexGrow: 1,
             width: '100%',
-            pt: { xs: 7, sm: 8 }, // Toolbar биіктігіне байланысты жоғарғы шегініс
+            transition: theme.transitions.create(['margin'], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.leavingScreen,
+            }),
+            ...(sidebarOpen && !isMobile && {
+              transition: theme.transitions.create(['margin'], {
+                easing: theme.transitions.easing.easeOut,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+              marginLeft: 0,
+            }),
           }}
         >
-          {/* Контент контейнері - адаптивные отступы */}
+          {/* Контент контейнері - адаптивты шегіністер */}
           <Container 
             maxWidth="lg" 
+            component={motion.div}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageTransitionVariants}
             sx={{ 
               pt: { xs: 2, sm: 3, md: 4 }, 
               pb: { xs: 4, sm: 5, md: 6 },
-              px: isSmall ? 1 : 2, // Кішкентай экранда padding азырақ
+              px: isSmall ? 2 : 3,
               minHeight: 'calc(100vh - 200px)', // Минимальная высота для контента
             }}
           >
             {/* Outlet - бұл жерге React Router арқылы басқа компоненттер салынады */}
-            <Outlet />
+            <AnimatePresence mode="wait">
+              <Box
+                key={location.pathname}
+                component={motion.div}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageTransitionVariants}
+              >
+                <Outlet />
+              </Box>
+            </AnimatePresence>
           </Container>
         </Box>
       </Box>
       
       {/* Төменгі панель - бүкіл бетте тұрақты орында болады */}
       <Footer />
-      
-      {/* Жоғары скролл түймесі - беттің төменгі жағында орналасқан */}
-      <Zoom in={showScrollTop}>
-        <Fab 
-          color="primary" 
-          size="small" 
-          aria-label="scroll back to top"
-          onClick={scrollToTop}
-          sx={{
-            position: 'fixed',
-            right: isSmall ? 16 : 32,
-            bottom: isSmall ? 16 : 32,
-            zIndex: 1000,
-            boxShadow: theme.shadows[3],
-            '&:hover': {
-              boxShadow: theme.shadows[6],
-            }
-          }}
-        >
-          <KeyboardArrowUpIcon />
-        </Fab>
-      </Zoom>
     </Box>
   );
 };

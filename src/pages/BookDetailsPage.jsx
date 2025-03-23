@@ -51,6 +51,7 @@ import { useAuth } from '../context/AuthContext';
 import bookService from '../services/bookService';
 import bookmarkService from '../services/bookmarkService';
 import borrowService from '../services/borrowService';
+import apiClient from '../services/api'; // Import your API client
 
 /**
  * BookDetailsPage компоненті
@@ -96,23 +97,53 @@ const BookDetailsPage = () => {
       setLoading(true);
       setError(null);
       
-      // Кітап туралы мәліметтерді алу
-      const bookData = await bookService.getBook(id);
-      setBook(bookData);
+      console.log(`DEBUG: Fetching book with ID: ${id}`);
       
-      // Кітап бетбелгіге қосылған ба, тексеру
-      setIsBookmarked(bookData.isBookmarked);
+      // Add direct API call instead of using the service for testing
+      const response = await apiClient.get(`/books/${id}`);
+      console.log('DEBUG: Raw API response:', response);
+      
+      // Check what kind of data structure you're getting
+      const bookData = response.data;
+      console.log('DEBUG: bookData structure:', bookData);
+      
+      // Handle both potential data structures
+      let bookDetails;
+      if (bookData && typeof bookData === 'object') {
+        // Check if data is nested under a data property
+        bookDetails = bookData.data || bookData;
+        console.log('DEBUG: Extracted book details:', bookDetails);
+        
+        // Check if it has the expected properties
+        if (bookDetails.id && bookDetails.title) {
+          // Build the category object if needed
+          const enhancedBook = {
+            ...bookDetails,
+            category: bookDetails.category || {
+              id: bookDetails.categoryId,
+              name: 'Көрсетілмеген'
+            }
+          };
+          
+          console.log('DEBUG: Enhanced book with category:', enhancedBook);
+          setBook(enhancedBook);
+          setIsBookmarked(!!enhancedBook.isBookmarked);
+        } else {
+          console.error('DEBUG: Book data missing required properties');
+          throw new Error('Invalid book data - missing required properties');
+        }
+      } else {
+        console.error('DEBUG: Invalid response format:', bookData);
+        throw new Error('Invalid response format');
+      }
     } catch (err) {
-      console.error('Кітапты жүктеу қатесі:', err);
-      setError('Кітап туралы ақпаратты жүктеу кезінде қате орын алды');
+      console.error('DEBUG: Error fetching book:', err);
+      console.error('DEBUG: Error details:', err.response || err.message);
+      setError(`Кітап туралы ақпаратты жүктеу кезінде қате орын алды: ${err.message}`);
     } finally {
       setLoading(false);
     }
   }, [id]);
-  
-  useEffect(() => {
-    fetchBook();
-  }, [fetchBook]);
   
   /**
    * Бетбелгіні ауыстыру функциясы
@@ -165,6 +196,11 @@ const BookDetailsPage = () => {
     }
   };
   
+
+  useEffect(() => {
+    fetchBook();
+  }, [fetchBook]);
+  
   /**
    * Сипаттаманы кеңейту/жию
    */
@@ -195,9 +231,9 @@ const BookDetailsPage = () => {
   };
   
   // Мұқаба URL-ін дайындау
-  const coverUrl = book?.cover
-    ? `/uploads/books/${book.cover}`
-    : '/images/default-book-cover.jpg';
+  const coverUrl = book && book.cover
+  ? (book.cover.startsWith('http') ? book.cover : `/uploads/books/${book.cover}`)
+  : '/images/default-book-cover.jpg';
   
   // Мұқаба суретінің жүктелу оқиғасын өңдеу
   const handleImageLoad = () => {
@@ -411,7 +447,7 @@ const BookDetailsPage = () => {
                           Категория
                         </Typography>
                         <Typography variant="body1">
-                          {book.category?.name || 'Көрсетілмеген'}
+                        {book.category && book.category.name ? book.category.name : 'Көрсетілмеген'}
                         </Typography>
                       </Box>
                     </Box>
@@ -426,7 +462,7 @@ const BookDetailsPage = () => {
                           Жарияланған жыл
                         </Typography>
                         <Typography variant="body1">
-                          {book.publicationYear || 'Көрсетілмеген'}
+                        {book.publicationYear || 'Көрсетілмеген'}
                         </Typography>
                       </Box>
                     </Box>

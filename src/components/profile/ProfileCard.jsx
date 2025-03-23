@@ -6,10 +6,6 @@ import {
   Card,
   CardContent,
   Divider,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Typography,
   Chip,
   useTheme,
@@ -17,20 +13,24 @@ import {
 } from '@mui/material';
 import {
   Edit as EditIcon,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  School as SchoolIcon,
 } from '@mui/icons-material';
 
+// Импортируем подкомпоненты
+import ProfileContactInfo from './ProfileContactInfo';
+
 /**
- * ProfileCard component displays user information and avatar
+ * ProfileCard компоненті пайдаланушы ақпараты мен аватарын көрсетеді
  * 
- * @param {Object} props - Component props
- * @param {Object} props.userData - User data object
- * @param {Function} props.onEditClick - Function to handle edit button click
+ * @param {Object} props - Компонент параметрлері
+ * @param {Object} props.userData - Пайдаланушы деректері
+ * @param {Function} props.onEditClick - Өңдеу түймесін басқан кезде шақырылатын функция
  */
 const ProfileCard = ({ userData, onEditClick }) => {
   const theme = useTheme();
+
+  if (!userData) {
+    return null;
+  }
 
   return (
     <Card
@@ -47,12 +47,7 @@ const ProfileCard = ({ userData, onEditClick }) => {
       }}
     >
       {/* Профиль бетінің жоғарғы түсті аймағы */}
-      <Box
-        sx={{
-          height: 120,
-          background: 'linear-gradient(120deg, #d50032 0%, #ff5252 100%)',
-        }}
-      />
+      <ProfileHeader />
       
       {/* Профиль ақпараты */}
       <Box
@@ -65,21 +60,7 @@ const ProfileCard = ({ userData, onEditClick }) => {
         }}
       >
         {/* Пайдаланушы аватары */}
-        <Avatar
-          src={userData.avatar}
-          alt={userData.name}
-          sx={{
-            width: 120,
-            height: 120,
-            border: '5px solid white',
-            backgroundColor: alpha('#d50032', 0.8),
-            fontSize: 48,
-            fontWeight: 'bold',
-            boxShadow: theme.shadows[3],
-          }}
-        >
-          {userData.name?.charAt(0)} {/* Аватар болмаса, атының бірінші әрпі көрсетіледі */}
-        </Avatar>
+        <ProfileAvatar userData={userData} />
         
         <CardContent sx={{ width: '100%', textAlign: 'center', pt: 3 }}>
           {/* Пайдаланушы аты */}
@@ -93,82 +74,108 @@ const ProfileCard = ({ userData, onEditClick }) => {
             color="text.secondary"
             gutterBottom
           >
-            Студент • {userData.year}
+            Студент • {userData.year} курс
           </Typography>
           
           {/* Пайдаланушы мамандығы */}
-          <Chip
-            label={userData.specialization}
-            sx={{ 
-              mt: 1, 
-              mb: 3,
-              bgcolor: alpha('#d50032', 0.1),
-              color: '#d50032',
-              fontWeight: 'medium',
-            }}
-            size="medium"
-          />
+          <ProfileSpecialization specialization={userData.specialization} />
           
           <Divider sx={{ my: 3 }} />
           
           {/* Пайдаланушының байланыс ақпараты */}
-          <List disablePadding>
-            {/* Email */}
-            <ListItem disablePadding sx={{ mb: 2 }}>
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <EmailIcon sx={{ color: '#d50032' }} />
-              </ListItemIcon>
-              <ListItemText
-                primary={<Typography variant="subtitle2" fontWeight="bold">Email</Typography>}
-                secondary={userData.email}
-              />
-            </ListItem>
-            
-            {/* Телефон */}
-            <ListItem disablePadding sx={{ mb: 2 }}>
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <PhoneIcon sx={{ color: '#d50032' }} />
-              </ListItemIcon>
-              <ListItemText
-                primary={<Typography variant="subtitle2" fontWeight="bold">Телефон</Typography>}
-                secondary={userData.phone}
-              />
-            </ListItem>
-            
-            {/* Факультет */}
-            <ListItem disablePadding>
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <SchoolIcon sx={{ color: '#d50032' }} />
-              </ListItemIcon>
-              <ListItemText
-                primary={<Typography variant="subtitle2" fontWeight="bold">Факультет</Typography>}
-                secondary={userData.faculty}
-              />
-            </ListItem>
-          </List>
+          <ProfileContactInfo userData={userData} />
           
           {/* Профильді өңдеу түймесі */}
-          <Button
-            variant="outlined"
-            startIcon={<EditIcon />}
-            onClick={onEditClick}
-            fullWidth
-            sx={{ 
-              mt: 3,
-              borderColor: '#d50032',
-              color: '#d50032',
-              borderRadius: 2,
-              '&:hover': {
-                borderColor: '#d50032',
-                backgroundColor: alpha('#d50032', 0.05),
-              },
-            }}
-          >
-            Редактировать профиль
-          </Button>
+          <EditProfileButton onEditClick={onEditClick} />
         </CardContent>
       </Box>
     </Card>
+  );
+};
+
+/**
+ * Профиль бетінің жоғарғы түсті аймағы
+ */
+const ProfileHeader = () => (
+  <Box
+    sx={{
+      height: 120,
+      background: 'linear-gradient(120deg, #d50032 0%, #ff5252 100%)',
+    }}
+  />
+);
+
+/**
+ * Пайдаланушы аватары компоненті
+ */
+const ProfileAvatar = ({ userData }) => {
+  const theme = useTheme();
+  
+  return (
+    <Avatar
+      src={userData.avatar}
+      alt={userData.name}
+      sx={{
+        width: 120,
+        height: 120,
+        border: '5px solid white',
+        backgroundColor: alpha('#d50032', 0.8),
+        fontSize: 48,
+        fontWeight: 'bold',
+        boxShadow: theme.shadows[3],
+      }}
+    >
+      {userData.name?.charAt(0)} {/* Аватар болмаса, атының бірінші әрпі көрсетіледі */}
+    </Avatar>
+  );
+};
+
+/**
+ * Пайдаланушы мамандығы компоненті
+ */
+const ProfileSpecialization = ({ specialization }) => {
+  const theme = useTheme();
+  
+  if (!specialization) return null;
+  
+  return (
+    <Chip
+      label={specialization}
+      sx={{ 
+        mt: 1, 
+        mb: 3,
+        bgcolor: alpha('#d50032', 0.1),
+        color: '#d50032',
+        fontWeight: 'medium',
+      }}
+      size="medium"
+    />
+  );
+};
+
+/**
+ * Профильді өңдеу түймесі компоненті
+ */
+const EditProfileButton = ({ onEditClick }) => {
+  return (
+    <Button
+      variant="outlined"
+      startIcon={<EditIcon />}
+      onClick={onEditClick}
+      fullWidth
+      sx={{ 
+        mt: 3,
+        borderColor: '#d50032',
+        color: '#d50032',
+        borderRadius: 2,
+        '&:hover': {
+          borderColor: '#d50032',
+          backgroundColor: alpha('#d50032', 0.05),
+        },
+      }}
+    >
+      Профильді өңдеу
+    </Button>
   );
 };
 

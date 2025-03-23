@@ -96,8 +96,10 @@ const BooksPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const categoriesData = await bookService();
-        setCategories(categoriesData);
+        // Correct method call
+        const categoriesData = await bookService.getCategories();
+        // Extract just the data array from the response
+        setCategories(categoriesData.data || []);
       } catch (err) {
         console.error('Категорияларды жүктеу қатесі:', err);
         showError('Категорияларды жүктеу кезінде қате орын алды');
