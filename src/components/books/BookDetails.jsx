@@ -56,8 +56,7 @@ import {
   Visibility as VisibilityIcon
 } from '@mui/icons-material';
 
-
-import { motion } from 'framer-motion';
+import borrowService from '../services/borrowService';
 
 const BookDetails = ({ book }) => {
   const theme = useTheme();
@@ -104,12 +103,33 @@ const BookDetails = ({ book }) => {
   };
 
   // Кітапты алуды растау
-  const handleConfirmBorrow = () => {
+  // Кітапты алуды растау
+const handleConfirmBorrow = async () => {
+  try {
+    // Кітапты алу API сұрауы
+    await borrowService.borrowBook({ bookId: book.id });
+    
     setDialogOpen(false);
     setSnackbarMessage('Кітап сәтті тапсырылды! Оны кітапханадан 3 күн ішінде алыңыз.');
     setSnackbarSeverity('success');
     setSnackbarOpen(true);
-  };
+  } catch (err) {
+    console.error('Кітапты алу қатесі:', err);
+    
+    // Сервер қайтарған қате хабарламасын көрсету
+    if (err.response && err.response.data && err.response.data.error) {
+      setDialogOpen(false);
+      setSnackbarMessage(err.response.data.error);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } else {
+      setDialogOpen(false);
+      setSnackbarMessage('Кітапты алу кезінде қате орын алды');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  }
+};
 
   // Хабарламаны жабу
   const handleSnackbarClose = () => {

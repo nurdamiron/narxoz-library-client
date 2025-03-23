@@ -44,7 +44,8 @@ import {
   Check,
   ExpandMore,
   ExpandLess,
-  Home
+  Home,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -66,7 +67,7 @@ const BookDetailsPage = () => {
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   
   // AuthContext мәліметтері
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   
   // Кітап мәліметтері күйі
   const [book, setBook] = useState(null);
@@ -82,7 +83,8 @@ const BookDetailsPage = () => {
   const [borrowLoading, setBorrowLoading] = useState(false);
   const [borrowSuccess, setBorrowSuccess] = useState(false);
   const [borrowError, setBorrowError] = useState(null);
-  
+  const [hasAlreadyBorrowed, setHasAlreadyBorrowed] = useState(false);
+
   // Сипаттама күйі
   const [expanded, setExpanded] = useState(false);
   
@@ -190,7 +192,19 @@ const BookDetailsPage = () => {
       setBorrowSuccess(true);
     } catch (error) {
       console.error('Кітапты қарызға алу қатесі:', error);
-      setBorrowError(error.message || 'Кітапты қарызға алу кезінде қате орын алды');
+      
+      // Сервер қайтарған қате хабарламасын тексеру
+      if (error.response && error.response.data && error.response.data.error) {
+        const errorMessage = error.response.data.error;
+        setBorrowError(errorMessage);
+        
+        // Тексеру - егер пайдаланушы кітапты әлдеқашан алса
+        if (errorMessage.includes('әлдеқашан қарызға алдыңыз')) {
+          setHasAlreadyBorrowed(true);
+        }
+      } else {
+        setBorrowError('Кітапты қарызға алу кезінде қате орын алды');
+      }
     } finally {
       setBorrowLoading(false);
     }
@@ -200,7 +214,15 @@ const BookDetailsPage = () => {
   useEffect(() => {
     fetchBook();
   }, [fetchBook]);
-  
+
+  useEffect(() => {
+    // Если книга загружена и есть информация о заимствованиях
+    if (book && book.borrows && user && 
+        book.borrows.some(borrow => borrow.userId === user.id && borrow.status === 'active')) {
+      setHasAlreadyBorrowed(true);
+    }
+  }, [book, user]);
+
   /**
    * Сипаттаманы кеңейту/жию
    */
@@ -343,35 +365,65 @@ const BookDetailsPage = () => {
                 
                 {/* Кітапты қарызға алу түймесі - мобильді көрініс */}
                 {isMobile && (
-                  <Box sx={{ mt: 3 }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      size="large"
-                      startIcon={<LocalLibrary />}
-                      onClick={handleBorrowBook}
-                      disabled={
-                        borrowLoading || 
-                        book.availableCopies <= 0
-                      }
-                      sx={{ mb: 1 }}
-                    >
-                      {borrowLoading ? 'Жүктелуде...' : 'Кітапты алу'}
-                    </Button>
-                    
-                    {book.availableCopies <= 0 && (
-                      <Typography 
-                        variant="body2" 
-                        color="error"
-                        align="center"
-                        sx={{ mt: 1 }}
-                      >
-                        Қазіргі уақытта қолжетімсіз
-                      </Typography>
-                    )}
-                  </Box>
-                )}
+  <Box sx={{ mt: 3 }}>
+    {hasAlreadyBorrowed ? (
+      <Button
+        variant="outlined"
+        fullWidth
+        size="large"
+        startIcon={<InfoIcon />}
+        disabled={true}
+        sx={{ 
+          mb: 1,
+          color: 'warning.main',
+          borderColor: 'warning.main',
+        }}
+      >
+        Сіз кітапты әлдеқашан алдыңыз
+      </Button>
+    ) : (
+      <Button
+        variant="contained"
+        color="primary"
+        fullWidth
+        size="large"
+        startIcon={<LocalLibrary />}
+        onClick={handleBorrowBook}
+        disabled={
+          borrowLoading || 
+          book.availableCopies <= 0
+        }
+        sx={{ mb: 1 }}
+      >
+        {borrowLoading ? 'Жүктелуде...' : 'Кітапты алу'}
+      </Button>
+    )}
+    
+    {book.availableCopies <= 0 && !hasAlreadyBorrowed && (
+      <Typography 
+        variant="body2" 
+        color="error"
+        align="center"
+        sx={{ mt: 1 }}
+      >
+        Қазіргі уақытта қолжетімсіз
+      </Typography>
+    )}
+    
+    {borrowError && !hasAlreadyBorrowed && (
+      <Alert 
+        severity="error" 
+        sx={{ 
+          mt: 2,
+          borderRadius: 1,
+          boxShadow: 1
+        }}
+      >
+        {borrowError}
+      </Alert>
+    )}
+  </Box>
+)}
               </Grid>
               
               {/* Кітап туралы ақпарат */}
@@ -558,43 +610,63 @@ const BookDetailsPage = () => {
                 </Box>
                 
                 {/* Кітапты қарызға алу түймесі - десктоп көрініс */}
-                {!isMobile && (
-                  <Box>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="large"
-                      startIcon={<LocalLibrary />}
-                      onClick={handleBorrowBook}
-                      disabled={
-                        borrowLoading || 
-                        book.availableCopies <= 0
-                      }
-                      sx={{ 
-                        minWidth: '200px',
-                        py: 1.5
-                      }}
-                    >
-                      {borrowLoading ? 'Жүктелуде...' : 'Кітапты алу'}
-                    </Button>
-                    
-                    {book.availableCopies <= 0 && (
-                      <Typography 
-                        variant="body2" 
-                        color="error"
-                        sx={{ mt: 1 }}
-                      >
-                        Қазіргі уақытта қолжетімсіз
-                      </Typography>
-                    )}
-                    
-                    {borrowError && (
-                      <Alert severity="error" sx={{ mt: 2 }}>
-                        {borrowError}
-                      </Alert>
-                    )}
-                  </Box>
-                )}
+{!isMobile && (
+  <Box>
+    {hasAlreadyBorrowed ? (
+      <Button
+        variant="outlined"
+        size="large"
+        startIcon={<InfoIcon />}
+        disabled={true}
+        sx={{ 
+          minWidth: '200px',
+          py: 1.5,
+          color: 'warning.main',
+          borderColor: 'warning.main',
+        }}
+      >
+        Сіз кітапты әлдеқашан алдыңыз
+      </Button>
+    ) : (
+      <Button
+        variant="contained"
+        color="primary"
+        size="large"
+        startIcon={<LocalLibrary />}
+        onClick={handleBorrowBook}
+        disabled={
+          borrowLoading || 
+          book.availableCopies <= 0
+        }
+        sx={{ 
+          minWidth: '200px',
+          py: 1.5
+        }}
+      >
+        {borrowLoading ? 'Жүктелуде...' : 'Кітапты алу'}
+      </Button>
+    )}
+    
+    {book.availableCopies <= 0 && !hasAlreadyBorrowed && (
+      <Typography 
+        variant="body2" 
+        color="error"
+        sx={{ mt: 1 }}
+      >
+        Қазіргі уақытта қолжетімсіз
+      </Typography>
+    )}
+    
+    {borrowError && !hasAlreadyBorrowed && (
+      <Alert 
+        severity="error" 
+        sx={{ mt: 2 }}
+      >
+        {borrowError}
+      </Alert>
+    )}
+  </Box>
+)}
               </Grid>
             </Grid>
           </Paper>

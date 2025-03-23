@@ -287,7 +287,12 @@ const BooksPage = () => {
       handleCloseBorrowDialog();
     } catch (err) {
       console.error('Кітапты алу қатесі:', err);
-      showError('Кітапты алу кезінде қате орын алды');
+      // Сервер қайтарған қате хабарламасын көрсету
+      if (err.response && err.response.data && err.response.data.error) {
+        showError(err.response.data.error);
+      } else {
+        showError('Кітапты алу кезінде қате орын алды');
+      }
     } finally {
       setBorrowing(false);
     }
