@@ -1,6 +1,14 @@
-// src/pages/NotificationsPage.js
+/**
+ * src/pages/NotificationsPage.jsx
+ * 
+ * Хабарламалар беті
+ * 
+ * Бұл компонент пайдаланушы хабарламаларын көрсетеді және басқарады.
+ * Әр түрлі типтегі хабарламаларды өңдеу, оқылды/оқылмады деп белгілеу 
+ * және жою функционалын қамтамасыз етеді.
+ */
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Container,
   Typography,
@@ -17,7 +25,17 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  Backdrop
+  Backdrop,
+  Tooltip,
+  Badge,
+  useTheme,
+  useMediaQuery,
+  alpha,
+  Card,
+  Tabs,
+  Tab,
+  Skeleton,
+  Fade
 } from '@mui/material';
 import {
   Info as InfoIcon,
@@ -28,15 +46,29 @@ import {
   Notifications as NotificationsIcon,
   Delete as DeleteIcon,
   Markunread as UnreadIcon,
-  Done as ReadIcon
+  Done as ReadIcon,
+  Refresh as RefreshIcon,
+  FilterList as FilterListIcon,
+  CheckCircle as CheckCircleIcon,
+  ArrowBack as ArrowBackIcon,
+  Inbox as InboxIcon
 } from '@mui/icons-material';
 
-// Импорт хуков и сервисов
-import useNotifications  from '../hooks/useNotifications';
+// Хуктар мен сервистерді импорттау
+import useNotifications from '../hooks/useNotifications';
 import { useToast } from '../context/ToastContext';
 import { formatDateTime } from '../utils';
 
+/**
+ * NotificationsPage компоненті - хабарламалар бетін көрсетеді
+ * 
+ * @returns {JSX.Element} - Хабарламалар беті
+ */
 const NotificationsPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  
   const { 
     notifications, 
     unreadCount, 
@@ -47,73 +79,189 @@ const NotificationsPage = () => {
     markAllAsRead, 
     deleteNotification 
   } = useNotifications();
+  
   const { success, error: showError } = useToast();
   
+  // Күйлер
   const [deleting, setDeleting] = useState(false);
-
-  // Обработчик маркировки уведомления как прочитанного
+  const [activeTab, setActiveTab] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  
+  /**
+   * Хабарламаны оқылды деп белгілеу
+   * 
+   * @param {string|number} id - Хабарлама идентификаторы
+   */
   const handleMarkAsRead = async (id) => {
     try {
       await markAsRead(id);
       success('Хабарлама оқылды деп белгіленді');
     } catch (err) {
-      console.error('Ошибка при маркировке уведомления:', err);
+      console.error('Хабарламаны белгілеу қатесі:', err);
       showError('Хабарламаны оқылды деп белгілеу кезінде қате орын алды');
     }
   };
 
-  // Обработчик маркировки всех уведомлений как прочитанных
+  /**
+   * Барлық хабарламаларды оқылды деп белгілеу
+   */
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead();
       success('Барлық хабарламалар оқылды деп белгіленді');
     } catch (err) {
-      console.error('Ошибка при маркировке всех уведомлений:', err);
+      console.error('Барлық хабарламаларды белгілеу қатесі:', err);
       showError('Барлық хабарламаларды оқылды деп белгілеу кезінде қате орын алды');
     }
   };
 
-  // Обработчик удаления уведомления
+  /**
+   * Хабарламаны жою
+   * 
+   * @param {string|number} id - Хабарлама идентификаторы
+   */
   const handleDeleteNotification = async (id) => {
     try {
       setDeleting(true);
       await deleteNotification(id);
       success('Хабарлама жойылды');
     } catch (err) {
-      console.error('Ошибка при удалении уведомления:', err);
+      console.error('Хабарламаны жою қатесі:', err);
       showError('Хабарламаны жою кезінде қате орын алды');
     } finally {
       setDeleting(false);
     }
   };
+  
+  /**
+   * Хабарламаларды жаңарту
+   */
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await fetchNotifications();
+      success('Хабарламалар жаңартылды');
+    } catch (err) {
+      console.error('Хабарламаларды жаңарту қатесі:', err);
+      showError('Хабарламаларды жаңарту кезінде қате орын алды');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+  
+  /**
+   * Таб өзгерісін өңдеу
+   */
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
 
-  // Получение иконки и цвета для типа уведомления
+  /**
+   * Хабарлама түрі бойынша иконка мен түсті алу
+   * 
+   * @param {string} type - Хабарлама түрі
+   * @returns {Object} - Иконка мен түс
+   */
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'info':
-        return { icon: <InfoIcon color="info" />, color: 'info' };
+        return { 
+          icon: <InfoIcon color="info" />, 
+          color: 'info',
+          background: alpha(theme.palette.info.main, 0.12)
+        };
       case 'warning':
-        return { icon: <WarningIcon color="warning" />, color: 'warning' };
+        return { 
+          icon: <WarningIcon color="warning" />, 
+          color: 'warning',
+          background: alpha(theme.palette.warning.main, 0.12)
+        };
       case 'overdue':
-        return { icon: <ErrorIcon color="error" />, color: 'error' };
+        return { 
+          icon: <ErrorIcon color="error" />, 
+          color: 'error',
+          background: alpha(theme.palette.error.main, 0.12)
+        };
       case 'return':
-        return { icon: <ScheduleIcon color="warning" />, color: 'warning' };
+        return { 
+          icon: <ScheduleIcon color="warning" />, 
+          color: 'warning',
+          background: alpha(theme.palette.warning.main, 0.12)
+        };
       case 'system':
-        return { icon: <SettingsIcon color="primary" />, color: 'primary' };
+        return { 
+          icon: <SettingsIcon color="primary" />, 
+          color: 'primary',
+          background: alpha(theme.palette.primary.main, 0.12)
+        };
       default:
-        return { icon: <NotificationsIcon />, color: 'default' };
+        return { 
+          icon: <NotificationsIcon color="action" />, 
+          color: 'default',
+          background: alpha(theme.palette.grey[500], 0.12)
+        };
     }
   };
-
+  
+  // Хабарламаларды сүзгілеу
+  const filteredNotifications = notifications.filter(notification => {
+    if (activeTab === 0) return true; // Барлық хабарламалар
+    if (activeTab === 1) return !notification.read; // Оқылмаған хабарламалар
+    if (activeTab === 2) return notification.read; // Оқылған хабарламалар
+    return true;
+  });
+  
+  // Жүктелу күйі
   if (loading && notifications.length === 0) {
     return (
-      <Container sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Box sx={{ mb: 4 }}>
+          <Skeleton variant="text" width={300} height={60} />
+          <Skeleton variant="text" width={200} height={40} sx={{ mt: 1 }} />
         </Box>
+        
+        <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 1, mb: 2 }}/>
+        
+        {[1, 2, 3].map((item) => (
+          <Skeleton 
+            key={item} 
+            variant="rectangular" 
+            height={120} 
+            sx={{ borderRadius: 2, mb: 2 }}
+          />
+        ))}
       </Container>
     );
   }
+  
+  // Анимация конфигурациясы
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.3
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      y: -20,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
 
   return (
     <motion.div
@@ -121,131 +269,425 @@ const NotificationsPage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <Container sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            Хабарламалар {unreadCount > 0 && `(${unreadCount} оқылмаған)`}
-          </Typography>
-          
-          {notifications.length > 0 && (
-            <Button 
-              variant="outlined" 
-              onClick={handleMarkAllAsRead}
-              disabled={unreadCount === 0}
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        {/* Тақырып және функционалдық батырмалар */}
+        <Box 
+          sx={{ 
+            mb: 3, 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between', 
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: { xs: 2, sm: 0 }
+          }}
+        >
+          <Box>
+            <Typography 
+              variant="h4" 
+              component="h1"
+              sx={{ fontWeight: 'bold' }}
             >
-              Барлығын оқылды деп белгілеу
-            </Button>
-          )}
+              Хабарламалар
+            </Typography>
+            
+            {unreadCount > 0 && (
+              <Typography 
+                variant="subtitle1" 
+                color="primary"
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  fontWeight: 'medium'
+                }}
+              >
+                <Badge 
+                  badgeContent={unreadCount} 
+                  color="primary"
+                  sx={{ mr: 1 }}
+                >
+                  <UnreadIcon fontSize="small" />
+                </Badge>
+                {unreadCount} оқылмаған хабарлама
+              </Typography>
+            )}
+          </Box>
+          
+          {/* Функционалдық батырмалар */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              gap: 1,
+              width: { xs: '100%', sm: 'auto' }
+            }}
+          >
+            <Tooltip title="Жаңарту">
+              <IconButton 
+                onClick={handleRefresh}
+                disabled={refreshing}
+                color="primary"
+                sx={{ 
+                  bgcolor: alpha(theme.palette.primary.main, 0.05),
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  }
+                }}
+              >
+                {refreshing ? <CircularProgress size={24} /> : <RefreshIcon />}
+              </IconButton>
+            </Tooltip>
+            
+            {notifications.length > 0 && (
+              <Button 
+                variant="outlined" 
+                color="primary"
+                onClick={handleMarkAllAsRead}
+                disabled={unreadCount === 0}
+                startIcon={<CheckCircleIcon />}
+                fullWidth={isMobile}
+              >
+                Барлығын оқылды деп белгілеу
+              </Button>
+            )}
+          </Box>
         </Box>
 
+        {/* Қате хабарламасы */}
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 3,
+              borderRadius: 2 
+            }}
+          >
             {error}
           </Alert>
         )}
+        
+        {/* Таб панелі */}
+        {notifications.length > 0 && (
+          <Paper 
+            elevation={2} 
+            sx={{ 
+              mb: 3, 
+              borderRadius: 2,
+              overflow: 'hidden'
+            }}
+          >
+            <Tabs 
+              value={activeTab} 
+              onChange={handleTabChange}
+              variant={isMobile ? "fullWidth" : "standard"}
+              centered={!isMobile}
+              indicatorColor="primary"
+              textColor="primary"
+            >
+              <Tab 
+                label={`Барлығы (${notifications.length})`}
+                icon={<NotificationsIcon />}
+                iconPosition="start"
+              />
+              <Tab 
+                label={`Оқылмаған (${unreadCount})`}
+                icon={<UnreadIcon />}
+                iconPosition="start"
+                disabled={unreadCount === 0}
+              />
+              <Tab 
+                label={`Оқылған (${notifications.length - unreadCount})`}
+                icon={<ReadIcon />}
+                iconPosition="start"
+                disabled={notifications.length - unreadCount === 0}
+              />
+            </Tabs>
+          </Paper>
+        )}
 
+        {/* Хабарламалар тізімі */}
         {notifications.length === 0 ? (
-          <Paper elevation={2} sx={{ p: 4, textAlign: 'center' }}>
-            <NotificationsIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6">
+          <Card 
+            elevation={2} 
+            sx={{ 
+              p: 4, 
+              textAlign: 'center',
+              borderRadius: 3,
+              bgcolor: alpha(theme.palette.background.paper, 0.7),
+              backdropFilter: 'blur(5px)'
+            }}
+          >
+            <Box
+              sx={{
+                width: 120,
+                height: 120,
+                borderRadius: '50%',
+                bgcolor: alpha(theme.palette.grey[200], 0.5),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 3,
+                mx: 'auto'
+              }}
+            >
+              <NotificationsIcon 
+                sx={{ 
+                  fontSize: 60, 
+                  color: alpha(theme.palette.text.secondary, 0.5),
+                }}
+              />
+            </Box>
+            
+            <Typography 
+              variant="h5"
+              sx={{ fontWeight: 'bold', mb: 1 }}
+            >
               Хабарламалар жоқ
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Сізде әзірге хабарламалар жоқ
+            
+            <Typography 
+              variant="body1" 
+              color="text.secondary"
+              sx={{ maxWidth: 400, mx: 'auto' }}
+            >
+              Сізде әзірге хабарламалар жоқ. Кітаптарды алғанда, мерзімі өткенде немесе жүйеде өзгерістер болғанда хабарламалар пайда болады.
             </Typography>
-          </Paper>
+            
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<ArrowBackIcon />}
+              sx={{ mt: 3 }}
+              onClick={() => window.history.back()}
+            >
+              Артқа қайту
+            </Button>
+          </Card>
         ) : (
-          <Paper elevation={2}>
-            <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-              {notifications.map((notification, index) => {
-                const { icon, color } = getNotificationIcon(notification.type);
-                
-                return (
-                  <React.Fragment key={notification.id}>
-                    <ListItem
-                      alignItems="flex-start"
-                      sx={{
-                        backgroundColor: notification.read ? 'inherit' : 'action.hover',
-                        transition: 'background-color 0.3s'
-                      }}
+          <AnimatePresence>
+            {filteredNotifications.length === 0 ? (
+              <Fade in={true} timeout={500}>
+                <Alert 
+                  severity="info" 
+                  sx={{ 
+                    borderRadius: 2,
+                    p: 2
+                  }}
+                >
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                    Бұл санатта хабарламалар жоқ
+                  </Typography>
+                  <Typography variant="body2">
+                    Басқа санатты таңдаңыз немесе хабарламаларды жаңартыңыз
+                  </Typography>
+                </Alert>
+              </Fade>
+            ) : (
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {filteredNotifications.map((notification, index) => {
+                  const { icon, color, background } = getNotificationIcon(notification.type);
+                  
+                  return (
+                    <motion.div
+                      key={notification.id}
+                      variants={itemVariants}
+                      exit="exit"
+                      layout
                     >
-                      <ListItemIcon>
-                        {icon}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle1" component="span">
-                              {notification.title}
-                            </Typography>
-                            {!notification.read && (
-                              <Chip 
-                                label="Жаңа" 
-                                color="primary" 
-                                size="small" 
-                                variant="outlined"
-                              />
-                            )}
-                          </Box>
-                        }
-                        secondary={
-                          <>
-                            <Typography
-                              component="span"
-                              variant="body2"
-                              color="text.primary"
-                              sx={{ display: 'block', my: 1 }}
-                            >
-                              {notification.message}
-                            </Typography>
-                            <Typography
-                              component="span"
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {formatDateTime(notification.createdAt)}
-                            </Typography>
-                          </>
-                        }
-                      />
-                      <ListItemSecondaryAction>
-                        {!notification.read && (
-                          <IconButton 
-                            edge="end" 
-                            onClick={() => handleMarkAsRead(notification.id)}
-                            title="Оқылды деп белгілеу"
+                      <Card 
+                        elevation={1} 
+                        sx={{ 
+                          mb: 2, 
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          transition: 'all 0.2s',
+                          borderLeft: `4px solid ${theme.palette[color].main}`,
+                          bgcolor: notification.read ? 'transparent' : alpha(theme.palette[color].light, 0.05),
+                          '&:hover': {
+                            boxShadow: theme.shadows[3],
+                          }
+                        }}
+                      >
+                        <Box sx={{ position: 'relative' }}>
+                          {/* Индикатор жаңа хабарламасы */}
+                          {!notification.read && (
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 16,
+                                right: 16,
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                bgcolor: theme.palette.primary.main,
+                                zIndex: 1
+                              }}
+                            />
+                          )}
+                          
+                          <ListItem
+                            alignItems="flex-start"
+                            sx={{
+                              p: { xs: 2, sm: 3 },
+                              transition: 'background-color 0.3s'
+                            }}
                           >
-                            <ReadIcon />
-                          </IconButton>
-                        )}
-                        <IconButton 
-                          edge="end" 
-                          onClick={() => handleDeleteNotification(notification.id)}
-                          title="Жою"
-                          sx={{ ml: 1 }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                    {index < notifications.length - 1 && <Divider variant="inset" component="li" />}
-                  </React.Fragment>
-                );
-              })}
-            </List>
-          </Paper>
+                            {/* Иконка */}
+                            <ListItemIcon sx={{ mt: 0.5 }}>
+                              <Avatar
+                                sx={{
+                                  bgcolor: background,
+                                  color: theme.palette[color].main,
+                                  borderRadius: 2,
+                                  p: 1,
+                                  width: 40,
+                                  height: 40
+                                }}
+                              >
+                                {icon}
+                              </Avatar>
+                            </ListItemIcon>
+                            
+                            {/* Хабарлама мәтіні */}
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                  <Typography 
+                                    variant="subtitle1" 
+                                    component="span"
+                                    sx={{ fontWeight: notification.read ? 'normal' : 'bold' }}
+                                  >
+                                    {notification.title}
+                                  </Typography>
+                                  
+                                  {!notification.read && (
+                                    <Chip 
+                                      label="Жаңа" 
+                                      color="primary" 
+                                      size="small"
+                                      sx={{
+                                        height: 20,
+                                        fontSize: '0.7rem',
+                                        fontWeight: 'bold'
+                                      }}
+                                    />
+                                  )}
+                                </Box>
+                              }
+                              
+                              secondary={
+                                <>
+                                  <Typography
+                                    component="span"
+                                    variant="body2"
+                                    color="text.primary"
+                                    sx={{ display: 'block', mb: 1 }}
+                                  >
+                                    {notification.message}
+                                  </Typography>
+                                  
+                                  <Typography
+                                    component="span"
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ fontWeight: 'medium' }}
+                                  >
+                                    {formatDateTime(notification.createdAt)}
+                                  </Typography>
+                                </>
+                              }
+                              sx={{ pr: { xs: 6, sm: 8 } }}
+                            />
+                            
+                            {/* Әрекет түймелері */}
+                            <ListItemSecondaryAction sx={{ top: 'auto', bottom: 16, right: 16 }}>
+                              {!notification.read && (
+                                <Tooltip title="Оқылды деп белгілеу">
+                                  <IconButton 
+                                    edge="end" 
+                                    onClick={() => handleMarkAsRead(notification.id)}
+                                    color="primary"
+                                    size="small"
+                                    sx={{
+                                      mr: 1,
+                                      bgcolor: alpha(theme.palette.primary.main, 0.05),
+                                      '&:hover': {
+                                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                      }
+                                    }}
+                                  >
+                                    <ReadIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                              
+                              <Tooltip title="Жою">
+                                <IconButton 
+                                  edge="end" 
+                                  onClick={() => handleDeleteNotification(notification.id)}
+                                  color="error"
+                                  size="small"
+                                  sx={{
+                                    bgcolor: alpha(theme.palette.error.main, 0.05),
+                                    '&:hover': {
+                                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                                    }
+                                  }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </ListItemSecondaryAction>
+                          </ListItem>
+                        </Box>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
       </Container>
 
-      {/* Индикатор загрузки при удалении */}
+      {/* Жою кезіндегі жүктелу индикаторы */}
       <Backdrop
         sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
         open={deleting}
       >
-        <CircularProgress color="inherit" />
+        <Paper
+          elevation={4}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            p: 3,
+            borderRadius: 2
+          }}
+        >
+          <CircularProgress color="primary" sx={{ mb: 2 }} />
+          <Typography variant="body2">Хабарлама жойылуда...</Typography>
+        </Paper>
       </Backdrop>
     </motion.div>
   );
 };
+
+// Хабарлама аватарын көрсету компоненті
+const Avatar = ({ children, sx, ...props }) => (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...sx
+    }}
+    {...props}
+  >
+    {children}
+  </Box>
+);
 
 export default NotificationsPage;

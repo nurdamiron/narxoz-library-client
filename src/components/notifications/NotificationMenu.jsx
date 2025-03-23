@@ -1,6 +1,14 @@
-// src/components/notifications/NotificationMenu.js
-import React, { useState } from 'react';
+/**
+ * src/components/notifications/NotificationMenu.jsx
+ * 
+ * Хабарлама менюі компоненті
+ * 
+ * Бұл компонент кіріс хабарламалар менюін көрсетеді, соңғы хабарламаларды
+ * көрсетеді және оларды оқылды деп белгілеу функционалын қамтамасыз етеді.
+ */
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Badge,
   IconButton,
@@ -16,7 +24,12 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListSubheader
+  ListSubheader,
+  Avatar,
+  Tooltip,
+  Paper,
+  alpha,
+  useTheme
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
@@ -27,16 +40,25 @@ import {
   Settings as SettingsIcon,
   NotificationsNone as EmptyNotificationIcon,
   Done as DoneIcon,
-  MoreVert as MoreIcon
+  DoneAll as DoneAllIcon,
+  ArrowForward as ArrowForwardIcon,
+  Circle as CircleIcon
 } from '@mui/icons-material';
 
 // Импорт хуков
 import useNotifications from '../../hooks/useNotifications';
-import { useToast } from '../../context/ToastContext'; // Исправлено с default на именованный импорт
+import { useToast } from '../../context/ToastContext';
 import { formatDateTime, truncateString } from '../../utils';
 
+/**
+ * NotificationMenu компоненті
+ * 
+ * @returns {JSX.Element} - Хабарлама менюі
+ */
 const NotificationMenu = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  
   const { 
     notifications, 
     unreadCount, 
@@ -45,87 +67,226 @@ const NotificationMenu = () => {
     markAsRead, 
     markAllAsRead 
   } = useNotifications();
-  const { success, error } = useToast();
+  const { success, error: showError } = useToast();
   
-  // Состояние для меню
+  // Менюдің күйі
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const [markingAsRead, setMarkingAsRead] = useState(false);
+  const [recentlyRead, setRecentlyRead] = useState([]);
   
-  // Получаем только 5 последних уведомлений для меню
+  // Соңғы 5 хабарламаны алу
   const recentNotifications = notifications.slice(0, 5);
   
-  // Открытие меню
+  /**
+   * Хабарламалар жүктелген кезде кешіктіру эффектін баптау
+   */
+  useEffect(() => {
+    if (open && !loading) {
+      const timer = setTimeout(() => {
+        setRecentlyRead([]);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [open, loading]);
+  
+  /**
+   * Менюді ашу
+   * 
+   * @param {Object} event - Оқиға объектісі
+   */
   const handleOpenMenu = (event) => {
     setAnchorEl(event.currentTarget);
+    // Менюді ашқан кезде жаңа хабарламаларды жүктеу
+    fetchNotifications();
   };
   
-  // Закрытие меню
+  /**
+   * Менюді жабу
+   */
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
   
-  // Отметить все как прочитанные
+  /**
+   * Барлық хабарламаларды оқылды деп белгілеу
+   */
   const handleMarkAllAsRead = async () => {
     try {
       setMarkingAsRead(true);
       await markAllAsRead();
       success('Барлық хабарламалар оқылды деп белгіленді');
     } catch (err) {
-      console.error('Ошибка при маркировке уведомлений:', err);
-      error('Хабарламаларды оқылды деп белгілеу кезінде қате орын алды');
+      console.error('Хабарламаларды белгілеу қатесі:', err);
+      showError('Хабарламаларды оқылды деп белгілеу кезінде қате орын алды');
     } finally {
       setMarkingAsRead(false);
     }
   };
   
-  // Отметить одно уведомление как прочитанное
+  /**
+   * Бір хабарламаны оқылды деп белгілеу
+   * 
+   * @param {string} id - Хабарлама идентификаторы
+   * @param {Object} event - Оқиға объектісі
+   */
   const handleMarkAsRead = async (id, event) => {
-    event.stopPropagation(); // Предотвращаем открытие страницы уведомлений
+    event.stopPropagation(); // Хабарлама бетіне өтпеу
     
     try {
       await markAsRead(id);
+      // Жаңа оқылған хабарламаларға қосу (анимация үшін)
+      setRecentlyRead(prev => [...prev, id]);
+      
+      // 2 секундтан кейін тізімнен алып тастау
+      setTimeout(() => {
+        setRecentlyRead(prev => prev.filter(itemId => itemId !== id));
+      }, 2000);
+      
+      success('Хабарлама оқылды деп белгіленді');
     } catch (err) {
-      console.error('Ошибка при маркировке уведомления:', err);
-      error('Хабарламаны оқылды деп белгілеу кезінде қате орын алды');
+      console.error('Хабарламаны белгілеу қатесі:', err);
+      showError('Хабарламаны оқылды деп белгілеу кезінде қате орын алды');
     }
   };
   
-  // Переход на страницу уведомлений
+  /**
+   * Хабарламалар бетіне өту
+   */
   const handleGoToNotifications = () => {
     handleCloseMenu();
     navigate('/notifications');
   };
   
-  // Получение иконки для типа уведомления
+  /**
+   * Хабарлама типіне сәйкес иконка алу
+   * 
+   * @param {string} type - Хабарлама типі
+   * @returns {JSX.Element} - Иконка
+   */
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'info':
-        return <InfoIcon color="info" fontSize="small" />;
+        return { 
+          icon: <InfoIcon fontSize="small" />, 
+          color: theme.palette.info.main,
+          bgColor: alpha(theme.palette.info.main, 0.1)
+        };
       case 'warning':
-        return <WarningIcon color="warning" fontSize="small" />;
+        return { 
+          icon: <WarningIcon fontSize="small" />, 
+          color: theme.palette.warning.main,
+          bgColor: alpha(theme.palette.warning.main, 0.1)
+        };
       case 'overdue':
-        return <ErrorIcon color="error" fontSize="small" />;
+        return { 
+          icon: <ErrorIcon fontSize="small" />, 
+          color: theme.palette.error.main,
+          bgColor: alpha(theme.palette.error.main, 0.1)
+        };
       case 'return':
-        return <ScheduleIcon color="warning" fontSize="small" />;
+        return { 
+          icon: <ScheduleIcon fontSize="small" />, 
+          color: theme.palette.warning.main,
+          bgColor: alpha(theme.palette.warning.main, 0.1)
+        };
       case 'system':
-        return <SettingsIcon color="primary" fontSize="small" />;
+        return { 
+          icon: <SettingsIcon fontSize="small" />, 
+          color: theme.palette.primary.main,
+          bgColor: alpha(theme.palette.primary.main, 0.1)
+        };
       default:
-        return <NotificationsIcon fontSize="small" />;
+        return { 
+          icon: <NotificationsIcon fontSize="small" />, 
+          color: theme.palette.primary.main,
+          bgColor: alpha(theme.palette.primary.main, 0.1)
+        };
     }
   };
   
+  // Анимация варианттары
+  const menuItemVariants = {
+    hidden: { opacity: 0, y: -10 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.3
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      y: 10,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+  
+  const loadingVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      transition: {
+        duration: 0.3
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.8,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+
   return (
     <>
-      <IconButton
-        color="inherit"
-        onClick={handleOpenMenu}
-        aria-label="Показать уведомления"
-      >
-        <Badge badgeContent={unreadCount} color="error">
-          <NotificationsIcon />
-        </Badge>
-      </IconButton>
+      <Tooltip title="Хабарламалар">
+        <IconButton
+          color="inherit"
+          onClick={handleOpenMenu}
+          aria-label="Хабарламаларды көрсету"
+          sx={{
+            position: 'relative',
+            transition: 'transform 0.2s',
+            '&:hover': {
+              transform: 'scale(1.05)'
+            }
+          }}
+        >
+          <Badge 
+            badgeContent={unreadCount} 
+            color="error"
+            overlap="circular"
+            sx={{
+              '& .MuiBadge-badge': {
+                fontWeight: 'bold',
+                animation: unreadCount > 0 ? 'pulse 1.5s infinite' : 'none',
+                '@keyframes pulse': {
+                  '0%': {
+                    transform: 'scale(1)',
+                    boxShadow: '0 0 0 0 rgba(211, 47, 47, 0.7)'
+                  },
+                  '70%': {
+                    transform: 'scale(1.1)',
+                    boxShadow: '0 0 0 6px rgba(211, 47, 47, 0)'
+                  },
+                  '100%': {
+                    transform: 'scale(1)',
+                    boxShadow: '0 0 0 0 rgba(211, 47, 47, 0)'
+                  }
+                }
+              }
+            }}
+          >
+            <NotificationsIcon />
+          </Badge>
+        </IconButton>
+      </Tooltip>
       
       <Menu
         id="notification-menu"
@@ -136,22 +297,49 @@ const NotificationMenu = () => {
           'aria-labelledby': 'notification-button',
         }}
         PaperProps={{
-          elevation: 3,
-          sx: { width: 320, maxHeight: 500 }
+          elevation: 4,
+          sx: { 
+            width: 360, 
+            maxHeight: 500,
+            borderRadius: 2,
+            overflow: 'hidden',
+            '&:before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 3,
+              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+            }
+          }
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        transitionDuration={250}
       >
         <ListSubheader 
           sx={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            bgcolor: 'background.paper'
+            bgcolor: 'background.paper',
+            py: 1.5,
+            px: 2
           }}
         >
-          <Typography variant="subtitle1">
-            Хабарламалар {unreadCount > 0 && `(${unreadCount})`}
+          <Typography variant="subtitle1" fontWeight="medium">
+            Хабарламалар {unreadCount > 0 && (
+              <Box 
+                component="span" 
+                sx={{ 
+                  color: 'error.main',
+                  fontWeight: 'bold'
+                }}
+              >
+                ({unreadCount})
+              </Box>
+            )}
           </Typography>
           
           {unreadCount > 0 && (
@@ -159,7 +347,19 @@ const NotificationMenu = () => {
               size="small" 
               onClick={handleMarkAllAsRead}
               disabled={markingAsRead}
-              startIcon={markingAsRead ? <CircularProgress size={16} /> : <DoneIcon />}
+              startIcon={markingAsRead ? <CircularProgress size={16} /> : <DoneAllIcon />}
+              variant="outlined"
+              color="primary"
+              sx={{
+                borderRadius: 4,
+                px: 1.5,
+                py: 0.5,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.5)}`,
+                '&:hover': {
+                  border: `1px solid ${theme.palette.primary.main}`,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.04)
+                }
+              }}
             >
               Барлығын оқу
             </Button>
@@ -168,83 +368,226 @@ const NotificationMenu = () => {
         
         <Divider />
         
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress size={24} />
-          </Box>
-        ) : recentNotifications.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <EmptyNotificationIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
-            <Typography variant="body2" color="text.secondary">
-              Сізде хабарламалар жоқ
-            </Typography>
-          </Box>
-        ) : (
-          <List dense sx={{ width: '100%', p: 0 }}>
-            {recentNotifications.map((notification) => (
-              <ListItem 
-                key={notification.id}
-                disablePadding
-                secondaryAction={
-                  !notification.read && (
-                    <IconButton
-                      edge="end"
-                      aria-label="оқылды деп белгілеу"
-                      onClick={(e) => handleMarkAsRead(notification.id, e)}
-                    >
-                      <DoneIcon fontSize="small" />
-                    </IconButton>
-                  )
-                }
-                sx={{
-                  bgcolor: notification.read ? 'inherit' : 'action.hover'
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              variants={loadingVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress size={32} />
+              </Box>
+            </motion.div>
+          ) : recentNotifications.length === 0 ? (
+            <motion.div
+              key="empty"
+              variants={loadingVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <EmptyNotificationIcon 
+                  sx={{ 
+                    fontSize: 60, 
+                    color: alpha(theme.palette.text.secondary, 0.7), 
+                    mb: 2 
+                  }} 
+                />
+                <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                  Сізде хабарламалар жоқ
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Жаңа хабарламалар осы жерде көрсетіледі
+                </Typography>
+              </Box>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="notifications"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <List 
+                dense 
+                sx={{ 
+                  width: '100%', 
+                  p: 0,
+                  maxHeight: 350,
+                  overflowY: 'auto'
                 }}
               >
-                <ListItemButton onClick={handleGoToNotifications}>
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    {getNotificationIcon(notification.type)}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={truncateString(notification.title, 30)}
-                    secondary={
-                      <>
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="text.primary"
-                          sx={{ 
-                            display: 'block',
+                <AnimatePresence initial={false}>
+                  {recentNotifications.map((notification, index) => {
+                    const { icon, color, bgColor } = getNotificationIcon(notification.type);
+                    const isRecentlyRead = recentlyRead.includes(notification.id);
+                    
+                    return (
+                      <motion.div
+                        key={notification.id}
+                        variants={menuItemVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <ListItem 
+                          disablePadding
+                          secondaryAction={
+                            !notification.read && !isRecentlyRead && (
+                              <IconButton
+                                edge="end"
+                                aria-label="оқылды деп белгілеу"
+                                onClick={(e) => handleMarkAsRead(notification.id, e)}
+                                sx={{
+                                  mr: 1,
+                                  color: theme.palette.primary.main,
+                                  '&:hover': {
+                                    backgroundColor: alpha(theme.palette.primary.main, 0.1)
+                                  }
+                                }}
+                              >
+                                <Tooltip title="Оқылды деп белгілеу">
+                                  <DoneIcon fontSize="small" />
+                                </Tooltip>
+                              </IconButton>
+                            )
+                          }
+                          sx={{
+                            bgcolor: notification.read ? 'inherit' : alpha(theme.palette.primary.main, 0.04),
+                            position: 'relative',
                             overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            maxWidth: '100%'
+                            transition: 'background-color 0.3s',
+                            '&:hover': {
+                              bgcolor: notification.read ? alpha(theme.palette.action.hover, 0.5) : alpha(theme.palette.primary.main, 0.08)
+                            },
+                            // Анимация для недавно прочитанных уведомлений
+                            ...(isRecentlyRead && {
+                              bgcolor: alpha(theme.palette.success.light, 0.2),
+                              '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                background: `linear-gradient(90deg, ${alpha(theme.palette.success.light, 0)}, ${alpha(theme.palette.success.light, 0.4)}, ${alpha(theme.palette.success.light, 0)})`,
+                                animation: 'sweep 1.5s ease-in-out',
+                                '@keyframes sweep': {
+                                  '0%': {
+                                    transform: 'translateX(-100%)'
+                                  },
+                                  '100%': {
+                                    transform: 'translateX(100%)'
+                                  }
+                                }
+                              }
+                            })
                           }}
                         >
-                          {truncateString(notification.message, 50)}
-                        </Typography>
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          {formatDateTime(notification.createdAt)}
-                        </Typography>
-                      </>
-                    }
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        )}
+                          <ListItemButton 
+                            onClick={handleGoToNotifications}
+                            sx={{ 
+                              py: 1.5,
+                              pl: 2
+                            }}
+                          >
+                            <Avatar
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                backgroundColor: bgColor,
+                                color: color,
+                                mr: 2
+                              }}
+                            >
+                              {icon}
+                            </Avatar>
+                            
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                  <Typography
+                                    variant="subtitle2"
+                                    sx={{ fontWeight: notification.read ? 'normal' : 'bold' }}
+                                  >
+                                    {truncateString(notification.title, 30)}
+                                  </Typography>
+                                  
+                                  {!notification.read && !isRecentlyRead && (
+                                    <CircleIcon 
+                                      sx={{ 
+                                        ml: 1, 
+                                        fontSize: 8, 
+                                        color: theme.palette.primary.main 
+                                      }} 
+                                    />
+                                  )}
+                                </Box>
+                              }
+                              secondary={
+                                <>
+                                  <Typography
+                                    component="span"
+                                    variant="body2"
+                                    color="text.primary"
+                                    sx={{ 
+                                      display: 'block',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      maxWidth: '100%',
+                                      mb: 0.5,
+                                      opacity: notification.read ? 0.8 : 1
+                                    }}
+                                  >
+                                    {truncateString(notification.message, 50)}
+                                  </Typography>
+                                  <Typography
+                                    component="span"
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
+                                    {formatDateTime(notification.createdAt)}
+                                  </Typography>
+                                </>
+                              }
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                        <Divider component="li" />
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </List>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
-        <Divider />
-        
-        <MenuItem onClick={handleGoToNotifications}>
-          <Typography variant="body1" sx={{ width: '100%', textAlign: 'center' }}>
+        <Box
+          sx={{
+            p: 1,
+            bgcolor: alpha(theme.palette.background.paper, 0.8)
+          }}
+        >
+          <Button
+            fullWidth
+            endIcon={<ArrowForwardIcon />}
+            onClick={handleGoToNotifications}
+            sx={{
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 'medium'
+            }}
+          >
             Барлық хабарламаларды көру
-          </Typography>
-        </MenuItem>
+          </Button>
+        </Box>
       </Menu>
     </>
   );
