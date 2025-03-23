@@ -1,3 +1,4 @@
+// src/styles/theme.js
 import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 import { alpha } from '@mui/material';
 
@@ -12,6 +13,36 @@ import { alpha } from '@mui/material';
 // Негізгі түстер жиынтығы
 const primaryColor = '#d50032';
 const secondaryColor = '#ff5252';
+
+const colorScheme = {
+  primary: {
+    main: '#d50032',      // Негізгі қызыл түс
+    light: '#ff5c5d',     // Ашық қызыл
+    dark: '#9b0000',      // Қою қызыл
+    contrastText: '#fff', // Контрастты ақ мәтін
+  },
+  secondary: {
+    main: '#ff5252',      // Қосымша қызыл түс
+    light: '#ff867f',     // Ашық қосымша түс
+    dark: '#c50e29',      // Қою қосымша түс
+    contrastText: '#fff', // Контрастты ақ мәтін
+  },
+}
+
+// Жаңартылған түс градиенттері үлгілері
+const gradientExamples = {
+  // Негізгі градиент - тік
+  primaryVertical: `linear-gradient(to bottom, ${colorScheme.primary.main}, ${colorScheme.primary.dark})`,
+  
+  // Негізгі градиент - көлденең
+  primaryHorizontal: `linear-gradient(to right, ${colorScheme.primary.main}, ${colorScheme.secondary.main})`,
+  
+  // Фон градиенті
+  backgroundGradient: `linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)`,
+  
+  // Карточка градиенті
+  cardGradient: `linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)`,
+}
 
 // Қараңғы режим үшін түстерді баптау
 const getDesignTokens = (mode) => ({

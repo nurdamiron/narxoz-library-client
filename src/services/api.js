@@ -1,5 +1,6 @@
 // src/services/api.js
 import axios from 'axios';
+import apiDebugger from '../utils/apiDebugger';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -11,13 +12,17 @@ const apiClient = axios.create({
   }
 });
 
-// Add request interceptor to include auth token
+// Add request interceptor to include auth token and log requests
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
+    
+    // Log request for debugging
+    apiDebugger.logRequest(config.url, config.method, config.data);
+    
     return config;
   },
   (error) => {
@@ -25,16 +30,19 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Add response interceptor to handle common errors
+// Add response interceptor to handle common errors and log responses
 apiClient.interceptors.response.use(
   (response) => {
+    // Log successful response
+    apiDebugger.logResponse(response.config.url, response);
     return response;
   },
   (error) => {
-    const { response } = error;
+    // Log error response
+    apiDebugger.logError(error.config?.url || 'unknown endpoint', error);
     
     // Handle token expiration
-    if (response && response.status === 401) {
+    if (error.response && error.response.status === 401) {
       // Clear local storage and redirect to login if token is invalid/expired
       if (localStorage.getItem('token')) {
         localStorage.removeItem('token');

@@ -19,18 +19,59 @@ const authService = {
   },
 
   /**
-   * Register a new user
-   * @param {Object} userData - User registration data
-   * @returns {Promise} Promise object with user data and token
-   */
-  register: async (userData) => {
-    const response = await apiClient.post('/auth/register', userData);
+ * Register a new user
+ * @param {Object} userData - User registration data
+ * @returns {Promise} Promise object with user data and token
+ * @throws {Error} Error with message from API response
+ */
+register: async (userData) => {
+  try {
+    // Make sure we're sending the data in the exact format the backend expects
+    const registrationData = {
+      name: userData.name,
+      email: userData.email,
+      password: userData.password,
+      phone: userData.phone || '',
+      faculty: userData.faculty,
+      specialization: userData.specialization,
+      studentId: userData.studentId,
+      year: userData.year
+    };
+    
+    // Log the data being sent for debugging purposes
+    console.log('Sending registration data:', registrationData);
+    
+    const response = await apiClient.post('/auth/register', registrationData);
+    
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.data));
     }
     return response.data;
-  },
+  } catch (error) {
+    // Log the error for debugging
+    console.error('Registration error:', error);
+    
+    // Handle specific API error responses
+    if (error.response && error.response.data) {
+      // Extract the error message from the API response
+      const errorData = error.response.data;
+      
+      // If the API returns a structured error object
+      if (errorData.error) {
+        throw new Error(errorData.error);
+      } else {
+        throw new Error('Тіркелу кезінде қате орын алды. Әрекетті қайталап көріңіз.');
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      throw new Error('Сервер жауап бермеді. Интернет байланысыңызды тексеріңіз.');
+    } else {
+      // Something happened in setting up the request
+      throw new Error('Тіркелу сұранысын жіберу кезінде қате орын алды.');
+    }
+  }
+},
 
   /**
    * Logout current user

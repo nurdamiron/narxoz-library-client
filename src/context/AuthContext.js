@@ -78,9 +78,28 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data);
       return response;
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Тіркелу кезінде қате орын алды';
+      console.error('Registration error:', err);
+      
+      // Extract the error message in a more robust way
+      let errorMessage;
+      
+      if (err.response) {
+        // The request was made and the server responded with an error status
+        if (err.response.data && err.response.data.error) {
+          errorMessage = err.response.data.error;
+        } else {
+          errorMessage = `Server error: ${err.response.status}`;
+        }
+      } else if (err.request) {
+        // The request was made but no response was received
+        errorMessage = 'No response from server. Please check your connection.';
+      } else {
+        // Something happened in setting up the request
+        errorMessage = err.message || 'Unknown error during registration';
+      }
+      
       setError(errorMessage);
-      throw err;
+      throw err; // Important: keep throwing the error so components can handle it
     } finally {
       setLoading(false);
     }

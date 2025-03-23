@@ -5,7 +5,8 @@ import { Navigate } from 'react-router-dom';
 // Импортируем компоненты страниц
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import { RegisterForm } from './components/auth/RegisterForm/barrel';
+
 import BooksPage from './pages/BooksPage';
 import BookDetailsPage from './pages/BookDetailsPage';
 import NotificationsPage from './pages/NotificationsPage';
@@ -28,7 +29,7 @@ const routes = [
   },
   {
     path: '/register',
-    element: <RegisterPage />,
+    element: <RegisterForm />,
   },
   {
     path: '/books',
