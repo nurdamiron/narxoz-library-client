@@ -37,7 +37,6 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Импортируем компоненты
 import Header from '../common/Header';
 import Footer from '../common/Footer';
 import Sidebar from '../common/Sidebar';

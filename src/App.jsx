@@ -19,7 +19,7 @@ import BorrowHistoryPage from './pages/BorrowHistoryPage';
 // Импорт компонента защищенного маршрута
 import ProtectedRoute from './components/routes/ProtectedRoute';
 
-// Импорт Layout компонента
+// Импорт Layout компонента - используем только ОДИН компонент макета
 import Layout from './components/layout/Layout';
 
 // Импорт наших контекстов

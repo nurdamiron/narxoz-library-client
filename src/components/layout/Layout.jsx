@@ -55,7 +55,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Импорт компонентов и хуков
-import Sidebar from '../common/Sidebar';
+// import Sidebar from '../common/Sidebar';
 import NotificationMenu from '../notifications/NotificationMenu';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -78,15 +78,15 @@ const Layout = ({ children }) => {
   const { success } = useToast();
   
   // Күйлер
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  // const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   
   // Бүйірлік мәзірді ашу/жабу
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  // const toggleSidebar = () => {
+  //   setSidebarOpen(!sidebarOpen);
+  // };
   
   // Мобильді мәзірді ашу/жабу
   const handleMobileDrawerToggle = () => {
@@ -185,7 +185,7 @@ const Layout = ({ children }) => {
               bgcolor: theme.palette.primary.main
             }}
           >
-            Н
+            
           </Avatar>
           <Typography
             variant="h6"
@@ -506,7 +506,7 @@ const Layout = ({ children }) => {
             <MenuIcon />
           </IconButton>
           
-          {/* Бүйірлік мәзір түймесі (десктоп) */}
+          {/* Бүйірлік мәзір түймесі (десктоп)
           <IconButton
             color="inherit"
             aria-label="toggle sidebar"
@@ -518,7 +518,7 @@ const Layout = ({ children }) => {
             }}
           >
             <MenuIcon />
-          </IconButton>
+          </IconButton> */}
           
           {/* Логотип */}
           <Box
@@ -809,19 +809,19 @@ const Layout = ({ children }) => {
         {mobileDrawer}
       </Drawer>
       
-      {/* Десктоп үшін тұрақты бүйірлік мәзір */}
+      {/* Десктоп үшін тұрақты бүйірлік мәзір
       <Sidebar
         open={sidebarOpen}
         onClose={toggleSidebar}
         stats={stats}
-      />
+      /> */}
       
       {/* Негізгі мазмұны */}
       <Box 
         component="main" 
         sx={{
           flexGrow: 1,
-          pl: { xs: 0, md: sidebarOpen ? '260px' : 0 },
+          pl: { xs: 0 },
           transition: 'padding-left 0.3s ease',
         }}
       >
@@ -843,7 +843,7 @@ const Layout = ({ children }) => {
           px: 2,
           mt: 'auto',
           backgroundColor: (theme) => alpha(theme.palette.grey[200], 0.5),
-          pl: { xs: 0, md: sidebarOpen ? '260px' : 0 },
+          pl: { xs: 0 },
           transition: 'padding-left 0.3s ease',
         }}
       >

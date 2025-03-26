@@ -334,7 +334,7 @@ const PasswordStep = ({
                         }
                       </ListItemIcon>
                       <ListItemText 
-                        primary="Мин. 6 таңба" 
+                        primary="Мин. 8 таңба" 
                         primaryTypographyProps={{ 
                           variant: 'caption',
                           color: passwordStrength.hasMinLength ? 'success.main' : 'text.secondary'

@@ -39,7 +39,7 @@ import {
   BookmarkBorder,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
-import { getNotifications } from '../../api/notificationService';
+import getNotifications from '../../services/notificationService';
 
 /**
  * Іздеу компонентінің стильдері

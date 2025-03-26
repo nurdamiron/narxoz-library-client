@@ -222,7 +222,7 @@ const ProfilePage = () => {
     if (!passwordData.newPassword) {
       errors.newPassword = 'Жаңа құпия сөз міндетті';
     } else if (passwordData.newPassword.length < 6) {
-      errors.newPassword = 'Құпия сөз кем дегенде 6 таңбадан тұруы керек';
+      errors.newPassword = 'Құпия сөз кем дегенде 8 таңбадан тұруы керек';
     }
     
     if (!passwordData.confirmPassword) {
