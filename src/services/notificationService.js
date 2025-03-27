@@ -1,53 +1,48 @@
 // src/services/notificationService.js
-import apiClient from './api';
+import BaseService from './baseService';
 
 const notificationService = {
   /**
-   * Get all notifications for the current user
-   * @returns {Promise} Promise object with notifications data
+   * Получить все уведомления для текущего пользователя
+   * @returns {Promise} Promise с данными уведомлений
    */
   getNotifications: async () => {
-    const response = await apiClient.get('/notifications');
-    return response.data;
+    return BaseService.get('/notifications');
   },
 
   /**
-   * Get a single notification
-   * @param {string} id - Notification ID
-   * @returns {Promise} Promise object with notification data
+   * Получить отдельное уведомление
+   * @param {string} id - ID уведомления
+   * @returns {Promise} Promise с данными уведомления
    */
   getNotification: async (id) => {
-    const response = await apiClient.get(`/notifications/${id}`);
-    return response.data;
+    return BaseService.get(`/notifications/${id}`);
   },
 
   /**
-   * Mark notification as read
-   * @param {string} id - Notification ID
-   * @returns {Promise} Promise object with updated notification
+   * Отметить уведомление как прочитанное
+   * @param {string} id - ID уведомления
+   * @returns {Promise} Promise с обновленным уведомлением
    */
   markAsRead: async (id) => {
-    const response = await apiClient.put(`/notifications/${id}/read`);
-    return response.data;
+    return BaseService.put(`/notifications/${id}/read`);
   },
 
   /**
-   * Delete notification
-   * @param {string} id - Notification ID
-   * @returns {Promise} Promise object
+   * Удалить уведомление
+   * @param {string} id - ID уведомления
+   * @returns {Promise} Promise
    */
   deleteNotification: async (id) => {
-    const response = await apiClient.delete(`/notifications/${id}`);
-    return response.data;
+    return BaseService.delete(`/notifications/${id}`);
   },
 
   /**
-   * Mark all notifications as read
-   * @returns {Promise} Promise object
+   * Отметить все уведомления как прочитанные
+   * @returns {Promise} Promise
    */
   markAllAsRead: async () => {
-    const response = await apiClient.put('/notifications/read-all');
-    return response.data;
+    return BaseService.put('/notifications/read-all');
   }
 };
 

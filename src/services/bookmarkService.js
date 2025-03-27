@@ -1,65 +1,59 @@
 // src/services/bookmarkService.js
-import apiClient from './api';
+import BaseService from './baseService';
 
 const bookmarkService = {
   /**
-   * Get all bookmarks for current user
-   * @returns {Promise} Promise object with bookmarks data
+   * Получить все закладки текущего пользователя
+   * @returns {Promise} Promise с данными закладок
    */
   getBookmarks: async () => {
-    const response = await apiClient.get('/bookmarks');
-    return response.data;
+    return BaseService.get('/bookmarks');
   },
 
   /**
-   * Add a bookmark
-   * @param {Object} data - Bookmark data
-   * @param {string} data.bookId - Book ID to bookmark
-   * @returns {Promise} Promise object with created bookmark
+   * Добавить закладку
+   * @param {Object} data - Данные закладки
+   * @param {string} data.bookId - ID книги для закладки
+   * @returns {Promise} Promise с созданной закладкой
    */
   addBookmark: async (data) => {
-    const response = await apiClient.post('/bookmarks', data);
-    return response.data;
+    return BaseService.post('/bookmarks', data);
   },
 
   /**
-   * Delete bookmark
-   * @param {string} id - Bookmark ID
-   * @returns {Promise} Promise object
+   * Удалить закладку
+   * @param {string} id - ID закладки
+   * @returns {Promise} Promise
    */
   deleteBookmark: async (id) => {
-    const response = await apiClient.delete(`/bookmarks/${id}`);
-    return response.data;
+    return BaseService.delete(`/bookmarks/${id}`);
   },
 
   /**
-   * Delete bookmark by book ID
-   * @param {string} bookId - Book ID
-   * @returns {Promise} Promise object
+   * Удалить закладку по ID книги
+   * @param {string} bookId - ID книги
+   * @returns {Promise} Promise
    */
   deleteBookmarkByBookId: async (bookId) => {
-    const response = await apiClient.delete(`/bookmarks/book/${bookId}`);
-    return response.data;
+    return BaseService.delete(`/bookmarks/book/${bookId}`);
   },
 
   /**
-   * Toggle bookmark (add if not exists, remove if exists)
-   * @param {string} bookId - Book ID
-   * @returns {Promise} Promise object with bookmark status
+   * Переключить закладку (добавить если не существует, удалить если существует)
+   * @param {string} bookId - ID книги
+   * @returns {Promise} Promise со статусом закладки
    */
   toggleBookmark: async (bookId) => {
-    const response = await apiClient.post(`/bookmarks/toggle/${bookId}`);
-    return response.data;
+    return BaseService.post(`/bookmarks/toggle/${bookId}`);
   },
 
   /**
-   * Check if a book is bookmarked by the current user
-   * @param {string} bookId - Book ID
-   * @returns {Promise} Promise object with bookmark status
+   * Проверить, добавлена ли книга в закладки текущим пользователем
+   * @param {string} bookId - ID книги
+   * @returns {Promise} Promise со статусом закладки
    */
   checkBookmark: async (bookId) => {
-    const response = await apiClient.get(`/bookmarks/check/${bookId}`);
-    return response.data;
+    return BaseService.get(`/bookmarks/check/${bookId}`);
   }
 };
 

@@ -1,173 +1,166 @@
-// src/context/AuthContext.js
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services';
 
-// Create context
+// Создание контекста авторизации
 const AuthContext = createContext();
 
-// Provider component
+/**
+ * Провайдер аутентификации
+ * Управляет состоянием аутентификации пользователя
+ * 
+ * @param {Object} props - Пропсы компонента
+ * @param {ReactNode} props.children - Дочерние компоненты
+ */
 export const AuthProvider = ({ children }) => {
+  // Состояние пользователя
   const [user, setUser] = useState(null);
+  // Состояние авторизации
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Состояние загрузки
   const [loading, setLoading] = useState(true);
+  // Состояние ошибки
   const [error, setError] = useState(null);
 
-  // Load user from local storage on initial render
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        // Check for token in localStorage
-        if (authService.isAuthenticated()) {
-          // Get user from localStorage initially to prevent loading flash
-          const storedUser = authService.getUser();
-          if (storedUser) {
-            setUser(storedUser);
-          }
-          
-          // Then fetch fresh user data from API
-          try {
-            const response = await authService.getCurrentUser();
-            if (response.success) {
-              setUser(response.data);
-              // Update localStorage with fresh data
-              localStorage.setItem('user', JSON.stringify(response.data));
-            }
-          } catch (err) {
-            console.error('Failed to refresh user data:', err);
-            // If API call fails but we have stored user, keep using that
-            // If API call fails and no stored user, handle as if not authenticated
-            if (!storedUser) {
-              localStorage.removeItem('token');
-              setUser(null);
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Auth initialization error:', err);
-        setError('Аутентификация қатесі орын алды.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Очистка ошибки
+  const clearError = () => setError(null);
 
-    initAuth();
-  }, []);
-
-  // Login user
+  /**
+   * Вход пользователя
+   * 
+   * @param {Object} credentials - Учетные данные пользователя
+   * @param {string} credentials.email - Email пользователя
+   * @param {string} credentials.password - Пароль пользователя
+   * @param {boolean} credentials.rememberMe - Флаг "запомнить меня"
+   */
   const login = async (credentials) => {
     try {
       setLoading(true);
       setError(null);
+      
       const response = await authService.login(credentials);
-      setUser(response.data);
-      return response;
-    } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Кіру кезінде қате орын алды';
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Register user
-  const register = async (userData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await authService.register(userData);
-      setUser(response.data);
-      return response;
-    } catch (err) {
-      console.error('Registration error:', err);
       
-      // Extract the error message in a more robust way
-      let errorMessage;
-      
-      if (err.response) {
-        // The request was made and the server responded with an error status
-        if (err.response.data && err.response.data.error) {
-          errorMessage = err.response.data.error;
-        } else {
-          errorMessage = `Server error: ${err.response.status}`;
+      if (response.success) {
+        // Сохраняем данные пользователя (без JWT)
+        setUser(response.data);
+        setIsAuthenticated(true);
+        
+        // Сохраняем учетные данные в сессии, чтобы использовать их при последующих запросах
+        sessionStorage.setItem('userEmail', credentials.email);
+        sessionStorage.setItem('userPassword', credentials.password);
+        
+        // Если включено "запомнить меня", сохраняем учетные данные в локальном хранилище
+        if (credentials.rememberMe) {
+          localStorage.setItem('userEmail', credentials.email);
+          localStorage.setItem('userPassword', credentials.password);
         }
-      } else if (err.request) {
-        // The request was made but no response was received
-        errorMessage = 'No response from server. Please check your connection.';
-      } else {
-        // Something happened in setting up the request
-        errorMessage = err.message || 'Unknown error during registration';
       }
       
-      setError(errorMessage);
-      throw err; // Important: keep throwing the error so components can handle it
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Logout user
-  const logout = async () => {
-    try {
-      setLoading(true);
-      await authService.logout();
-      setUser(null);
-    } catch (err) {
-      console.error('Logout error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update user profile
-  const updateProfile = async (userData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await authService.updateUserDetails(userData);
-      setUser(response.data);
       return response;
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Профильді жаңарту кезінде қате орын алды';
-      setError(errorMessage);
+      console.error('Login error:', err);
+      setError(err.message || 'Жүйеге кіру кезінде қате орын алды');
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Clear any auth errors
-  const clearError = () => {
-    setError(null);
+  /**
+   * Выход пользователя
+   */
+  const logout = () => {
+    // Удаляем учетные данные из хранилищ
+    sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem('userPassword');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userPassword');
+    
+    // Сбрасываем состояние авторизации
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  /**
+   * Обновление данных пользователя
+   */
+  const updateUserData = async () => {
+    try {
+      setLoading(true);
+      
+      // Проверяем наличие учетных данных
+      const email = sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail');
+      const password = sessionStorage.getItem('userPassword') || localStorage.getItem('userPassword');
+      
+      if (!email || !password) {
+        setLoading(false);
+        return;
+      }
+      
+      // Получаем данные пользователя
+      const response = await authService.getCurrentUser({ email, password });
+      
+      if (response.success) {
+        setUser(response.data);
+        setIsAuthenticated(true);
+      } else {
+        // Если запрос не удался, выходим из системы
+        logout();
+      }
+    } catch (err) {
+      console.error('Error updating user data:', err);
+      // В случае ошибки выходим из системы
+      logout();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // При первой загрузке проверяем наличие учетных данных
+  useEffect(() => {
+    const initAuth = async () => {
+      const email = sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail');
+      const password = sessionStorage.getItem('userPassword') || localStorage.getItem('userPassword');
+      
+      if (email && password) {
+        // Если учетные данные есть, пытаемся войти
+        try {
+          await login({ email, password });
+        } catch (err) {
+          // В случае ошибки выходим из системы
+          logout();
+        }
+      } else {
+        // Если учетных данных нет, просто заканчиваем загрузку
+        setLoading(false);
+      }
+    };
+    
+    initAuth();
+  }, []);
+
+  // Значение контекста
+  const value = {
+    user,
+    isAuthenticated,
+    loading,
+    error,
+    login,
+    logout,
+    updateUserData,
+    clearError,
+    setUser
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        error,
-        login,
-        register,
-        logout,
-        updateProfile,
-        clearError,
-        isAuthenticated: !!user,
-        isAdmin: user?.role === 'admin',
-        isLibrarian: user?.role === 'librarian'
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use the auth context
+// Хук для использования контекста авторизации
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 };
 
 export default AuthContext;

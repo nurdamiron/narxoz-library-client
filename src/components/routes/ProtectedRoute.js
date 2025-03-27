@@ -6,15 +6,15 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 
 /**
- * Protected route component that checks if user is authenticated
- * @param {Object} props - Component props
- * @param {string} props.requiredRole - Role required to access the route (optional)
+ * Компонент защищенного маршрута, который проверяет аутентификацию пользователя
+ * @param {Object} props - Свойства компонента
+ * @param {string} props.requiredRole - Роль, необходимая для доступа к маршруту (опционально)
  */
 const ProtectedRoute = ({ requiredRole }) => {
   const { isAuthenticated, user, loading } = useAuth();
   const location = useLocation();
 
-  // Show loading indicator while checking authentication
+  // Показываем индикатор загрузки во время проверки аутентификации
   if (loading) {
     return (
       <Box
@@ -30,19 +30,19 @@ const ProtectedRoute = ({ requiredRole }) => {
     );
   }
 
-  // Check if user is authenticated
+  // Проверяем, аутентифицирован ли пользователь
   if (!isAuthenticated) {
-    // Redirect to login page and save the location they tried to access
+    // Перенаправляем на страницу входа и сохраняем место, к которому пытались получить доступ
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If a role is required, check if user has that role
+  // Если требуется определенная роль, проверяем, есть ли она у пользователя
   if (requiredRole && user.role !== requiredRole) {
-    // User doesn't have the required role, redirect to home page
+    // У пользователя нет необходимой роли, перенаправляем на домашнюю страницу
     return <Navigate to="/" replace />;
   }
 
-  // User is authenticated and has the required role (if any), render the protected route
+  // Пользователь аутентифицирован и имеет необходимую роль (если требуется), отображаем защищенный маршрут
   return <Outlet />;
 };
 

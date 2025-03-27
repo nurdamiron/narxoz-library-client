@@ -7,7 +7,8 @@ import { SnackbarProvider } from 'notistack';
 // Импорт компонентов страниц
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
-import { RegisterForm } from './components/auth/RegisterForm/barrel';
+// Удаляем импорт компонента регистрации
+// import { RegisterForm } from './components/auth/RegisterForm/barrel';
 
 import BooksPage from './pages/BooksPage';
 import BookDetailsPage from './pages/BookDetailsPage';
@@ -70,7 +71,8 @@ function App() {
                 {/* Публичные маршруты */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterForm />} />
+                {/* Удаляем маршрут регистрации */}
+                {/* <Route path="/register" element={<RegisterForm />} /> */}
                 <Route path="/books" element={<BooksPage />} />
                 <Route path="/books/:id" element={<BookDetailsPage />} />
                 

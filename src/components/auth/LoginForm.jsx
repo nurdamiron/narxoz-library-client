@@ -1,10 +1,10 @@
 /**
  * src/components/auth/LoginForm.jsx
  * 
- * Жүйеге кіру формасы компоненті
+ * Форма входа
  * 
- * Бұл компонент пайдаланушының жүйеге кіруі үшін қажетті форманы ұсынады.
- * Ол email және құпиясөзді тексеріп, аутентификация процесін жүзеге асырады.
+ * Этот компонент предоставляет форму для входа пользователя в систему.
+ * Он проверяет email и пароль, и выполняет процесс аутентификации.
  */
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
@@ -40,9 +40,9 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 
 /**
- * LoginForm компоненті
+ * Компонент формы входа
  * 
- * @returns {JSX.Element} - Жүйеге кіру формасы
+ * @returns {JSX.Element} - Форма входа
  */
 const LoginForm = () => {
   const theme = useTheme();
@@ -50,13 +50,13 @@ const LoginForm = () => {
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
-  // AuthContext-тен қажетті функцияларды алу
+  // Получение необходимых функций из AuthContext
   const { login, loading: authLoading, error: authError, clearError } = useAuth();
   
-  // Бұрын келген беттен жолдауды алу (қайта бағыттау үшін)
+  // Получение пути для перенаправления (если пользователь был перенаправлен на страницу входа)
   const from = location.state?.from?.pathname || '/';
   
-  // Компонент күйлері
+  // Состояния компонента
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -64,19 +64,19 @@ const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // Валидация қателері
+  // Ошибки валидации
   const [errors, setErrors] = useState({
     email: '',
     password: ''
   });
   
-  // Компонент ашылғанда және AuthContext ауысқанда қателерді тазарту
+  // Очистка ошибок при открытии компонента и изменении AuthContext
   useEffect(() => {
     clearError();
     setError('');
   }, [clearError]);
   
-  // AuthContext қатесі өзгергенде оны компонент қатесіне көшіру
+  // При изменении ошибки в AuthContext, копируем её в состояние компонента
   useEffect(() => {
     if (authError) {
       setError(authError);
@@ -84,17 +84,17 @@ const LoginForm = () => {
   }, [authError]);
   
   /**
-   * Құпия сөзді көрсету/жасыру функциясы
+   * Функция переключения видимости пароля
    */
   const handleToggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
   
   /**
-   * Email өрісінің валидациясы
+   * Валидация поля email
    * 
-   * @param {string} value - Email мәні
-   * @returns {string} - Қате хабарламасы немесе бос жол
+   * @param {string} value - Значение email
+   * @returns {string} - Сообщение об ошибке или пустая строка
    */
   const validateEmail = (value) => {
     if (!value) return 'Email міндетті түрде енгізілуі керек';
@@ -104,10 +104,10 @@ const LoginForm = () => {
   };
   
   /**
-   * Құпия сөз өрісінің валидациясы
+   * Валидация поля пароля
    * 
-   * @param {string} value - Құпия сөз мәні
-   * @returns {string} - Қате хабарламасы немесе бос жол
+   * @param {string} value - Значение пароля
+   * @returns {string} - Сообщение об ошибке или пустая строка
    */
   const validatePassword = (value) => {
     if (!value) return 'Құпия сөз міндетті түрде енгізілуі керек';
@@ -116,7 +116,7 @@ const LoginForm = () => {
   };
   
   /**
-   * Email өрісінің өзгерісін өңдеу функциясы
+   * Обработчик изменения поля email
    */
   const handleEmailChange = (e) => {
     const value = e.target.value;
@@ -125,7 +125,7 @@ const LoginForm = () => {
   };
   
   /**
-   * Құпия сөз өрісінің өзгерісін өңдеу функциясы
+   * Обработчик изменения поля пароля
    */
   const handlePasswordChange = (e) => {
     const value = e.target.value;
@@ -134,23 +134,23 @@ const LoginForm = () => {
   };
   
   /**
-   * "Мені есте сақтау" күйін өзгерту функциясы
+   * Обработчик изменения состояния "Запомнить меня"
    */
   const handleRememberMeChange = (e) => {
     setRememberMe(e.target.checked);
   };
   
   /**
-   * Форманы жіберу функциясы
+   * Обработчик отправки формы
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Форма өрістерін валидациялау
+    // Валидация полей формы
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
     
-    // Валидация қателері болса, оларды көрсету
+    // Если есть ошибки валидации, показываем их
     if (emailError || passwordError) {
       setErrors({
         email: emailError,
@@ -163,23 +163,23 @@ const LoginForm = () => {
     setError('');
     
     try {
-      // AuthContext арқылы жүйеге кіру
+      // Вход через AuthContext
       await login({ email, password, rememberMe });
       
-      // Егер сәтті болса, бұрын келген бетке бағыттау
+      // Если успешно, перенаправляем на предыдущую страницу
       navigate(from, { replace: true });
     } catch (err) {
-      // Қате жағдайында оны күйге сақтау (AuthEffect арқылы көрсетіледі)
-      console.error('Жүйеге кіру қатесі:', err);
+      // В случае ошибки, сохраняем её в состоянии (будет отображена через useEffect)
+      console.error('Ошибка входа:', err);
     } finally {
       setLoading(false);
     }
   };
   
-  // Жүктелу күйі (компонент немесе аутентификация)
+  // Состояние загрузки (компонента или аутентификации)
   const isLoading = loading || authLoading;
   
-  // Анимация вариантары
+  // Варианты анимации
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
@@ -216,7 +216,7 @@ const LoginForm = () => {
             overflow: 'hidden'
           }}
         >
-          {/* Жоғарғы түрлі-түсті жолақ */}
+          {/* Верхняя цветная полоса */}
           <Box
             sx={{
               position: 'absolute',
@@ -229,7 +229,7 @@ const LoginForm = () => {
             }}
           />
           
-          {/* Форма тақырыбы */}
+          {/* Заголовок формы */}
           <Box sx={{ 
             display: 'flex', 
             flexDirection: 'column', 
@@ -267,17 +267,17 @@ const LoginForm = () => {
             </Typography>
           </Box>
           
-          {/* Қате хабарламасы */}
+          {/* Сообщение об ошибке */}
           <Slide direction="down" in={!!error} mountOnEnter unmountOnExit>
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           </Slide>
           
-          {/* Кіру формасы */}
+          {/* Форма входа */}
           <form onSubmit={handleSubmit}>
             <motion.div variants={itemVariants}>
-              {/* Email өрісі */}
+              {/* Поле email */}
               <TextField
                 margin="normal"
                 required
@@ -303,7 +303,7 @@ const LoginForm = () => {
             </motion.div>
             
             <motion.div variants={itemVariants}>
-              {/* Құпия сөз өрісі */}
+              {/* Поле пароля */}
               <TextField
                 margin="normal"
                 required
@@ -342,7 +342,7 @@ const LoginForm = () => {
             </motion.div>
             
             <motion.div variants={itemVariants}>
-              {/* Қосымша опциялар */}
+              {/* Дополнительные опции */}
               <Box 
                 sx={{ 
                   display: 'flex', 
@@ -380,7 +380,7 @@ const LoginForm = () => {
             </motion.div>
             
             <motion.div variants={itemVariants}>
-              {/* Кіру түймесі */}
+              {/* Кнопка входа */}
               <Button
                 type="submit"
                 fullWidth
@@ -407,28 +407,6 @@ const LoginForm = () => {
               >
                 {isLoading ? 'Жүктелуде...' : 'Кіру'}
               </Button>
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              {/* Тіркелу сілтемесі */}
-              <Box sx={{ mt: 3, textAlign: 'center' }}>
-                <Typography variant="body2">
-                  Аккаунтыңыз жоқ па?{' '}
-                  <Link 
-                    component={RouterLink} 
-                    to="/register" 
-                    color="primary"
-                    sx={{ 
-                      fontWeight: 'medium',
-                      '&:hover': {
-                        textDecoration: 'underline',
-                      } 
-                    }}
-                  >
-                    Тіркелу
-                  </Link>
-                </Typography>
-              </Box>
             </motion.div>
           </form>
         </Paper>

@@ -1,97 +1,81 @@
 // src/services/borrowService.js
-import apiClient from './api';
+import BaseService from './baseService';
 
 const borrowService = {
   /**
-   * Get current user's borrow history
-   * @param {Object} params - Query parameters
-   * @param {string} params.status - Filter by status ('active', 'returned', 'overdue')
-   * @param {number} params.page - Page number
-   * @param {number} params.limit - Items per page
-   * @returns {Promise} Promise object with borrows data
+   * Получить историю займов текущего пользователя
+   * @param {Object} params - Параметры запроса
+   * @param {string} params.status - Фильтр по статусу ('active', 'returned', 'overdue')
+   * @param {number} params.page - Номер страницы
+   * @param {number} params.limit - Элементов на странице
+   * @returns {Promise} Promise с данными займов
    */
   getUserBorrows: async (params = {}) => {
-    const response = await apiClient.get('/borrows', { params });
-    return response.data;
+    return BaseService.get('/borrows', params);
   },
 
   /**
-   * Borrow a book
-   * @param {Object} data - Borrow data
-   * @param {string} data.bookId - Book ID to borrow
-   * @returns {Promise} Promise object with created borrow
+   * Взять книгу
+   * @param {Object} data - Данные займа
+   * @param {string} data.bookId - ID книги для займа
+   * @returns {Promise} Promise с созданным займом
    */
   borrowBook: async (data) => {
-    const response = await apiClient.post('/borrows', data);
-    return response.data;
+    return BaseService.post('/borrows', data);
   },
 
   /**
-   * Get a single borrow record
-   * @param {string} id - Borrow ID
-   * @returns {Promise} Promise object with borrow data
+   * Получить отдельную запись о займе
+   * @param {string} id - ID займа
+   * @returns {Promise} Promise с данными займа
    */
   getBorrow: async (id) => {
-    const response = await apiClient.get(`/borrows/${id}`);
-    return response.data;
+    return BaseService.get(`/borrows/${id}`);
   },
 
   /**
-   * Return a borrowed book
-   * @param {string} id - Borrow ID
-   * @returns {Promise} Promise object with updated borrow
+   * Вернуть взятую книгу
+   * @param {string} id - ID займа
+   * @returns {Promise} Promise с обновленным займом
    */
   returnBook: async (id) => {
-    const response = await apiClient.put(`/borrows/${id}/return`);
-    return response.data;
+    return BaseService.put(`/borrows/${id}/return`);
   },
 
   /**
-   * Extend borrow period
-   * @param {string} id - Borrow ID
-   * @returns {Promise} Promise object with updated borrow
+   * Продлить срок займа
+   * @param {string} id - ID займа
+   * @returns {Promise} Promise с обновленным займом
    */
   extendBorrow: async (id) => {
-    const response = await apiClient.put(`/borrows/${id}/extend`);
-    return response.data;
+    return BaseService.put(`/borrows/${id}/extend`);
   },
 
   /**
-   * Get all borrows (admin/librarian only)
-   * @param {Object} params - Query parameters
-   * @param {string} params.status - Filter by status
-   * @param {string} params.userId - Filter by user ID
-   * @param {string} params.bookId - Filter by book ID
-   * @param {string} params.startDate - Filter by start date
-   * @param {string} params.endDate - Filter by end date
-   * @param {boolean} params.overdue - Filter overdue borrows
-   * @param {number} params.page - Page number
-   * @param {number} params.limit - Items per page
-   * @returns {Promise} Promise object with borrows data
+   * Получить все займы (только для администраторов/библиотекарей)
+   * @param {Object} params - Параметры запроса
+   * @returns {Promise} Promise с данными займов
    */
   getAllBorrows: async (params = {}) => {
-    const response = await apiClient.get('/borrows/all', { params });
-    return response.data;
+    return BaseService.get('/borrows/all', params);
   },
 
   /**
-   * Update borrow record (admin/librarian only)
-   * @param {string} id - Borrow ID
-   * @param {Object} data - Borrow data to update
-   * @returns {Promise} Promise object with updated borrow
+   * Обновить запись о займе (только для администраторов/библиотекарей)
+   * @param {string} id - ID займа
+   * @param {Object} data - Данные для обновления
+   * @returns {Promise} Promise с обновленным займом
    */
   updateBorrow: async (id, data) => {
-    const response = await apiClient.put(`/borrows/${id}`, data);
-    return response.data;
+    return BaseService.put(`/borrows/${id}`, data);
   },
 
   /**
-   * Get borrow statistics (admin/librarian only)
-   * @returns {Promise} Promise object with borrow statistics
+   * Получить статистику по займам (только для администраторов/библиотекарей)
+   * @returns {Promise} Promise со статистикой займов
    */
   getBorrowStats: async () => {
-    const response = await apiClient.get('/borrows/stats');
-    return response.data;
+    return BaseService.get('/borrows/stats');
   }
 };
 

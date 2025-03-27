@@ -1,121 +1,120 @@
 // src/services/bookService.js
-import apiClient from './api';
+import BaseService from './baseService';
 
 const bookService = {
   /**
-   * Get books with pagination and filtering
-   * @param {Object} params - Query parameters
-   * @param {number} params.page - Page number
-   * @param {number} params.limit - Books per page
-   * @param {string} params.search - Search query
-   * @param {string} params.categoryId - Category ID
-   * @param {string} params.year - Publication year
-   * @param {string} params.language - Book language
-   * @param {string} params.sort - Sort field (e.g. 'title', '-publicationYear')
-   * @returns {Promise} Promise object with books data
+   * Получить книги с пагинацией и фильтрацией
+   * @param {Object} params - Параметры запроса
+   * @returns {Promise} Promise с данными книг
    */
   getBooks: async (params = {}) => {
-    const response = await apiClient.get('/books', { params });
-    return response.data;
+    return BaseService.get('/books', params);
   },
 
   /**
-   * Get single book by ID
-   * @param {string} id - Book ID
-   * @returns {Promise} Promise object with book data
+   * Получить отдельную книгу по ID
+   * @param {string} id - ID книги
+   * @returns {Promise} Promise с данными книги
    */
   getBook: async (id) => {
-    const response = await apiClient.get(`/books/${id}`);
-    return response.data;
+    return BaseService.get(`/books/${id}`);
   },
 
   /**
-   * Get popular books
-   * @param {number} limit - Number of books to return
-   * @returns {Promise} Promise object with popular books
+   * Получить популярные книги
+   * @param {number} limit - Количество книг для возврата
+   * @returns {Promise} Promise с популярными книгами
    */
   getPopularBooks: async (limit = 4) => {
-    const response = await apiClient.get('/books/popular', { params: { limit } });
-    return response.data;
+    return BaseService.get('/books/popular', { limit });
   },
 
   /**
-   * Get new books
-   * @param {number} limit - Number of books to return
-   * @returns {Promise} Promise object with new books
+   * Получить новые книги
+   * @param {number} limit - Количество книг для возврата
+   * @returns {Promise} Promise с новыми книгами
    */
   getNewBooks: async (limit = 4) => {
-    const response = await apiClient.get('/books/new', { params: { limit } });
-    return response.data;
+    return BaseService.get('/books/new', { limit });
   },
 
   /**
-   * Get all categories
-   * @returns {Promise} Promise object with categories data
+   * Получить все категории
+   * @returns {Promise} Promise с данными категорий
    */
   getCategories: async () => {
-    const response = await apiClient.get('/books/categories');
-    return response.data;
+    return BaseService.get('/books/categories');
   },
 
   /**
-   * Create a new book (Admin only)
-   * @param {Object} bookData - Book data
-   * @returns {Promise} Promise object with created book
+   * Создать новую книгу (только для администраторов)
+   * @param {Object} bookData - Данные книги
+   * @returns {Promise} Promise с созданной книгой
    */
   createBook: async (bookData) => {
-    const response = await apiClient.post('/books', bookData);
-    return response.data;
+    return BaseService.post('/books', bookData);
   },
 
   /**
-   * Update book (Admin only)
-   * @param {string} id - Book ID
-   * @param {Object} bookData - Book data to update
-   * @returns {Promise} Promise object with updated book
+   * Обновить книгу (только для администраторов)
+   * @param {string} id - ID книги
+   * @param {Object} bookData - Данные для обновления
+   * @returns {Promise} Promise с обновленной книгой
    */
   updateBook: async (id, bookData) => {
-    const response = await apiClient.put(`/books/${id}`, bookData);
-    return response.data;
+    return BaseService.put(`/books/${id}`, bookData);
   },
 
   /**
-   * Delete book (Admin only)
-   * @param {string} id - Book ID
-   * @returns {Promise} Promise object
+   * Удалить книгу (только для администраторов)
+   * @param {string} id - ID книги
+   * @returns {Promise} Promise
    */
   deleteBook: async (id) => {
-    const response = await apiClient.delete(`/books/${id}`);
-    return response.data;
+    return BaseService.delete(`/books/${id}`);
   },
 
   /**
-   * Upload book cover (Admin only)
-   * @param {string} id - Book ID
-   * @param {File} file - Cover image file
-   * @returns {Promise} Promise object with updated cover URL
+   * Загрузить обложку книги (только для администраторов)
+   * @param {string} id - ID книги
+   * @param {File} file - Файл изображения обложки
+   * @returns {Promise} Promise с обновленным URL обложки
    */
   uploadBookCover: async (id, file) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await apiClient.put(`/books/${id}/cover`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    try {
+      const email = sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail');
+      const password = sessionStorage.getItem('userPassword') || localStorage.getItem('userPassword');
+      
+      const headers = {};
+      if (email && password) {
+        headers['Authorization'] = 'Basic ' + btoa(`${email}:${password}`);
       }
-    });
-    return response.data;
+      
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/books/${id}/cover`, {
+        method: 'PUT',
+        body: formData,
+        headers
+      });
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error uploading book cover:', error);
+      throw error;
+    }
   },
 
   /**
-   * Update book inventory (Admin only)
-   * @param {string} id - Book ID
-   * @param {Object} data - Inventory data
-   * @returns {Promise} Promise object with updated book
+   * Обновить инвентарь книги (только для администраторов)
+   * @param {string} id - ID книги
+   * @param {Object} data - Данные инвентаря
+   * @returns {Promise} Promise с обновленной книгой
    */
   updateInventory: async (id, data) => {
-    const response = await apiClient.put(`/books/${id}/inventory`, data);
-    return response.data;
+    return BaseService.put(`/books/${id}/inventory`, data);
   }
 };
 

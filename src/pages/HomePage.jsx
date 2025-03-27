@@ -331,7 +331,7 @@ const HomePage = () => {
                       transition: 'transform 0.3s'
                     }}
                   >
-                    Кіру / Тіркелу
+                    Кіру
                   </Button>
                 )}
               </Box>

@@ -427,7 +427,7 @@ const Layout = ({ children }) => {
                 />
               </ListItemButton>
             </ListItem>
-            
+{/*             
             <ListItem disablePadding>
               <ListItemButton
                 component={RouterLink}
@@ -460,7 +460,7 @@ const Layout = ({ children }) => {
                   }}
                 />
               </ListItemButton>
-            </ListItem>
+            </ListItem> */}
           </>
         )}
       </List>
@@ -760,7 +760,7 @@ const Layout = ({ children }) => {
                   color="inherit"
                   component={RouterLink}
                   to="/login"
-                  variant="text"
+                  variant="outlined"
                   sx={{ 
                     display: { xs: 'none', sm: 'inline-flex' },
                     fontWeight: 'medium',
@@ -771,7 +771,7 @@ const Layout = ({ children }) => {
                   Кіру
                 </Button>
                 
-                <Button
+                {/* <Button
                   variant="outlined"
                   color="inherit"
                   component={RouterLink}
@@ -786,7 +786,7 @@ const Layout = ({ children }) => {
                   }}
                 >
                   Тіркелу
-                </Button>
+                </Button> */}
               </Box>
             )}
           </Box>

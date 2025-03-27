@@ -4,7 +4,7 @@ import apiDebugger from '../utils/apiDebugger';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-// Create axios instance with default config
+// Создание экземпляра axios с настройками по умолчанию
 const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
@@ -12,15 +12,24 @@ const apiClient = axios.create({
   }
 });
 
-// Add request interceptor to include auth token and log requests
+// Добавление интерцептора запросов для включения учетных данных из сессии или локального хранилища
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+    // Если в заголовках уже установлена аутентификация, используем её
+    if (config.headers['Authorization']) {
+      return config;
     }
     
-    // Log request for debugging
+    // Иначе пытаемся получить учетные данные из хранилища
+    const email = sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail');
+    const password = sessionStorage.getItem('userPassword') || localStorage.getItem('userPassword');
+    
+    if (email && password) {
+      // Создаем заголовок Basic Authentication
+      config.headers['Authorization'] = 'Basic ' + btoa(`${email}:${password}`);
+    }
+    
+    // Логирование запроса для отладки
     apiDebugger.logRequest(config.url, config.method, config.data);
     
     return config;
@@ -30,23 +39,27 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Add response interceptor to handle common errors and log responses
+// Добавление интерцептора ответов для обработки ошибок и логирования
 apiClient.interceptors.response.use(
   (response) => {
-    // Log successful response
+    // Логирование успешного ответа
     apiDebugger.logResponse(response.config.url, response);
     return response;
   },
   (error) => {
-    // Log error response
+    // Логирование ошибки
     apiDebugger.logError(error.config?.url || 'unknown endpoint', error);
     
-    // Handle token expiration
+    // Обработка ошибки авторизации
     if (error.response && error.response.status === 401) {
-      // Clear local storage and redirect to login if token is invalid/expired
-      if (localStorage.getItem('token')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+      // Перенаправление на страницу входа при ошибке авторизации
+      sessionStorage.removeItem('userEmail');
+      sessionStorage.removeItem('userPassword');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userPassword');
+      
+      // Перенаправление только если мы не на странице входа
+      if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
     }
