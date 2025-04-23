@@ -2,7 +2,7 @@
 import axios from 'axios';
 import apiDebugger from '../utils/apiDebugger';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 // Создание экземпляра axios с настройками по умолчанию
 const apiClient = axios.create({
@@ -27,6 +27,11 @@ apiClient.interceptors.request.use(
     if (email && password) {
       // Создаем заголовок Basic Authentication
       config.headers['Authorization'] = 'Basic ' + btoa(`${email}:${password}`);
+    }
+    
+    // Не изменяем заголовок Content-Type, если он уже установлен для multipart/form-data
+    if (config.headers['Content-Type'] === 'multipart/form-data') {
+      delete config.headers['Content-Type']; // Позволить axios автоматически установить boundary
     }
     
     // Логирование запроса для отладки

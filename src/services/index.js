@@ -11,6 +11,7 @@ import userService from './userService';
 import adminBookService from './adminBookService';
 import adminUserService from './adminUserService';
 import adminBorrowService from './adminBorrowService';
+import dashboardService from './dashboardService';
 
 export {
   apiClient,
@@ -24,5 +25,6 @@ export {
   // Admin services
   adminBookService,
   adminUserService,
-  adminBorrowService
+  adminBorrowService,
+  dashboardService
 };

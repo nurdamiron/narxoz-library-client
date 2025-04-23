@@ -39,7 +39,8 @@ import {
   ExpandMore,
   Person as PersonIcon,
   Logout as LogoutIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Dashboard as DashboardIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
@@ -98,6 +99,13 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
       requireAuth: true,
       badge: stats.activeborrows || 0,
       alert: stats.overdueborrows > 0
+    },
+    { 
+      text: 'Админ панелі', 
+      icon: <DashboardIcon />, 
+      path: '/admin',
+      requireAuth: true,
+      requireRole: 'admin'
     },
   ];
   
@@ -251,6 +259,11 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
         {mainMenuItems.map((item, index) => {
           // Авторизация қажет элементтерді тексеру
           if (item.requireAuth && !isAuthenticated) {
+            return null;
+          }
+          
+          // Белгілі бір рөл қажет болса, тексеру
+          if (item.requireRole && (!user || user.role !== item.requireRole)) {
             return null;
           }
           

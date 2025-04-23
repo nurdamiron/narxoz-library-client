@@ -17,6 +17,14 @@ import ProfilePage from './pages/ProfilePage';
 import BookmarksPage from './pages/BookmarksPage';
 import BorrowHistoryPage from './pages/BorrowHistoryPage';
 
+// Импорт компонентов админ-панели
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UsersPage from './pages/admin/UsersPage';
+import AdminBooksPage from './pages/admin/BooksPage';
+import BorrowsPage from './pages/admin/BorrowsPage';
+import CategoriesPage from './pages/admin/CategoriesPage';
+import { AdminLayout } from './components/admin/common';
+
 // Импорт компонента защищенного маршрута
 import ProtectedRoute from './components/routes/ProtectedRoute';
 
@@ -82,6 +90,17 @@ function App() {
                   <Route path="/bookmarks" element={<BookmarksPage />} />
                   <Route path="/borrows" element={<BorrowHistoryPage />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
+                </Route>
+                
+                {/* Маршруты администратора */}
+                <Route path="/admin" element={<ProtectedRoute requiredRole="admin" />}>
+                  <Route element={<AdminLayout />}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="users" element={<UsersPage />} />
+                    <Route path="books" element={<AdminBooksPage />} />
+                    <Route path="borrows" element={<BorrowsPage />} />
+                    <Route path="categories" element={<CategoriesPage />} />
+                  </Route>
                 </Route>
                 
                 {/* Маршрут по умолчанию (404) */}

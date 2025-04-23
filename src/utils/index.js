@@ -218,7 +218,7 @@ export const formatDate = (date, options = {}) => {
       return path;
     }
     
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
     
     // Handle different path formats
     if (path.startsWith('/')) {

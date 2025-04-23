@@ -122,12 +122,30 @@ export const AuthProvider = ({ children }) => {
       const password = sessionStorage.getItem('userPassword') || localStorage.getItem('userPassword');
       
       if (email && password) {
-        // Если учетные данные есть, пытаемся войти
+        // Если учетные данные есть, пытаемся получить текущего пользователя
         try {
-          await login({ email, password });
+          setLoading(true);
+          const response = await authService.getCurrentUser({ email, password });
+          
+          if (response.success) {
+            // Если успешно получили данные, устанавливаем пользователя
+            setUser(response.data);
+            setIsAuthenticated(true);
+            
+            // Проверяем, является ли пользователь админом для перенаправления
+            if (response.data.role === 'admin' && !window.location.pathname.includes('/admin')) {
+              window.location.href = '/admin';
+            }
+          } else {
+            // Если запрос не удался, выходим из системы
+            logout();
+          }
         } catch (err) {
+          console.error('Authentication error:', err);
           // В случае ошибки выходим из системы
           logout();
+        } finally {
+          setLoading(false);
         }
       } else {
         // Если учетных данных нет, просто заканчиваем загрузку

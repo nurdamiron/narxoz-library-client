@@ -1,65 +1,133 @@
-// src/services/adminUserService.js
+/**
+ * Админ пайдаланушы сервисі
+ * 
+ * @description Пайдаланушыларды басқару қызметін қамтамасыз ететін сервис.
+ * Админдер пайдаланушыларды қарау, жасау, өңдеу және жою мүмкіндіктерін қолдайды.
+ */
+
 import apiClient from './api';
 
 const adminUserService = {
   /**
-   * Get all users
-   * @returns {Promise} Promise object with users data
+   * Барлық пайдаланушыларды алу
+   * 
+   * @param {Object} params - Сұраныс параметрлері (іздеу, беттеу, сүзу)
+   * @returns {Promise} Пайдаланушылар тізімі бар уәде
    */
-  getUsers: async () => {
-    const response = await apiClient.get('/users');
-    return response.data;
+  getUsers: async (params = {}) => {
+    try {
+      const queryString = new URLSearchParams(params).toString();
+      const response = await apiClient.get(`/users?${queryString}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
   },
 
   /**
-   * Get single user
-   * @param {string} id - User ID
-   * @returns {Promise} Promise object with user data
+   * Жеке пайдаланушыны алу
+   * 
+   * @param {string} id - Пайдаланушы ID
+   * @returns {Promise} Пайдаланушы мәліметтері
    */
   getUser: async (id) => {
-    const response = await apiClient.get(`/users/${id}`);
-    return response.data;
+    try {
+      const response = await apiClient.get(`/users/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
   },
 
   /**
-   * Create user
-   * @param {Object} userData - User data
-   * @returns {Promise} Promise object with created user
+   * Жаңа пайдаланушы жасау
+   * 
+   * @param {Object} userData - Пайдаланушы мәліметтері
+   * @returns {Promise} Жасалған пайдаланушы мәліметтері
    */
   createUser: async (userData) => {
-    const response = await apiClient.post('/users', userData);
-    return response.data;
+    try {
+      const response = await apiClient.post('/users', userData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
   },
 
   /**
-   * Update user
-   * @param {string} id - User ID
-   * @param {Object} userData - User data to update
-   * @returns {Promise} Promise object with updated user
+   * Пайдаланушыны жаңарту
+   * 
+   * @param {string} id - Пайдаланушы ID
+   * @param {Object} userData - Жаңартылатын мәліметтер
+   * @returns {Promise} Жаңартылған пайдаланушы мәліметтері
    */
   updateUser: async (id, userData) => {
-    const response = await apiClient.put(`/users/${id}`, userData);
-    return response.data;
+    try {
+      const response = await apiClient.put(`/users/${id}`, userData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
   },
 
   /**
-   * Delete user
-   * @param {string} id - User ID
-   * @returns {Promise} Promise object
+   * Пайдаланушыны жою
+   * 
+   * @param {string} id - Пайдаланушы ID
+   * @returns {Promise} Жою нәтижесі
    */
   deleteUser: async (id) => {
-    const response = await apiClient.delete(`/users/${id}`);
-    return response.data;
+    try {
+      const response = await apiClient.delete(`/users/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
   },
 
   /**
-   * Register an admin or librarian (admin only)
-   * @param {Object} userData - User data with role
-   * @returns {Promise} Promise object with created admin/librarian
+   * Әкімші немесе кітапханашы тіркеу (тек әкімші үшін)
+   * 
+   * @param {Object} userData - Жаңа әкімші мәліметтері
+   * @returns {Promise} Жасалған әкімші мәліметтері
    */
   registerAdmin: async (userData) => {
-    const response = await apiClient.post('/auth/register-admin', userData);
-    return response.data;
+    try {
+      const response = await apiClient.post('/auth/register-admin', userData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Пайдаланушы статистикасын алу
+   * 
+   * @returns {Promise} Пайдаланушылар бойынша статистика
+   */
+  getUserStats: async () => {
+    try {
+      const response = await apiClient.get('/users/stats');
+      return response.data.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Құпия сөзді әкімші арқылы өзгерту
+   * 
+   * @param {string} id - Пайдаланушы ID
+   * @param {string} newPassword - Жаңа құпия сөз
+   * @returns {Promise} Өзгерту нәтижесі
+   */
+  resetPassword: async (id, newPassword) => {
+    try {
+      const response = await apiClient.put(`/users/${id}/reset-password`, { newPassword });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
   }
 };
 

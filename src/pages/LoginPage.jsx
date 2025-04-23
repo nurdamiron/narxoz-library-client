@@ -23,14 +23,16 @@ import {
   IconButton,
   CircularProgress,
   Alert,
-  useTheme
+  useTheme,
+  Divider
 } from '@mui/material';
 import {
   Email as EmailIcon,
   Lock as LockIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-  Login as LoginIcon
+  Login as LoginIcon,
+  AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 
 // Импорт хуков
@@ -45,7 +47,7 @@ import { useToast } from '../context/ToastContext';
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const { success, error: showError } = useToast();
   const theme = useTheme();
   
@@ -64,12 +66,18 @@ const LoginPage = () => {
   // Авторизациядан кейін бағыттау
   const from = location.state?.from || '/';
   
-  // Егер пайдаланушы авторизацияланған болса, негізгі бетке бағыттау
+  // Егер пайдаланушы авторизацияланған болса, ролін тексеріп бағыттау
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(from, { replace: true });
+      // Егер пайдаланушы админ болса, админ панеліне бағыттау
+      if (user && user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        // Басқа пайдаланушылар үшін әдеттегі бағыттау
+        navigate(from, { replace: true });
+      }
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, navigate, from, user]);
   
   /**
    * Форма өрісін өзгерту
@@ -137,9 +145,16 @@ const LoginPage = () => {
       setLoading(true);
       setError('');
       
-      await login(formData);
+      const response = await login(formData);
       success('Сіз сәтті кірдіңіз!');
-      navigate(from, { replace: true });
+      
+      // Егер пайдаланушы админ болса, админ панеліне бағыттау
+      if (response.data && response.data.role === 'admin') {
+        navigate('/admin');
+      } else {
+        // Басқа пайдаланушылар үшін әдеттегі бағыттау
+        navigate(from, { replace: true });
+      }
     } catch (err) {
       console.error('Login error:', err);
       
@@ -147,6 +162,37 @@ const LoginPage = () => {
         setError(err.response.data.error);
       } else {
         setError('Кіру кезінде қате орын алды. Әрекетті қайталап көріңіз.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  /**
+   * Админ ретінде кіру
+   */
+  const loginAsAdmin = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const adminCredentials = {
+        email: 'admin@narxoz.kz',
+        password: 'admin123'
+      };
+      
+      const response = await login(adminCredentials);
+      success('Админ ретінде сәтті кірдіңіз!');
+      
+      // Админ панеліне бағыттау
+      navigate('/admin');
+    } catch (err) {
+      console.error('Admin login error:', err);
+      
+      if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else {
+        setError('Админ ретінде кіру кезінде қате орын алды. Әрекетті қайталап көріңіз.');
       }
     } finally {
       setLoading(false);
@@ -346,24 +392,9 @@ const LoginPage = () => {
                     Құпия сөзді ұмыттыңыз ба?
                   </Link>
                 </Grid>
-                {/* <Grid item>
-                  <Link 
-                    component={RouterLink} 
-                    to="/register" 
-                    variant="body2"
-                    color="primary"
-                    sx={{ 
-                      fontWeight: 'medium',
-                      '&:hover': {
-                        textDecoration: 'underline',
-                      } 
-                    }}
-                  >
-                    Тіркелгіңіз жоқ па? Тіркелу
-                  </Link>
-                </Grid> */}
               </Grid>
             </motion.div>
+            
           </Box>
         </Paper>
       </motion.div>

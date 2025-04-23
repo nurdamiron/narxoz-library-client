@@ -139,6 +139,7 @@ const Layout = ({ children }) => {
     { text: 'Кітаптар', icon: <LibraryIcon />, path: '/books' },
     { text: 'Бетбелгілер', icon: <BookmarkIcon />, path: '/bookmarks', auth: true },
     { text: 'Қарыз тарихы', icon: <HistoryIcon />, path: '/borrows', auth: true },
+    { text: 'Админ панелі', icon: <SettingsIcon />, path: '/admin', auth: true, adminOnly: true },
   ];
   
   // Анимация конфигурациясы
@@ -233,7 +234,31 @@ const Layout = ({ children }) => {
                 {user.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {user.role === 'admin' ? 'Әкімші' : (user.role === 'librarian' ? 'Кітапханашы' : 'Оқырман')}
+                {user.role === 'admin' ? (
+                  <Box component="span" sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    color: theme.palette.error.main, 
+                    fontWeight: 'medium' 
+                  }}>
+                    Әкімші <Box 
+                      component={RouterLink} 
+                      to="/admin"
+                      sx={{ 
+                        ml: 1, 
+                        fontSize: '0.75rem', 
+                        bgcolor: theme.palette.error.main, 
+                        color: 'white', 
+                        px: 1, 
+                        py: 0.25, 
+                        borderRadius: 1,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      Басқару
+                    </Box>
+                  </Box>
+                ) : (user.role === 'librarian' ? 'Кітапханашы' : 'Оқырман')}
               </Typography>
             </Box>
           </Box>
@@ -565,8 +590,9 @@ const Layout = ({ children }) => {
             }}
           >
             {menuItems.map((item) => (
-              // Авторизация қажет элементтерді тексеру
-              (!item.auth || (item.auth && isAuthenticated)) && (
+              // Авторизация қажет және админ қажетті элементтерді тексеру
+              (!item.auth || (item.auth && isAuthenticated)) && 
+              (!item.adminOnly || (item.adminOnly && user?.role === 'admin')) && (
                 <Button
                   key={item.text}
                   component={RouterLink}
@@ -700,6 +726,18 @@ const Layout = ({ children }) => {
                     <Typography variant="body2" color="text.secondary">
                       {user?.email}
                     </Typography>
+                    {user?.role === 'admin' && (
+                      <Button
+                        component={RouterLink}
+                        to="/admin"
+                        size="small"
+                        variant="contained"
+                        color="error"
+                        sx={{ mt: 1, fontSize: '0.75rem' }}
+                      >
+                        Админ панеліне өту
+                      </Button>
+                    )}
                   </Box>
                   
                   <MenuItem component={RouterLink} to="/profile" onClick={handleCloseUserMenu}>

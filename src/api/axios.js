@@ -8,7 +8,7 @@ import axios from 'axios';
 
 // Базалық URL бар Axios данасын жасау
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api'
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api'
 });
 
 // Барлық сұраныстарға аутентификация токенін қосу үшін сұраныс интерцепторын қосу

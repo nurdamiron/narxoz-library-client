@@ -3,6 +3,24 @@ import apiClient from './api';
 
 const adminBookService = {
   /**
+   * Get all books
+   * @returns {Promise} Promise object with list of books
+   */
+  getBooks: async () => {
+    const response = await apiClient.get('/books');
+    return response.data;
+  },
+
+  /**
+   * Get all categories
+   * @returns {Promise} Promise object with list of categories
+   */
+  getCategories: async () => {
+    const response = await apiClient.get('/books/categories');
+    return response.data;
+  },
+
+  /**
    * Create a new book
    * @param {Object} bookData - Book data
    * @returns {Promise} Promise object with created book
@@ -41,6 +59,7 @@ const adminBookService = {
    */
   uploadBookCover: async (id, file) => {
     const formData = new FormData();
+    // Use 'file' as the field name to match what the backend expects
     formData.append('file', file);
 
     const response = await apiClient.put(`/books/${id}/cover`, formData, {

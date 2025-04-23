@@ -14,6 +14,13 @@ import ProfilePage from './pages/ProfilePage';
 import BookmarksPage from './pages/BookmarksPage';
 import BorrowHistoryPage from './pages/BorrowHistoryPage';
 
+// Импортируем страницы администратора
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UsersPage from './pages/admin/UsersPage';
+import AdminBooksPage from './pages/admin/BooksPage';
+import BorrowsPage from './pages/admin/BorrowsPage';
+import CategoriesPage from './pages/admin/CategoriesPage';
+
 // Импортируем защищенный маршрут
 import ProtectedRoute from './components/routes/ProtectedRoute';
 
@@ -59,6 +66,39 @@ const routes = [
       {
         path: '/notifications',
         element: <NotificationsPage />,
+      },
+    ],
+  },
+  // Маршруты администратора (требуют роли admin)
+  {
+    path: '/admin',
+    element: <ProtectedRoute requiredRole="admin" />,
+    children: [
+      {
+        path: '',
+        element: <AdminLayout />,
+        children: [
+          {
+            path: '',
+            element: <AdminDashboard />,
+          },
+          {
+            path: 'users',
+            element: <UsersPage />,
+          },
+          {
+            path: 'books',
+            element: <AdminBooksPage />,
+          },
+          {
+            path: 'borrows',
+            element: <BorrowsPage />,
+          },
+          {
+            path: 'categories',
+            element: <CategoriesPage />,
+          },
+        ],
       },
     ],
   },
