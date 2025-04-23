@@ -7,6 +7,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import CategoryIcon from '@mui/icons-material/Category';
+import RateReviewIcon from '@mui/icons-material/RateReview';
 
 const AdminLayout = () => {
   const theme = useTheme();
@@ -21,6 +22,7 @@ const AdminLayout = () => {
     if (path.includes('/admin/books')) return 2;
     if (path.includes('/admin/borrows')) return 3;
     if (path.includes('/admin/categories')) return 4;
+    if (path.includes('/admin/reviews')) return 5;
     return 0;
   }
 
@@ -42,6 +44,9 @@ const AdminLayout = () => {
         break;
       case 4:
         navigate('/admin/categories');
+        break;
+      case 5:
+        navigate('/admin/reviews');
         break;
       default:
         navigate('/admin');
@@ -74,6 +79,7 @@ const AdminLayout = () => {
           if (name === 'books') displayName = 'Кітаптар';
           if (name === 'borrows') displayName = 'Қарыздар';
           if (name === 'categories') displayName = 'Санаттар';
+          if (name === 'reviews') displayName = 'Пікірлер';
           
           return isLast ? (
             <Typography key={route} color="text.primary">
@@ -144,6 +150,12 @@ const AdminLayout = () => {
           <Tab 
             icon={<CategoryIcon />} 
             label="Санаттар" 
+            iconPosition="start"
+            sx={{ minWidth: 120 }}
+          />
+          <Tab 
+            icon={<RateReviewIcon />} 
+            label="Пікірлер" 
             iconPosition="start"
             sx={{ minWidth: 120 }}
           />

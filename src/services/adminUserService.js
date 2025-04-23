@@ -47,7 +47,8 @@ const adminUserService = {
    */
   createUser: async (userData) => {
     try {
-      const response = await apiClient.post('/users', userData);
+      // Используем новый endpoint для регистрации пользователей
+      const response = await apiClient.post('/auth/register', userData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -86,14 +87,14 @@ const adminUserService = {
   },
 
   /**
-   * Әкімші немесе кітапханашы тіркеу (тек әкімші үшін)
+   * Әкімші немесе студент тіркеу (тек әкімші үшін)
    * 
-   * @param {Object} userData - Жаңа әкімші мәліметтері
-   * @returns {Promise} Жасалған әкімші мәліметтері
+   * @param {Object} userData - Жаңа пайдаланушы мәліметтері
+   * @returns {Promise} Жасалған пайдаланушы мәліметтері
    */
-  registerAdmin: async (userData) => {
+  registerUser: async (userData) => {
     try {
-      const response = await apiClient.post('/auth/register-admin', userData);
+      const response = await apiClient.post('/auth/register', userData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

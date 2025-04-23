@@ -45,12 +45,12 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         
         // Сохраняем учетные данные в сессии, чтобы использовать их при последующих запросах
-        sessionStorage.setItem('userEmail', credentials.email);
+        sessionStorage.setItem('email', credentials.email);
         sessionStorage.setItem('userPassword', credentials.password);
         
         // Если включено "запомнить меня", сохраняем учетные данные в локальном хранилище
         if (credentials.rememberMe) {
-          localStorage.setItem('userEmail', credentials.email);
+          localStorage.setItem('email', credentials.email);
           localStorage.setItem('userPassword', credentials.password);
         }
       }
@@ -70,9 +70,9 @@ export const AuthProvider = ({ children }) => {
    */
   const logout = () => {
     // Удаляем учетные данные из хранилищ
-    sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem('email');
     sessionStorage.removeItem('userPassword');
-    localStorage.removeItem('userEmail');
+    localStorage.removeItem('email');
     localStorage.removeItem('userPassword');
     
     // Сбрасываем состояние авторизации
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       
       // Проверяем наличие учетных данных
-      const email = sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail');
+      const email = sessionStorage.getItem('email') || localStorage.getItem('email');
       const password = sessionStorage.getItem('userPassword') || localStorage.getItem('userPassword');
       
       if (!email || !password) {
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }) => {
   // При первой загрузке проверяем наличие учетных данных
   useEffect(() => {
     const initAuth = async () => {
-      const email = sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail');
+      const email = sessionStorage.getItem('email') || localStorage.getItem('email');
       const password = sessionStorage.getItem('userPassword') || localStorage.getItem('userPassword');
       
       if (email && password) {

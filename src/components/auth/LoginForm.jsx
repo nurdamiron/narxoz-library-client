@@ -91,15 +91,18 @@ const LoginForm = () => {
   };
   
   /**
-   * Валидация поля email
+   * Валидация поля электронной почты
    * 
    * @param {string} value - Значение email
    * @returns {string} - Сообщение об ошибке или пустая строка
    */
   const validateEmail = (value) => {
     if (!value) return 'Email міндетті түрде енгізілуі керек';
+    
+    // Простая регулярка для проверки формата email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value)) return 'Жарамды email енгізіңіз';
+    if (!emailRegex.test(value)) return 'Жарамды email мекенжайын енгізіңіз';
+    
     return '';
   };
   

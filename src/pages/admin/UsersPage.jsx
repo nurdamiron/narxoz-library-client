@@ -38,14 +38,16 @@ const UsersPage = () => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    username: '',
     password: '',
-    role: 'user',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    role: 'student',
     faculty: '',
     specialization: '',
-    studentId: '',
-    year: ''
+    studentId: ''
   });
 
   // Загрузка пользователей при монтировании компонента
@@ -136,14 +138,16 @@ const UsersPage = () => {
   const openEditUserDialog = (user) => {
     setSelectedUser(user);
     setFormData({
-      name: user.name,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
+      phoneNumber: user.phoneNumber || '',
       password: '',
       role: user.role,
       faculty: user.faculty || '',
       specialization: user.specialization || '',
-      studentId: user.studentId || '',
-      year: user.year || ''
+      studentId: user.studentId || ''
     });
     setOpenEditDialog(true);
   };
@@ -157,14 +161,16 @@ const UsersPage = () => {
   // Сброс формы
   const resetForm = () => {
     setFormData({
-      name: '',
+      username: '',
+      firstName: '',
+      lastName: '',
       email: '',
+      phoneNumber: '',
       password: '',
-      role: 'user',
+      role: 'student',
       faculty: '',
       specialization: '',
-      studentId: '',
-      year: ''
+      studentId: ''
     });
     setSelectedUser(null);
   };
@@ -174,7 +180,7 @@ const UsersPage = () => {
     switch (role) {
       case 'admin':
         return 'error';
-      case 'librarian':
+      case 'student':
         return 'primary';
       default:
         return 'default';
@@ -206,7 +212,7 @@ const UsersPage = () => {
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
-                <TableCell>Аты</TableCell>
+                <TableCell>Аты-жөні</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Рөлі</TableCell>
                 <TableCell>Факультет</TableCell>
@@ -229,7 +235,7 @@ const UsersPage = () => {
                   .map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>{user.id}</TableCell>
-                      <TableCell>{user.name}</TableCell>
+                      <TableCell>{user.firstName} {user.lastName}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
                         <Chip 
@@ -284,20 +290,9 @@ const UsersPage = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Аты"
-                name="name"
-                value={formData.name}
-                onChange={handleFormChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
+                label="Логин"
+                name="username"
+                value={formData.username}
                 onChange={handleFormChange}
                 required
               />
@@ -316,14 +311,53 @@ const UsersPage = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                label="Аты"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Тегі"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Телефон"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleFormChange}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
                 select
                 label="Рөлі"
                 name="role"
                 value={formData.role}
                 onChange={handleFormChange}
               >
-                <MenuItem value="user">Оқырман</MenuItem>
-                <MenuItem value="librarian">Кітапханашы</MenuItem>
+                <MenuItem value="student">Студент</MenuItem>
                 <MenuItem value="admin">Әкімші</MenuItem>
               </TextField>
             </Grid>
@@ -351,15 +385,6 @@ const UsersPage = () => {
                 label="Студент ID"
                 name="studentId"
                 value={formData.studentId}
-                onChange={handleFormChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Оқу жылы"
-                name="year"
-                value={formData.year}
                 onChange={handleFormChange}
               />
             </Grid>
@@ -379,9 +404,39 @@ const UsersPage = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                label="Логин"
+                name="username"
+                value={formData.username}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Жаңа құпия сөз (өзгертпеу үшін бос қалдырыңыз)"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleFormChange}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
                 label="Аты"
-                name="name"
-                value={formData.name}
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Тегі"
+                name="lastName"
+                value={formData.lastName}
                 onChange={handleFormChange}
                 required
               />
@@ -400,10 +455,9 @@ const UsersPage = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Жаңа құпия сөз (өзгертпеу үшін бос қалдырыңыз)"
-                name="password"
-                type="password"
-                value={formData.password}
+                label="Телефон"
+                name="phoneNumber"
+                value={formData.phoneNumber}
                 onChange={handleFormChange}
               />
             </Grid>
@@ -416,8 +470,7 @@ const UsersPage = () => {
                 value={formData.role}
                 onChange={handleFormChange}
               >
-                <MenuItem value="user">Оқырман</MenuItem>
-                <MenuItem value="librarian">Кітапханашы</MenuItem>
+                <MenuItem value="student">Студент</MenuItem>
                 <MenuItem value="admin">Әкімші</MenuItem>
               </TextField>
             </Grid>
@@ -445,15 +498,6 @@ const UsersPage = () => {
                 label="Студент ID"
                 name="studentId"
                 value={formData.studentId}
-                onChange={handleFormChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Оқу жылы"
-                name="year"
-                value={formData.year}
                 onChange={handleFormChange}
               />
             </Grid>

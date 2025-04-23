@@ -23,6 +23,7 @@ import UsersPage from './pages/admin/UsersPage';
 import AdminBooksPage from './pages/admin/BooksPage';
 import BorrowsPage from './pages/admin/BorrowsPage';
 import CategoriesPage from './pages/admin/CategoriesPage';
+import ReviewsPage from './pages/admin/ReviewsPage';
 import { AdminLayout } from './components/admin/common';
 
 // Импорт компонента защищенного маршрута
@@ -100,6 +101,7 @@ function App() {
                     <Route path="books" element={<AdminBooksPage />} />
                     <Route path="borrows" element={<BorrowsPage />} />
                     <Route path="categories" element={<CategoriesPage />} />
+                    <Route path="reviews" element={<ReviewsPage />} />
                   </Route>
                 </Route>
                 

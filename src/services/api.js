@@ -21,7 +21,7 @@ apiClient.interceptors.request.use(
     }
     
     // Иначе пытаемся получить учетные данные из хранилища
-    const email = sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail');
+    const email = sessionStorage.getItem('email') || localStorage.getItem('email');
     const password = sessionStorage.getItem('userPassword') || localStorage.getItem('userPassword');
     
     if (email && password) {
@@ -58,9 +58,9 @@ apiClient.interceptors.response.use(
     // Обработка ошибки авторизации
     if (error.response && error.response.status === 401) {
       // Перенаправление на страницу входа при ошибке авторизации
-      sessionStorage.removeItem('userEmail');
+      sessionStorage.removeItem('email');
       sessionStorage.removeItem('userPassword');
-      localStorage.removeItem('userEmail');
+      localStorage.removeItem('email');
       localStorage.removeItem('userPassword');
       
       // Перенаправление только если мы не на странице входа

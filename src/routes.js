@@ -20,9 +20,11 @@ import UsersPage from './pages/admin/UsersPage';
 import AdminBooksPage from './pages/admin/BooksPage';
 import BorrowsPage from './pages/admin/BorrowsPage';
 import CategoriesPage from './pages/admin/CategoriesPage';
+import ReviewsPage from './pages/admin/ReviewsPage';
 
-// Импортируем защищенный маршрут
+// Импортируем компоненты для маршрутизации
 import ProtectedRoute from './components/routes/ProtectedRoute';
+import AdminLayout from './components/admin/common/AdminLayout';
 
 // Определяем маршруты
 const routes = [
@@ -97,6 +99,10 @@ const routes = [
           {
             path: 'categories',
             element: <CategoriesPage />,
+          },
+          {
+            path: 'reviews',
+            element: <ReviewsPage />,
           },
         ],
       },

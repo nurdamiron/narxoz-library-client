@@ -24,189 +24,314 @@ import {
   Chip,
   FormControl,
   InputLabel,
-  Select
+  Select,
+  Alert,
+  AlertTitle,
+  Snackbar
 } from '@mui/material';
 import { 
   CheckCircle as ApproveIcon, 
   DoDisturbOn as RejectIcon, 
   Visibility as ViewIcon,
   History as HistoryIcon,
-  Send as SendIcon
+  Send as SendIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import PageHeader from '../../components/common/PageHeader';
+import adminBorrowService from '../../services/adminBorrowService';
 
+/**
+ * Қарызға алуларды басқару беті
+ */
 const BorrowsPage = () => {
+  // Күй айнымалылары
   const [borrows, setBorrows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   const [selectedBorrow, setSelectedBorrow] = useState(null);
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
   const [openReturnDialog, setOpenReturnDialog] = useState(false);
   const [openSendNotificationDialog, setOpenSendNotificationDialog] = useState(false);
   const [notificationText, setNotificationText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
-  // Загрузка заимствований при монтировании компонента
+  // Компонент монтаждалған кезде қарызға алуларды жүктеу
   useEffect(() => {
     fetchBorrows();
-  }, []);
+  }, [page, rowsPerPage, statusFilter]);
 
-  // Функция для загрузки списка заимствований
+  /**
+   * Қарызға алулар тізімін жүктеу
+   */
   const fetchBorrows = async () => {
     try {
       setLoading(true);
-      // В реальном приложении использовали бы API, сейчас используем моки
-      setTimeout(() => {
-        const mockBorrows = [
-          {
-            id: 1,
-            userId: 101,
-            user: { name: 'Әсел Қасымова', email: 'asel@example.com' },
-            bookId: 201,
-            book: { title: 'Абай жолы', author: 'Мұхтар Әуезов' },
-            borrowDate: '2023-11-01',
-            dueDate: '2023-11-15',
-            returnDate: null,
-            status: 'borrowed',
-            notes: 'Первое заимствование'
-          },
-          {
-            id: 2,
-            userId: 102,
-            user: { name: 'Болат Сагинтаев', email: 'bolat@example.com' },
-            bookId: 202,
-            book: { title: 'Экономика негіздері', author: 'Аманжол Қозыбаев' },
-            borrowDate: '2023-10-25',
-            dueDate: '2023-11-08',
-            returnDate: '2023-11-05',
-            status: 'returned',
-            notes: 'Вернул вовремя'
-          },
-          {
-            id: 3,
-            userId: 103,
-            user: { name: 'Гүлнар Ахметова', email: 'gulnar@example.com' },
-            bookId: 203,
-            book: { title: 'Қазақ тілі', author: 'Сакен Калиев' },
-            borrowDate: '2023-11-05',
-            dueDate: '2023-11-19',
-            returnDate: null,
-            status: 'overdue',
-            notes: 'Просрочена'
-          },
-          {
-            id: 4,
-            userId: 104,
-            user: { name: 'Дамир Исламов', email: 'damir@example.com' },
-            bookId: 204,
-            book: { title: 'Информатика', author: 'Нуржан Алиев' },
-            borrowDate: null,
-            dueDate: null,
-            returnDate: null,
-            status: 'pending',
-            notes: 'Ожидает подтверждения'
-          }
-        ];
-        setBorrows(mockBorrows);
-        setLoading(false);
-      }, 500);
+      
+      // Сұраныс параметрлерін құру
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage
+      };
+      
+      // Статус сүзгісін қосу
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+      
+      // API сұранысын жіберу
+      const response = await adminBorrowService.getAllBorrows(params);
+      
+      if (response.success) {
+        setBorrows(response.data);
+        setTotalCount(response.total || response.count);
+      } else {
+        showSnackbar('Қарызға алулар тізімін жүктеу қатесі', 'error');
+      }
     } catch (error) {
       console.error('Error fetching borrows:', error);
+      showSnackbar('Қарызға алулар тізімін жүктеу қатесі', 'error');
+    } finally {
       setLoading(false);
     }
   };
 
-  // Обработчики изменения страницы и количества строк на странице
+  /**
+   * Мерзімі өткен қарызға алуларды тексеру
+   */
+  const handleCheckOverdue = async () => {
+    try {
+      setLoading(true);
+      const response = await adminBorrowService.checkOverdueBorrows();
+      
+      if (response.success) {
+        showSnackbar(`Мерзімі өткен қарызға алулар тексерілді. ${response.updatedCount} жазба жаңартылды.`, 'success');
+        fetchBorrows();
+      } else {
+        showSnackbar('Мерзімі өткен қарызға алуларды тексеру қатесі', 'error');
+      }
+    } catch (error) {
+      console.error('Error checking overdue borrows:', error);
+      showSnackbar('Мерзімі өткен қарызға алуларды тексеру қатесі', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Еске салу хабарландыруларын жіберу
+   */
+  const handleSendReminders = async () => {
+    try {
+      setLoading(true);
+      const response = await adminBorrowService.sendDueReminders();
+      
+      if (response.success) {
+        showSnackbar(`Еске салу хабарландырулары жіберілді. ${response.notificationsCreated} хабарландыру жасалды.`, 'success');
+      } else {
+        showSnackbar('Еске салу хабарландыруларын жіберу қатесі', 'error');
+      }
+    } catch (error) {
+      console.error('Error sending reminders:', error);
+      showSnackbar('Еске салу хабарландыруларын жіберу қатесі', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Бет айналымын өңдеу
+   */
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
+  /**
+   * Беттегі жолдар санын өзгерту
+   */
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  // Одобрение заимствования
+  /**
+   * Қарызға алуды бекіту
+   */
   const handleApproveBorrow = async (borrowId) => {
     try {
-      console.log('Approving borrow:', borrowId);
-      // В реальном приложении вызвали бы API
-      fetchBorrows();
+      setLoading(true);
+      const response = await adminBorrowService.updateBorrow(borrowId, { status: 'active' });
+      
+      if (response.success) {
+        showSnackbar('Қарызға алу сәтті бекітілді', 'success');
+        fetchBorrows();
+      } else {
+        showSnackbar('Қарызға алуды бекіту қатесі', 'error');
+      }
     } catch (error) {
       console.error('Error approving borrow:', error);
+      showSnackbar('Қарызға алуды бекіту қатесі', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Отклонение заимствования
+  /**
+   * Қарызға алуды қабылдамау
+   */
   const handleRejectBorrow = async () => {
     try {
       if (!selectedBorrow) return;
-      console.log('Rejecting borrow:', selectedBorrow.id);
-      // В реальном приложении вызвали бы API
-      fetchBorrows();
-      setOpenRejectDialog(false);
+      
+      setLoading(true);
+      const response = await adminBorrowService.updateBorrow(
+        selectedBorrow.id, 
+        { status: 'rejected', notes: rejectReason }
+      );
+      
+      if (response.success) {
+        showSnackbar('Қарызға алу қабылданбады', 'success');
+        fetchBorrows();
+        setOpenRejectDialog(false);
+        setRejectReason('');
+      } else {
+        showSnackbar('Қарызға алуды қабылдамау қатесі', 'error');
+      }
     } catch (error) {
       console.error('Error rejecting borrow:', error);
+      showSnackbar('Қарызға алуды қабылдамау қатесі', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Подтверждение возврата книги
+  /**
+   * Кітап қайтаруды растау
+   */
   const handleConfirmReturn = async () => {
     try {
       if (!selectedBorrow) return;
-      console.log('Confirming return for borrow:', selectedBorrow.id);
-      // В реальном приложении вызвали бы API
-      fetchBorrows();
-      setOpenReturnDialog(false);
+      
+      setLoading(true);
+      const response = await adminBorrowService.updateBorrow(
+        selectedBorrow.id, 
+        { status: 'returned', returnDate: new Date().toISOString() }
+      );
+      
+      if (response.success) {
+        showSnackbar('Кітап қайтару сәтті расталды', 'success');
+        fetchBorrows();
+        setOpenReturnDialog(false);
+      } else {
+        showSnackbar('Кітап қайтаруды растау қатесі', 'error');
+      }
     } catch (error) {
       console.error('Error confirming return:', error);
+      showSnackbar('Кітап қайтаруды растау қатесі', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Отправка уведомления
+  /**
+   * Хабарландыру жіберу
+   */
   const handleSendNotification = async () => {
     try {
-      if (!selectedBorrow || !notificationText) return;
-      console.log('Sending notification to user:', selectedBorrow.userId, 'Text:', notificationText);
-      // В реальном приложении вызвали бы API
-      setOpenSendNotificationDialog(false);
-      setNotificationText('');
+      if (!selectedBorrow || !notificationText.trim()) return;
+      
+      setLoading(true);
+      const response = await adminBorrowService.sendNotification(
+        selectedBorrow.userId,
+        selectedBorrow.id,
+        notificationText
+      );
+      
+      if (response.success) {
+        showSnackbar('Хабарландыру сәтті жіберілді', 'success');
+        setOpenSendNotificationDialog(false);
+        setNotificationText('');
+      } else {
+        showSnackbar('Хабарландыру жіберу қатесі', 'error');
+      }
     } catch (error) {
       console.error('Error sending notification:', error);
+      showSnackbar('Хабарландыру жіберу қатесі', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Открытие диалога деталей
+  /**
+   * Қарызға алу мәліметтерін көрсету
+   */
   const openBorrowDetailsDialog = (borrow) => {
     setSelectedBorrow(borrow);
     setOpenDetailsDialog(true);
   };
 
-  // Открытие диалога отклонения
+  /**
+   * Қарызға алуды қабылдамау диалогын ашу
+   */
   const openRejectBorrowDialog = (borrow) => {
     setSelectedBorrow(borrow);
+    setRejectReason('');
     setOpenRejectDialog(true);
   };
 
-  // Открытие диалога возврата
+  /**
+   * Кітап қайтару диалогын ашу
+   */
   const openReturnBorrowDialog = (borrow) => {
     setSelectedBorrow(borrow);
     setOpenReturnDialog(true);
   };
 
-  // Открытие диалога уведомления
+  /**
+   * Хабарландыру жіберу диалогын ашу
+   */
   const openNotificationDialog = (borrow) => {
     setSelectedBorrow(borrow);
+    setNotificationText('');
     setOpenSendNotificationDialog(true);
   };
 
-  // Получение цвета статуса
+  /**
+   * Snackbar хабарландыруын көрсету
+   */
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({
+      open: true,
+      message,
+      severity
+    });
+  };
+
+  /**
+   * Snackbar хабарландыруын жабу
+   */
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({
+      ...prev,
+      open: false
+    }));
+  };
+
+  /**
+   * Статус түсін алу
+   */
   const getStatusColor = (status) => {
     switch (status) {
-      case 'borrowed':
+      case 'active':
         return 'primary';
       case 'returned':
         return 'success';
@@ -214,57 +339,89 @@ const BorrowsPage = () => {
         return 'error';
       case 'pending':
         return 'warning';
+      case 'rejected':
+        return 'error';
       default:
         return 'default';
     }
   };
 
-  // Перевод статуса на русский
+  /**
+   * Статусты қазақ тіліне аудару
+   */
   const getStatusTranslation = (status) => {
     switch (status) {
-      case 'borrowed':
-        return 'Выдана';
+      case 'active':
+        return 'Берілген';
       case 'returned':
-        return 'Возвращена';
+        return 'Қайтарылған';
       case 'overdue':
-        return 'Просрочена';
+        return 'Мерзімі өткен';
       case 'pending':
-        return 'Ожидает';
+        return 'Күтуде';
+      case 'rejected':
+        return 'Қабылданбаған';
       default:
         return status;
     }
   };
 
-  // Фильтрация заимствований по статусу
-  const filteredBorrows = statusFilter === 'all' 
-    ? borrows 
-    : borrows.filter(borrow => borrow.status === statusFilter);
+  /**
+   * Күнді форматтау
+   */
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    try {
+      return format(new Date(dateString), 'dd.MM.yyyy');
+    } catch (error) {
+      return dateString;
+    }
+  };
 
   return (
     <Container maxWidth="lg">
       <PageHeader 
-        title="Управление заимствованиями" 
-        subtitle="Просмотр и обработка заявок на книги, возвратов и уведомления"
+        title="Қарызға алуларды басқару" 
+        subtitle="Кітап сұраныстарын, қайтаруларды және хабарландыруларды өңдеу"
       />
 
       <Paper elevation={3} sx={{ mb: 4, p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">Список заимствований</Typography>
-          <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel id="status-filter-label">Статус</InputLabel>
-            <Select
-              labelId="status-filter-label"
-              value={statusFilter}
-              label="Статус"
-              onChange={(e) => setStatusFilter(e.target.value)}
+          <Typography variant="h6">Қарызға алулар тізімі</Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button 
+              variant="outlined" 
+              color="primary" 
+              startIcon={<RefreshIcon />}
+              onClick={handleCheckOverdue}
             >
-              <MenuItem value="all">Все</MenuItem>
-              <MenuItem value="pending">Ожидающие</MenuItem>
-              <MenuItem value="borrowed">Выданные</MenuItem>
-              <MenuItem value="returned">Возвращенные</MenuItem>
-              <MenuItem value="overdue">Просроченные</MenuItem>
-            </Select>
-          </FormControl>
+              Мерзімі өткендерді тексеру
+            </Button>
+            <Button 
+              variant="outlined" 
+              color="secondary" 
+              startIcon={<SendIcon />}
+              onClick={handleSendReminders}
+            >
+              Еске салу жіберу
+            </Button>
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel id="status-filter-label">Мәртебе</InputLabel>
+              <Select
+                labelId="status-filter-label"
+                value={statusFilter}
+                label="Мәртебе"
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <MenuItem value="all">Барлығы</MenuItem>
+                <MenuItem value="pending">Күтудегі</MenuItem>
+                <MenuItem value="active">Берілген</MenuItem>
+                <MenuItem value="returned">Қайтарылған</MenuItem>
+                <MenuItem value="overdue">Мерзімі өткен</MenuItem>
+                <MenuItem value="rejected">Қабылданбаған</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
         </Box>
 
         <TableContainer>
@@ -272,196 +429,213 @@ const BorrowsPage = () => {
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
-                <TableCell>Пользователь</TableCell>
-                <TableCell>Книга</TableCell>
-                <TableCell>Дата выдачи</TableCell>
-                <TableCell>Срок возврата</TableCell>
-                <TableCell>Статус</TableCell>
-                <TableCell>Действия</TableCell>
+                <TableCell>Пайдаланушы</TableCell>
+                <TableCell>Кітап</TableCell>
+                <TableCell>Берілген күні</TableCell>
+                <TableCell>Қайтару мерзімі</TableCell>
+                <TableCell>Мәртебесі</TableCell>
+                <TableCell>Әрекеттер</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">Загрузка...</TableCell>
+                  <TableCell colSpan={7} align="center">Жүктелуде...</TableCell>
                 </TableRow>
-              ) : filteredBorrows.length === 0 ? (
+              ) : borrows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">Заимствования не найдены</TableCell>
+                  <TableCell colSpan={7} align="center">Қарызға алулар табылмады</TableCell>
                 </TableRow>
               ) : (
-                filteredBorrows
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((borrow) => (
-                    <TableRow key={borrow.id}>
-                      <TableCell>{borrow.id}</TableCell>
-                      <TableCell>{borrow.user.name}</TableCell>
-                      <TableCell>{borrow.book.title}</TableCell>
-                      <TableCell>{borrow.borrowDate || '-'}</TableCell>
-                      <TableCell>{borrow.dueDate || '-'}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={getStatusTranslation(borrow.status)} 
-                          color={getStatusColor(borrow.status)} 
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
+                borrows.map((borrow) => (
+                  <TableRow key={borrow.id}>
+                    <TableCell>{borrow.id}</TableCell>
+                    <TableCell>{borrow.user?.firstName} {borrow.user?.lastName}</TableCell>
+                    <TableCell>{borrow.book?.title}</TableCell>
+                    <TableCell>{formatDate(borrow.borrowDate)}</TableCell>
+                    <TableCell>{formatDate(borrow.dueDate)}</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={getStatusTranslation(borrow.status)} 
+                        color={getStatusColor(borrow.status)} 
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <IconButton 
+                        aria-label="view details" 
+                        color="info"
+                        onClick={() => openBorrowDetailsDialog(borrow)}
+                        title="Мәліметтерді көру"
+                      >
+                        <ViewIcon />
+                      </IconButton>
+                      
+                      {borrow.status === 'pending' && (
+                        <>
+                          <IconButton 
+                            aria-label="approve" 
+                            color="success"
+                            onClick={() => handleApproveBorrow(borrow.id)}
+                            title="Бекіту"
+                          >
+                            <ApproveIcon />
+                          </IconButton>
+                          <IconButton 
+                            aria-label="reject" 
+                            color="error"
+                            onClick={() => openRejectBorrowDialog(borrow)}
+                            title="Қабылдамау"
+                          >
+                            <RejectIcon />
+                          </IconButton>
+                        </>
+                      )}
+                      
+                      {borrow.status === 'active' && (
                         <IconButton 
-                          aria-label="view details" 
-                          color="info"
-                          onClick={() => openBorrowDetailsDialog(borrow)}
+                          aria-label="return" 
+                          color="primary"
+                          onClick={() => openReturnBorrowDialog(borrow)}
+                          title="Қайтаруды растау"
                         >
-                          <ViewIcon />
+                          <HistoryIcon />
                         </IconButton>
-                        
-                        {borrow.status === 'pending' && (
-                          <>
-                            <IconButton 
-                              aria-label="approve" 
-                              color="success"
-                              onClick={() => handleApproveBorrow(borrow.id)}
-                            >
-                              <ApproveIcon />
-                            </IconButton>
-                            <IconButton 
-                              aria-label="reject" 
-                              color="error"
-                              onClick={() => openRejectBorrowDialog(borrow)}
-                            >
-                              <RejectIcon />
-                            </IconButton>
-                          </>
-                        )}
-                        
-                        {borrow.status === 'borrowed' && (
-                          <IconButton 
-                            aria-label="return" 
-                            color="primary"
-                            onClick={() => openReturnBorrowDialog(borrow)}
-                          >
-                            <HistoryIcon />
-                          </IconButton>
-                        )}
-                        
-                        {(borrow.status === 'borrowed' || borrow.status === 'overdue') && (
-                          <IconButton 
-                            aria-label="send notification" 
-                            color="secondary"
-                            onClick={() => openNotificationDialog(borrow)}
-                          >
-                            <SendIcon />
-                          </IconButton>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                      )}
+                      
+                      {(borrow.status === 'active' || borrow.status === 'overdue') && (
+                        <IconButton 
+                          aria-label="send notification" 
+                          color="secondary"
+                          onClick={() => openNotificationDialog(borrow)}
+                          title="Хабарландыру жіберу"
+                        >
+                          <SendIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
         </TableContainer>
         
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[5, 10, 25, 50]}
           component="div"
-          count={filteredBorrows.length}
+          count={totalCount}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Бет сайын:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} / ${count}`}
         />
       </Paper>
 
-      {/* Диалог подробностей */}
+      {/* Қарызға алу мәліметтерін көрсету диалогы */}
       <Dialog open={openDetailsDialog} onClose={() => setOpenDetailsDialog(false)} maxWidth="md">
-        <DialogTitle>Детали заимствования</DialogTitle>
+        <DialogTitle>Қарызға алу мәліметтері</DialogTitle>
         <DialogContent>
           {selectedBorrow && (
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1">Пользователь:</Typography>
-                <Typography variant="body1">{selectedBorrow.user.name}</Typography>
-                <Typography variant="body2" color="text.secondary">{selectedBorrow.user.email}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">Пайдаланушы:</Typography>
+                <Typography variant="body1">{selectedBorrow.user?.firstName} {selectedBorrow.user?.lastName}</Typography>
+                <Typography variant="body2" color="text.secondary">{selectedBorrow.user?.email}</Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1">Книга:</Typography>
-                <Typography variant="body1">{selectedBorrow.book.title}</Typography>
-                <Typography variant="body2" color="text.secondary">Автор: {selectedBorrow.book.author}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">Кітап:</Typography>
+                <Typography variant="body1">{selectedBorrow.book?.title}</Typography>
+                <Typography variant="body2" color="text.secondary">Автор: {selectedBorrow.book?.author}</Typography>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <Typography variant="subtitle1">Дата выдачи:</Typography>
-                <Typography variant="body1">{selectedBorrow.borrowDate || 'Не выдана'}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">Берілген күні:</Typography>
+                <Typography variant="body1">{formatDate(selectedBorrow.borrowDate) || 'Берілмеген'}</Typography>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <Typography variant="subtitle1">Срок возврата:</Typography>
-                <Typography variant="body1">{selectedBorrow.dueDate || 'Не установлен'}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">Қайтару мерзімі:</Typography>
+                <Typography variant="body1">{formatDate(selectedBorrow.dueDate) || 'Орнатылмаған'}</Typography>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <Typography variant="subtitle1">Дата возврата:</Typography>
-                <Typography variant="body1">{selectedBorrow.returnDate || 'Не возвращена'}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">Қайтарылған күні:</Typography>
+                <Typography variant="body1">{formatDate(selectedBorrow.returnDate) || 'Қайтарылмаған'}</Typography>
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="subtitle1">Статус:</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">Мәртебесі:</Typography>
                 <Chip 
                   label={getStatusTranslation(selectedBorrow.status)} 
                   color={getStatusColor(selectedBorrow.status)} 
                 />
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="subtitle1">Примечания:</Typography>
-                <Typography variant="body1">{selectedBorrow.notes || 'Нет примечаний'}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">Ескертпелер:</Typography>
+                <Typography variant="body1">{selectedBorrow.notes || 'Ескертпелер жоқ'}</Typography>
               </Grid>
             </Grid>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDetailsDialog(false)}>Закрыть</Button>
+          <Button onClick={() => setOpenDetailsDialog(false)}>Жабу</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Диалог отклонения заимствования */}
+      {/* Қарызға алуды қабылдамау диалогы */}
       <Dialog
         open={openRejectDialog}
         onClose={() => setOpenRejectDialog(false)}
         aria-labelledby="reject-dialog-title"
       >
-        <DialogTitle id="reject-dialog-title">Отклонить заимствование</DialogTitle>
+        <DialogTitle id="reject-dialog-title">Қарызға алуды қабылдамау</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Вы уверены, что хотите отклонить заявку на книгу "{selectedBorrow?.book.title}" 
-            от пользователя {selectedBorrow?.user.name}?
+          <DialogContentText sx={{ mb: 2 }}>
+            "{selectedBorrow?.book?.title}" кітабына 
+            {selectedBorrow?.user?.firstName} {selectedBorrow?.user?.lastName} 
+            пайдаланушысының сұранысын қабылдамауға сенімдісіз бе?
           </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Қабылдамау себебі"
+            fullWidth
+            multiline
+            rows={2}
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenRejectDialog(false)}>Отмена</Button>
+          <Button onClick={() => setOpenRejectDialog(false)}>Бас тарту</Button>
           <Button onClick={handleRejectBorrow} color="error" autoFocus>
-            Отклонить
+            Қабылдамау
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Диалог подтверждения возврата */}
+      {/* Кітап қайтаруды растау диалогы */}
       <Dialog
         open={openReturnDialog}
         onClose={() => setOpenReturnDialog(false)}
         aria-labelledby="return-dialog-title"
       >
-        <DialogTitle id="return-dialog-title">Подтвердить возврат</DialogTitle>
+        <DialogTitle id="return-dialog-title">Қайтаруды растау</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Вы подтверждаете возврат книги "{selectedBorrow?.book.title}" 
-            от пользователя {selectedBorrow?.user.name}?
+            {selectedBorrow?.user?.firstName} {selectedBorrow?.user?.lastName} 
+            пайдаланушысының "{selectedBorrow?.book?.title}" кітабын 
+            қайтаруын растайсыз ба?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenReturnDialog(false)}>Отмена</Button>
+          <Button onClick={() => setOpenReturnDialog(false)}>Бас тарту</Button>
           <Button onClick={handleConfirmReturn} color="primary" autoFocus>
-            Подтвердить
+            Растау
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Диалог отправки уведомления */}
+      {/* Хабарландыру жіберу диалогы */}
       <Dialog
         open={openSendNotificationDialog}
         onClose={() => setOpenSendNotificationDialog(false)}
@@ -470,16 +644,16 @@ const BorrowsPage = () => {
         fullWidth
       >
         <DialogTitle id="notification-dialog-title">
-          Отправить уведомление для {selectedBorrow?.user.name}
+          {selectedBorrow?.user?.firstName} {selectedBorrow?.user?.lastName} пайдаланушысына хабарландыру жіберу
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            Напишите текст уведомления для пользователя о книге "{selectedBorrow?.book.title}".
+            "{selectedBorrow?.book?.title}" кітабы туралы пайдаланушыға хабарландыру мәтінін жазыңыз.
           </DialogContentText>
           <TextField
             autoFocus
             margin="dense"
-            label="Текст уведомления"
+            label="Хабарландыру мәтіні"
             fullWidth
             multiline
             rows={4}
@@ -488,16 +662,32 @@ const BorrowsPage = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenSendNotificationDialog(false)}>Отмена</Button>
+          <Button onClick={() => setOpenSendNotificationDialog(false)}>Бас тарту</Button>
           <Button 
             onClick={handleSendNotification} 
             color="primary" 
             disabled={!notificationText.trim()}
           >
-            Отправить
+            Жіберу
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar хабарландыруы */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

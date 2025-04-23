@@ -1,115 +1,198 @@
 // src/services/adminBookService.js
 import apiClient from './api';
 
+/**
+ * Әкімші үшін кітаптарды басқару қызметі
+ */
 const adminBookService = {
   /**
-   * Get all books
-   * @returns {Promise} Promise object with list of books
+   * Барлық кітаптарды алу
+   * @param {Object} params - Сұраныс параметрлері (беттеу, сүзу)
+   * @returns {Promise} API жауабы
    */
-  getBooks: async () => {
-    const response = await apiClient.get('/books');
-    return response.data;
+  getBooks: async (params = {}) => {
+    try {
+      const response = await apiClient.get('/books', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching books:', error);
+      throw error;
+    }
   },
 
   /**
-   * Get all categories
-   * @returns {Promise} Promise object with list of categories
+   * Барлық санаттарды алу
+   * @returns {Promise} API жауабы
    */
   getCategories: async () => {
-    const response = await apiClient.get('/books/categories');
-    return response.data;
+    try {
+      const response = await apiClient.get('/books/categories');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
   },
 
   /**
-   * Create a new book
-   * @param {Object} bookData - Book data
-   * @returns {Promise} Promise object with created book
+   * Жаңа кітап жасау
+   * @param {Object} bookData - Кітап мәліметтері
+   * @returns {Promise} API жауабы
    */
   createBook: async (bookData) => {
-    const response = await apiClient.post('/books', bookData);
-    return response.data;
+    try {
+      const response = await apiClient.post('/books', bookData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating book:', error);
+      throw error;
+    }
   },
 
   /**
-   * Update book
-   * @param {string} id - Book ID
-   * @param {Object} bookData - Book data to update
-   * @returns {Promise} Promise object with updated book
+   * Кітапты жаңарту
+   * @param {string} id - Кітап идентификаторы
+   * @param {Object} bookData - Жаңартылған кітап мәліметтері
+   * @returns {Promise} API жауабы
    */
   updateBook: async (id, bookData) => {
-    const response = await apiClient.put(`/books/${id}`, bookData);
-    return response.data;
+    try {
+      const response = await apiClient.put(`/books/${id}`, bookData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating book:', error);
+      throw error;
+    }
   },
 
   /**
-   * Delete book
-   * @param {string} id - Book ID
-   * @returns {Promise} Promise object
+   * Кітапты жою
+   * @param {string} id - Кітап идентификаторы
+   * @returns {Promise} API жауабы
    */
   deleteBook: async (id) => {
-    const response = await apiClient.delete(`/books/${id}`);
-    return response.data;
+    try {
+      const response = await apiClient.delete(`/books/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting book:', error);
+      throw error;
+    }
   },
 
   /**
-   * Upload book cover
-   * @param {string} id - Book ID
-   * @param {File} file - Cover image file
-   * @returns {Promise} Promise object with updated cover URL
+   * Кітап мұқабасын жүктеу
+   * @param {string} id - Кітап идентификаторы
+   * @param {File} file - Мұқаба файлы
+   * @returns {Promise} API жауабы
    */
   uploadBookCover: async (id, file) => {
-    const formData = new FormData();
-    // Use 'file' as the field name to match what the backend expects
-    formData.append('file', file);
-
-    const response = await apiClient.put(`/books/${id}/cover`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data;
+    try {
+      const formData = new FormData();
+      // Use 'file' as the field name to match what the backend expects
+      formData.append('file', file);
+      
+      const response = await apiClient.put(`/books/${id}/cover`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading cover:', error);
+      throw error;
+    }
   },
 
   /**
-   * Update book inventory
-   * @param {string} id - Book ID
-   * @param {Object} data - Inventory data
-   * @returns {Promise} Promise object with updated book
+   * Кітап қорын жаңарту
+   * @param {string} id - Кітап идентификаторы
+   * @param {Object} data - Қор мәліметтері
+   * @returns {Promise} API жауабы
    */
   updateInventory: async (id, data) => {
-    const response = await apiClient.put(`/books/${id}/inventory`, data);
-    return response.data;
+    try {
+      const response = await apiClient.put(`/books/${id}/inventory`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating inventory:', error);
+      throw error;
+    }
   },
 
   /**
-   * Create category
-   * @param {Object} categoryData - Category data
-   * @returns {Promise} Promise object with created category
+   * Жаңа санат жасау
+   * @param {Object} categoryData - Санат мәліметтері
+   * @returns {Promise} API жауабы
    */
   createCategory: async (categoryData) => {
-    const response = await apiClient.post('/books/categories', categoryData);
-    return response.data;
+    try {
+      const response = await apiClient.post('/books/categories', categoryData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating category:', error);
+      throw error;
+    }
   },
 
   /**
-   * Update category
-   * @param {string} id - Category ID
-   * @param {Object} categoryData - Category data to update
-   * @returns {Promise} Promise object with updated category
+   * Санатты жаңарту
+   * @param {string} id - Санат идентификаторы
+   * @param {Object} categoryData - Жаңартылған санат мәліметтері
+   * @returns {Promise} API жауабы
    */
   updateCategory: async (id, categoryData) => {
-    const response = await apiClient.put(`/books/categories/${id}`, categoryData);
-    return response.data;
+    try {
+      const response = await apiClient.put(`/books/categories/${id}`, categoryData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating category:', error);
+      throw error;
+    }
   },
 
   /**
-   * Delete category
-   * @param {string} id - Category ID
-   * @returns {Promise} Promise object
+   * Санатты жою
+   * @param {string} id - Санат идентификаторы
+   * @returns {Promise} API жауабы
    */
   deleteCategory: async (id) => {
-    const response = await apiClient.delete(`/books/categories/${id}`);
-    return response.data;
+    try {
+      const response = await apiClient.delete(`/books/categories/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Санаттар статистикасын алу
+   * @returns {Promise} API жауабы - әр санаттағы кітаптар саны
+   */
+  getCategoryStats: async () => {
+    try {
+      const response = await apiClient.get('/books/categories/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching category stats:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Ең көп қарызға алынған кітаптарды алу (трендтер)
+   * @param {number} limit - Қайтарылатын кітаптар саны
+   * @returns {Promise} API жауабы
+   */
+  getTrendingBooks: async (limit = 5) => {
+    try {
+      const response = await apiClient.get('/books/trending', { params: { limit } });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching trending books:', error);
+      throw error;
+    }
   }
 };
 

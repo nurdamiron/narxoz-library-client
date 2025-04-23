@@ -52,7 +52,9 @@ import { useAuth } from '../context/AuthContext';
 import bookService from '../services/bookService';
 import bookmarkService from '../services/bookmarkService';
 import borrowService from '../services/borrowService';
-import apiClient from '../services/api'; // Import your API client
+import apiClient from '../services/api';
+import ReviewForm from '../components/books/ReviewForm';
+import ReviewList from '../components/books/ReviewList';
 
 /**
  * BookDetailsPage компоненті
@@ -90,6 +92,9 @@ const BookDetailsPage = () => {
   
   // Диалог күйі
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  
+  // Пікірлер күйі
+  const [reviewsRefreshTrigger, setReviewsRefreshTrigger] = useState(0);
   
   /**
    * Кітапты жүктеу функциясы
@@ -712,6 +717,36 @@ const BookDetailsPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      
+      {/* Пікірлер блогы */}
+      {!loading && book && (
+        <Box sx={{ mt: 4 }}>
+          <Typography 
+            variant="h5" 
+            component="h2"
+            sx={{ 
+              fontWeight: 'bold',
+              mb: 3
+            }}
+          >
+            Пікірлер мен рейтингтер
+          </Typography>
+          
+          {/* Пікір қалдыру формасы */}
+          <ReviewForm 
+            bookId={id} 
+            onReviewSubmitted={() => setReviewsRefreshTrigger(prev => prev + 1)}
+          />
+          
+          {/* Пікірлер тізімі */}
+          <Box sx={{ mt: 3 }}>
+            <ReviewList 
+              bookId={id}
+              refreshTrigger={reviewsRefreshTrigger}
+            />
+          </Box>
+        </Box>
+      )}
     </Container>
   );
 };

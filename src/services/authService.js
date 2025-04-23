@@ -28,6 +28,8 @@ const authService = {
       if (error.response) {
         if (error.response.status === 401) {
           throw new Error('Жарамсыз тіркелгі деректері');
+        } else if (error.response.status === 403) {
+          throw new Error('Тіркелгіңіз бұғатталған');
         } else if (error.response.data && error.response.data.error) {
           throw new Error(error.response.data.error);
         }
