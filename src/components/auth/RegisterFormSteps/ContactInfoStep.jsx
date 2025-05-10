@@ -1,14 +1,18 @@
 // src/components/auth/RegisterFormSteps/ContactInfoStep.jsx
 import React, { useState, useEffect } from 'react';
 import { TextField, Typography, InputAdornment, Box, useTheme, useMediaQuery, Card, Tooltip, Grid, CircularProgress } from '@mui/material';
-import { Email, Phone, InfoOutlined, AlternateEmail, CheckCircle } from '@mui/icons-material';
+import { Email, Phone, InfoOutlined, AlternateEmail, CheckCircle, ErrorOutline } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import apiClient from '../../../services/api'; // Import your API client
+import { translateError } from '../../../utils/errorMessages';
+
+// Импорт утилиты валидации
+import { validateField } from '../../../utils/validationUtils';
 
 /**
  * Байланыс ақпараты қадамы компоненті
  * ===================================
- * Бұл компонент қолданушының электрондық пошта және телефон нөмірін еңгізуге арналған.
+ * Бұл компонент қолданушының электрондық пошта және телефон нөірін еңгізуге арналған.
  * Электрондық пошта жүйеде бар-жоғын тексеру функционалдығы қамтылған.
  * @param {Object} formData - Форма мәліметтері объектісі
  * @param {Object} formErrors - Форма қателері объектісі
@@ -88,7 +92,7 @@ const ContactInfoStep = ({ formData, formErrors, handleInputChange, setFieldErro
           
           // If email is not available, set an error through the form errors mechanism
           if (!available) {
-            setFieldError('email', 'Бұл электрондық пошта тіркелгісі жүйеде бар. Басқа пошта мекенжайын пайдаланыңыз.');
+            setFieldError('email', translateError('emailExists'));
           } else {
             // Clear error if email is available
             setFieldError('email', '');
@@ -195,7 +199,7 @@ const ContactInfoStep = ({ formData, formErrors, handleInputChange, setFieldErro
               error={!!formErrors.email || (emailChecked && !emailAvailable)}
               helperText={
                 formErrors.email || 
-                (emailChecked && !emailAvailable ? 'Бұл электрондық пошта тіркелгісі жүйеде бар. Басқа пошта мекенжайын пайдаланыңыз.' : '')
+                (emailChecked && !emailAvailable ? translateError('emailExists') : '')
               }
               disabled={isLoading}
               variant="outlined"

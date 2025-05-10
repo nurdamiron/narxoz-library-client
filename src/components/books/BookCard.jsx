@@ -135,8 +135,10 @@ const BookCard = ({
   
   // Мұқаба URL
   const coverUrl = book.cover
-    ? `/uploads/books/${book.cover}`
-    : '/images/default-book-cover.jpg';
+    ? book.cover.startsWith('/uploads')
+      ? `${window.location.protocol}//${window.location.host.replace(/:\d+/, ':5001')}${book.cover}`
+      : book.cover
+    : 'https://via.placeholder.com/300x450?text=Мұқаба+жоқ';
   
   // Кітаптың қысқаша сипаттамасы
   const shortDescription = book.description

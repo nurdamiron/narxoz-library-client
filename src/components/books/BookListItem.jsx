@@ -85,7 +85,12 @@ const BookListItem = ({ book }) => {
         <ImageContainer sx={{ width: 110, flexShrink: 0 }}>
           <Box
             component="img"
-            src={book.cover || 'https://via.placeholder.com/150x220?text=No+Cover'}
+            src={book.cover 
+              ? book.cover.startsWith('/uploads')
+                ? `${window.location.protocol}//${window.location.host.replace(/:\d+/, ':5001')}${book.cover}`
+                : book.cover
+              : 'https://via.placeholder.com/150x220?text=Мұқаба+жоқ'
+            }
             alt={book.title}
             sx={{
               width: '100%',

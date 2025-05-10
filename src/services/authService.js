@@ -1,5 +1,6 @@
 // src/services/authService.js
 import apiClient from './api';
+import { translateError } from '../utils/errorMessages';
 
 const authService = {
   /**
@@ -24,18 +25,8 @@ const authService = {
     } catch (error) {
       console.error('Login error:', error);
       
-      // Обработка конкретных ошибок API
-      if (error.response) {
-        if (error.response.status === 401) {
-          throw new Error('Жарамсыз тіркелгі деректері');
-        } else if (error.response.status === 403) {
-          throw new Error('Тіркелгіңіз бұғатталған');
-        } else if (error.response.data && error.response.data.error) {
-          throw new Error(error.response.data.error);
-        }
-      }
-      
-      throw new Error('Жүйеге кіру кезінде қате орын алды');
+      // Используем переведенные сообщения об ошибках
+      throw new Error(translateError(error));
     }
   },
 

@@ -21,12 +21,17 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination
+  TablePagination,
+  Alert,
+  AlertTitle,
+  useTheme
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Warning as WarningIcon } from '@mui/icons-material';
 import adminUserService from '../../services/adminUserService';
 import PageHeader from '../../components/common/PageHeader';
 import { AdminTable, FilterBar, ConfirmDialog } from '../../components/admin/common';
+import { useToast } from '../../context/ToastContext';
+import { translateError } from '../../utils/errorMessages';
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -37,6 +42,10 @@ const UsersPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openAddDialog, setOpenAddDialog] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [editUserLoading, setEditUserLoading] = useState(false);
+  const { success, error: showError } = useToast();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -49,6 +58,7 @@ const UsersPage = () => {
     specialization: '',
     studentId: ''
   });
+  const theme = useTheme();
 
   // Загрузка пользователей при монтировании компонента
   useEffect(() => {
@@ -92,14 +102,76 @@ const UsersPage = () => {
   // Обработчик добавления пользователя
   const handleAddUser = async () => {
     try {
+      setAddUserLoading(true);
+      setFormError('');
+      
+      // Проверка обязательных полей перед отправкой запроса
+      if (!formData.username || !formData.password || !formData.firstName || 
+          !formData.lastName || !formData.email || !formData.role) {
+        setFormError('Барлық міндетті өрістерді толтырыңыз');
+        return;
+      }
+      
+      console.log('👉 Sending registration data:', formData);
       const response = await adminUserService.createUser(formData);
+      
       if (response.success) {
+        // Успешное создание пользователя
+        success(`Пайдаланушы ${formData.firstName} ${formData.lastName} сәтті құрылды`);
         fetchUsers();
         setOpenAddDialog(false);
         resetForm();
       }
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error('❌ Error creating user:', error);
+      
+      // Улучшенная обработка ошибок
+      if (typeof error === 'object') {
+        // Проверка на структурированный объект ошибки
+        if (error.message) {
+          setFormError(error.message);
+          
+          // Подсветка конкретного поля с ошибкой, если известно
+          if (error.field) {
+            const errorField = document.querySelector(`input[name="${error.field}"]`);
+            if (errorField) {
+              errorField.focus();
+              errorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        } else if (error.response && error.response.data) {
+          // Обработка ответа API
+          const { data } = error.response;
+          
+          if (typeof data === 'string') {
+            setFormError(translateError(data));
+          } else if (data.error || data.message) {
+            setFormError(translateError(data.error || data.message));
+          } else {
+            setFormError('Пайдаланушыны құру кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.');
+          }
+        } else {
+          // Если структура ошибки не распознана
+          setFormError('Пайдаланушыны құру кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.');
+        }
+      } else if (typeof error === 'string') {
+        // Если ошибка представлена строкой
+        setFormError(translateError(error));
+      } else {
+        // Для неопределенных ошибок
+        setFormError('Белгісіз қате орын алды. Әрекетті қайталап көріңіз.');
+      }
+      
+      // Отображение дополнительной информации в консоли для отладки
+      if (error.response) {
+        console.error('Error status:', error.response.status);
+        console.error('Error data:', error.response.data);
+      }
+      
+      // Показать ошибку также через Toast
+      showError('Пайдаланушы құру сәтсіз аяқталды');
+    } finally {
+      setAddUserLoading(false);
     }
   };
 
@@ -108,14 +180,117 @@ const UsersPage = () => {
     try {
       if (!selectedUser) return;
       
+      setEditUserLoading(true);
+      setFormError('');
+      
+      console.log('📝 Отправка данных для обновления пользователя:', formData);
       const response = await adminUserService.updateUser(selectedUser.id, formData);
+      
       if (response.success) {
+        success(`Пайдаланушы ${formData.firstName} ${formData.lastName} сәтті жаңартылды`);
         fetchUsers();
         setOpenEditDialog(false);
         resetForm();
       }
     } catch (error) {
-      console.error('Error updating user:', error);
+      console.error('❌ Error updating user:', error);
+      
+      // Улучшенная обработка ошибок
+      if (typeof error === 'object') {
+        // Проверка на поле сообщения об ошибке
+        if (error.message) {
+          setFormError(error.message);
+          
+          // Выделение и фокус на поле с ошибкой
+          if (error.field) {
+            const errorField = document.querySelector(`input[name="${error.field}"]`);
+            if (errorField) {
+              errorField.focus();
+              errorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        } 
+        // Проверка на Sequelize ошибку
+        else if (error.name === 'SequelizeUniqueConstraintError' && error.errors && error.errors.length > 0) {
+          const fieldError = error.errors[0];
+          console.error('🔍 Ошибка уникального ограничения:', fieldError);
+          
+          if (fieldError.path === 'email') {
+            setFormError('Бұл email бұрыннан тіркелген. Басқа email пайдаланыңыз.');
+            const emailField = document.querySelector('input[name="email"]');
+            if (emailField) {
+              emailField.focus();
+            }
+          } else if (fieldError.path === 'username') {
+            setFormError('Бұл логин бұрыннан тіркелген. Басқа логин таңдаңыз.');
+            const usernameField = document.querySelector('input[name="username"]');
+            if (usernameField) {
+              usernameField.focus();
+            }
+          } else {
+            setFormError(`${fieldError.path} өрісі бірегей болуы керек.`);
+          }
+        } 
+        // Проверка на ответ API
+        else if (error.response && error.response.data) {
+          const { data } = error.response;
+          
+          // Проверка ответа на Sequelize ошибку
+          if (data && data.name === 'SequelizeUniqueConstraintError' && data.errors && data.errors.length > 0) {
+            const fieldError = data.errors[0];
+            if (fieldError.path === 'email') {
+              setFormError('Бұл email бұрыннан тіркелген. Басқа email пайдаланыңыз.');
+              const emailField = document.querySelector('input[name="email"]');
+              if (emailField) {
+                emailField.focus();
+              }
+            } else if (fieldError.path === 'username') {
+              setFormError('Бұл логин бұрыннан тіркелген. Басқа логин таңдаңыз.');
+              const usernameField = document.querySelector('input[name="username"]');
+              if (usernameField) {
+                usernameField.focus();
+              }
+            } else {
+              setFormError(`${fieldError.path} өрісі бірегей болуы керек.`);
+            }
+          } 
+          // Обработка строковых ответов
+          else if (typeof data === 'string') {
+            setFormError(translateError(data));
+          } 
+          // Проверка на сообщения об ошибках в ответе
+          else if (data.error || data.message) {
+            setFormError(translateError(data.error || data.message));
+          } 
+          // Общее сообщение об ошибке
+          else {
+            setFormError('Пайдаланушыны жаңарту кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.');
+          }
+        } 
+        // Если структура ошибки не распознана
+        else {
+          setFormError('Пайдаланушыны жаңарту кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.');
+        }
+      } 
+      // Если ошибка представлена строкой
+      else if (typeof error === 'string') {
+        setFormError(translateError(error));
+      } 
+      // Для неопределенных ошибок
+      else {
+        setFormError('Белгісіз қате орын алды. Әрекетті қайталап көріңіз.');
+      }
+      
+      // Отображение дополнительной информации в консоли для отладки
+      if (error.response) {
+        console.error('Error status:', error.response.status);
+        console.error('Error data:', error.response.data);
+      }
+      
+      // Показать ошибку также через Toast
+      showError('Пайдаланушы жаңарту сәтсіз аяқталды');
+    } finally {
+      setEditUserLoading(false);
     }
   };
 
@@ -124,13 +299,33 @@ const UsersPage = () => {
     try {
       if (!selectedUser) return;
       
+      setLoading(true);
       const response = await adminUserService.deleteUser(selectedUser.id);
+      
       if (response.success) {
+        success(`Пайдаланушы ${selectedUser.firstName} ${selectedUser.lastName} сәтті жойылды`);
         fetchUsers();
         setOpenDeleteDialog(false);
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error('❌ Error deleting user:', error);
+      
+      let errorMessage = 'Пайдаланушыны жою кезінде қате орын алды';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response && error.response.data) {
+        const { data } = error.response;
+        if (typeof data === 'string') {
+          errorMessage = translateError(data);
+        } else if (data.error || data.message) {
+          errorMessage = translateError(data.error || data.message);
+        }
+      }
+      
+      showError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -283,9 +478,43 @@ const UsersPage = () => {
       </Paper>
 
       {/* Диалог добавления пользователя */}
-      <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Пайдаланушы қосу</DialogTitle>
+      <Dialog open={openAddDialog} onClose={() => { setOpenAddDialog(false); setFormError(''); }} maxWidth="md" fullWidth>
+        <DialogTitle>Жаңа пайдаланушы қосу</DialogTitle>
         <DialogContent>
+          {formError && (
+            <Alert 
+              severity="error" 
+              sx={{ mt: 2, mb: 2 }}
+              variant={formError.includes('email') ? "filled" : "standard"}
+            >
+              <AlertTitle sx={{ fontWeight: 600 }}>
+                {formError.includes('email') 
+                  ? 'Email қатесі: Email бұрыннан тіркелген' 
+                  : formError.includes('логин') 
+                    ? 'Логин қатесі: Логин бұрыннан тіркелген'
+                    : 'Пайдаланушы құру қатесі'}
+              </AlertTitle>
+              <Typography sx={{ mb: 1 }} variant="body1">
+                {formError}
+              </Typography>
+              {formError.includes('email') && (
+                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.15)', p: 1, borderRadius: 1 }}>
+                  <WarningIcon fontSize="small" sx={{ mr: 1, color: theme.palette.warning.light }} />
+                  <Typography variant="body2">
+                    <strong>Шешім:</strong> Басқа email пайдаланыңыз немесе пайдаланушының бар екенін тексеріңіз.
+                  </Typography>
+                </Box>
+              )}
+              {formError.includes('логин') && (
+                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.15)', p: 1, borderRadius: 1 }}>
+                  <WarningIcon fontSize="small" sx={{ mr: 1, color: theme.palette.warning.light }} />
+                  <Typography variant="body2">
+                    <strong>Шешім:</strong> Басқа логин таңдаңыз немесе пайдаланушының бар екенін тексеріңіз.
+                  </Typography>
+                </Box>
+              )}
+            </Alert>
+          )}
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -295,6 +524,7 @@ const UsersPage = () => {
                 value={formData.username}
                 onChange={handleFormChange}
                 required
+                error={formError && formError.includes('логин')}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -306,6 +536,7 @@ const UsersPage = () => {
                 value={formData.password}
                 onChange={handleFormChange}
                 required
+                error={formError && formError.includes('құпия сөз')}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -337,6 +568,7 @@ const UsersPage = () => {
                 value={formData.email}
                 onChange={handleFormChange}
                 required
+                error={formError && formError.includes('email')}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -391,15 +623,64 @@ const UsersPage = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenAddDialog(false)}>Бас тарту</Button>
-          <Button onClick={handleAddUser} variant="contained" color="primary">Қосу</Button>
+          <Button 
+            onClick={() => { 
+              setOpenAddDialog(false); 
+              setFormError(''); 
+            }}
+            disabled={addUserLoading}
+          >
+            Бас тарту
+          </Button>
+          <Button 
+            onClick={handleAddUser} 
+            variant="contained" 
+            color="primary"
+            disabled={addUserLoading}
+          >
+            {addUserLoading ? 'Қосылуда...' : 'Қосу'}
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Диалог редактирования пользователя */}
-      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="md" fullWidth>
+      <Dialog open={openEditDialog} onClose={() => { setOpenEditDialog(false); setFormError(''); }} maxWidth="md" fullWidth>
         <DialogTitle>Пайдаланушыны өңдеу</DialogTitle>
         <DialogContent>
+          {formError && (
+            <Alert 
+              severity="error" 
+              sx={{ mt: 2, mb: 2 }}
+              variant={formError.includes('email') ? "filled" : "standard"}
+            >
+              <AlertTitle sx={{ fontWeight: 600 }}>
+                {formError.includes('email') 
+                  ? 'Email қатесі: Email бұрыннан тіркелген' 
+                  : formError.includes('логин') || formError.includes('username')
+                    ? 'Логин қатесі: Логин бұрыннан тіркелген'
+                    : 'Пайдаланушы өңдеу қатесі'}
+              </AlertTitle>
+              <Typography sx={{ mb: 1 }} variant="body1">
+                {formError}
+              </Typography>
+              {formError.includes('email') && (
+                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.15)', p: 1, borderRadius: 1 }}>
+                  <WarningIcon fontSize="small" sx={{ mr: 1, color: theme.palette.warning.light }} />
+                  <Typography variant="body2">
+                    <strong>Шешім:</strong> Басқа email пайдаланыңыз немесе пайдаланушының бар екенін тексеріңіз.
+                  </Typography>
+                </Box>
+              )}
+              {(formError.includes('логин') || formError.includes('username')) && (
+                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.15)', p: 1, borderRadius: 1 }}>
+                  <WarningIcon fontSize="small" sx={{ mr: 1, color: theme.palette.warning.light }} />
+                  <Typography variant="body2">
+                    <strong>Шешім:</strong> Басқа логин таңдаңыз немесе пайдаланушының бар екенін тексеріңіз.
+                  </Typography>
+                </Box>
+              )}
+            </Alert>
+          )}
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -409,6 +690,7 @@ const UsersPage = () => {
                 value={formData.username}
                 onChange={handleFormChange}
                 required
+                error={formError && (formError.includes('логин') || formError.includes('username'))}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -450,6 +732,7 @@ const UsersPage = () => {
                 value={formData.email}
                 onChange={handleFormChange}
                 required
+                error={formError && formError.includes('email')}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -504,8 +787,23 @@ const UsersPage = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenEditDialog(false)}>Бас тарту</Button>
-          <Button onClick={handleEditUser} variant="contained" color="primary">Сақтау</Button>
+          <Button 
+            onClick={() => { 
+              setOpenEditDialog(false); 
+              setFormError(''); 
+            }}
+            disabled={editUserLoading}
+          >
+            Бас тарту
+          </Button>
+          <Button 
+            onClick={handleEditUser} 
+            variant="contained" 
+            color="primary"
+            disabled={editUserLoading}
+          >
+            {editUserLoading ? 'Сақталуда...' : 'Сақтау'}
+          </Button>
         </DialogActions>
       </Dialog>
 

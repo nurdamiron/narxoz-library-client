@@ -26,6 +26,7 @@ import {
   calculateCompletionPercentage, 
   getValidationSummary 
 } from '../../../utils/validationUtils';
+import { translateError } from '../../../utils/errorMessages';
 
 // Импорт компонентов шагов
 import {
@@ -315,21 +316,23 @@ const RegisterForm = () => {
         // Сәтті тіркелгеннен кейін басты бетке бағыттау
         navigate('/', { replace: true });
       }, 2000);
-      
     } catch (err) {
-      // Қате жағдайында оны күйге сақтау
-      console.error('Тіркелу қатесі:', err);
+      // Қате жағдайында оны күйге сақтау және консольге шығару
+      console.error('Тіркелу қатесі (ADMIN):', err);
       
-      // Нақты қате хабарламаларын тексеру және пайдаланушыға ыңғайлы хабарлама көрсету
-      if (err.message === 'Email address already in use') {
-        setError('Бұл электрондық пошта тіркелгісі жүйеде бар. Басқа пошта мекенжайын пайдаланыңыз немесе кіру бетіне өтіңіз.');
-      } else if (err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else if (err.message) {
-        setError(err.message);
-      } else {
-        setError('Тіркелу кезінде қате орын алды. Әрекетті қайталап көріңіз.');
+      // Детали ошибки для отладки
+      if (err.response) {
+        console.error('Қате деректері (ADMIN):', {
+          status: err.response.status,
+          data: err.response.data,
+          headers: err.response.headers
+        });
       }
+      
+      // Қазақша аударылған қате хабарламасы пайдалану
+      const errorMessage = translateError(err);
+      console.log('Қолданушы үшін қате хабарламасы:', errorMessage);
+      setError(errorMessage);
       
       setSuccess(false);
     } finally {
@@ -356,7 +359,7 @@ const RegisterForm = () => {
 
   /**
    * Ағымдағы қадамның мазмұнын көрсету функциясы
-   * Белсенді қадам нөміріне байланысты тиісті компонентті қайтарады
+   * Белсенді қадам нөіріне байланысты тиісті компонентті қайтарады
    * 
    * @returns {JSX.Element} - Қадам мазмұны
    */
