@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -39,6 +40,7 @@ import {
  */
 const AboutPage = () => {
   const theme = useTheme(); // Material UI тақырыбын алу
+  const { t } = useTranslation();
 
   /**
    * Кітапхананың артықшылықтары туралы деректер массиві
@@ -51,18 +53,18 @@ const AboutPage = () => {
   const features = [
     {
       icon: <AutoStoriesIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
-      title: 'Более 100,000 книг',
-      description: 'Обширная коллекция учебной и научной литературы для всех специальностей университета',
+      title: t('about.features.books.title', 'Более 100,000 книг'),
+      description: t('about.features.books.description', 'Обширная коллекция учебной и научной литературы для всех специальностей университета'),
     },
     {
       icon: <ImportContactsIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
-      title: 'Электронные ресурсы',
-      description: 'Доступ к электронным базам данных, включая научные журналы и публикации',
+      title: t('about.features.electronic.title', 'Электронные ресурсы'),
+      description: t('about.features.electronic.description', 'Доступ к электронным базам данных, включая научные журналы и публикации'),
     },
     {
       icon: <GroupsIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
-      title: 'Учебные пространства',
-      description: 'Комфортные читальные залы и пространства для групповой работы',
+      title: t('about.features.spaces.title', 'Учебные пространства'),
+      description: t('about.features.spaces.description', 'Комфортные читальные залы и пространства для групповой работы'),
     },
   ];
 
@@ -71,10 +73,10 @@ const AboutPage = () => {
       <Box sx={{ mb: 6 }}>
         {/* Беттің тақырыбы мен қысқаша сипаттамасы */}
         <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-          О библиотеке
+          {t('about.title', 'О библиотеке')}
         </Typography>
         <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ mb: 4 }}>
-          Библиотека Университета Нархоз - центр знаний и информационных ресурсов
+          {t('about.subtitle', 'Библиотека Университета Нархоз - центр знаний и информационных ресурсов')}
         </Typography>
 
         {/* Кітапхана ғимаратының суреті */}
@@ -90,7 +92,7 @@ const AboutPage = () => {
           <Box
             component="img"
             src="https://via.placeholder.com/1200x400?text=Library+Building"
-            alt="Здание библиотеки"
+            alt={t('about.buildingImageAlt', 'Здание библиотеки')}
             sx={{
               width: '100%',
               height: { xs: 200, sm: 300, md: 400 }, // Экран өлшеміне байланысты биіктігі
@@ -105,17 +107,13 @@ const AboutPage = () => {
           <Grid item xs={12} md={8}>
             {/* Миссия бөлімі */}
             <Typography variant="h5" fontWeight="bold" gutterBottom>
-              Наша миссия
+              {t('about.mission.title', 'Наша миссия')}
             </Typography>
             <Typography variant="body1" paragraph>
-              Миссия библиотеки Университета Нархоз заключается в поддержке образовательного
-              процесса и научно-исследовательской деятельности путем предоставления доступа к
-              качественным информационным ресурсам и создания комфортной среды для обучения и развития.
+              {t('about.mission.paragraph1', 'Миссия библиотеки Университета Нархоз заключается в поддержке образовательного процесса и научно-исследовательской деятельности путем предоставления доступа к качественным информационным ресурсам и создания комфортной среды для обучения и развития.')}
             </Typography>
             <Typography variant="body1" paragraph>
-              Мы стремимся быть современным информационным центром, который помогает студентам,
-              преподавателям и исследователям в получении знаний, развитии навыков и проведении
-              исследований на высоком уровне.
+              {t('about.mission.paragraph2', 'Мы стремимся быть современным информационным центром, который помогает студентам, преподавателям и исследователям в получении знаний, развитии навыков и проведении исследований на высоком уровне.')}
             </Typography>
 
             <Divider sx={{ my: 4 }} /> {/* Бөлгіш сызық */}
@@ -124,22 +122,16 @@ const AboutPage = () => {
             <Box sx={{ mb: 4 }}>
               <Typography variant="h5" fontWeight="bold" gutterBottom>
                 <HistoryIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-                История библиотеки
+                {t('about.history.title', 'История библиотеки')}
               </Typography>
               <Typography variant="body1" paragraph>
-                Библиотека Университета Нархоз была основана в 1963 году одновременно с созданием университета.
-                За более чем полувековую историю библиотека превратилась в один из крупнейших академических
-                информационных центров в Казахстане.
+                {t('about.history.paragraph1', 'Библиотека Университета Нархоз была основана в 1963 году одновременно с созданием университета. За более чем полувековую историю библиотека превратилась в один из крупнейших академических информационных центров в Казахстане.')}
               </Typography>
               <Typography variant="body1" paragraph>
-                Первоначально библиотечный фонд насчитывал всего несколько тысяч книг, но благодаря
-                постоянному развитию сейчас он включает более 100 000 печатных изданий и предоставляет
-                доступ к многочисленным электронным ресурсам.
+                {t('about.history.paragraph2', 'Первоначально библиотечный фонд насчитывал всего несколько тысяч книг, но благодаря постоянному развитию сейчас он включает более 100 000 печатных изданий и предоставляет доступ к многочисленным электронным ресурсам.')}
               </Typography>
               <Typography variant="body1" paragraph>
-                В 2018 году библиотека переехала в новое современное здание, оборудованное по последнему
-                слову техники, что позволило расширить спектр услуг и создать еще более комфортные условия
-                для пользователей.
+                {t('about.history.paragraph3', 'В 2018 году библиотека переехала в новое современное здание, оборудованное по последнему слову техники, что позволило расширить спектр услуг и создать еще более комфортные условия для пользователей.')}
               </Typography>
             </Box>
           </Grid>
@@ -151,7 +143,7 @@ const AboutPage = () => {
                 {/* Байланыс ақпараты бөлімі */}
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   <LocationOnIcon sx={{ verticalAlign: 'middle', mr: 1, color: theme.palette.primary.main }} />
-                  Контактная информация
+                  {t('about.contact.title', 'Контактная информация')}
                 </Typography>
                 <Divider sx={{ my: 2 }} />
                 <List dense>
@@ -161,8 +153,8 @@ const AboutPage = () => {
                       <LocationOnIcon color="primary" />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Адрес"
-                      secondary="ул. Жандосова, 55, Алматы, Казахстан"
+                      primary={t('about.contact.address', 'Адрес')}
+                      secondary={t('about.contact.addressValue', 'ул. Жандосова, 55, Алматы, Казахстан')}
                     />
                   </ListItem>
                   {/* Телефон */}
@@ -171,7 +163,7 @@ const AboutPage = () => {
                       <PhoneIcon color="primary" />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Телефон"
+                      primary={t('about.contact.phone', 'Телефон')}
                       secondary="+7 (727) 377-11-11"
                     />
                   </ListItem>
@@ -192,28 +184,28 @@ const AboutPage = () => {
                 {/* Жұмыс кестесі бөлімі */}
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   <ScheduleIcon sx={{ verticalAlign: 'middle', mr: 1, color: theme.palette.primary.main }} />
-                  Часы работы
+                  {t('about.hours.title', 'Часы работы')}
                 </Typography>
                 <List dense>
                   {/* Дүйсенбі-жұма */}
                   <ListItem>
                     <ListItemText
-                      primary="Понедельник - Пятница"
+                      primary={t('about.hours.weekdays', 'Понедельник - Пятница')}
                       secondary="9:00 - 20:00"
                     />
                   </ListItem>
                   {/* Сенбі */}
                   <ListItem>
                     <ListItemText
-                      primary="Суббота"
+                      primary={t('about.hours.saturday', 'Суббота')}
                       secondary="10:00 - 17:00"
                     />
                   </ListItem>
                   {/* Жексенбі */}
                   <ListItem>
                     <ListItemText
-                      primary="Воскресенье"
-                      secondary="Закрыто"
+                      primary={t('about.hours.sunday', 'Воскресенье')}
+                      secondary={t('about.hours.closed', 'Закрыто')}
                     />
                   </ListItem>
                 </List>
@@ -226,7 +218,7 @@ const AboutPage = () => {
 
         {/* Кітапхананың артықшылықтары бөлімі */}
         <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ mb: 4 }}>
-          Преимущества нашей библиотеки
+          {t('about.featuresTitle', 'Преимущества нашей библиотеки')}
         </Typography>
 
         {/* Артықшылықтар картасының торы */}

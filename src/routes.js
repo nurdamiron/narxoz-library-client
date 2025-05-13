@@ -1,44 +1,37 @@
-// src/routes.js
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-// Импортируем компоненты страниц
+// Public pages
 import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import { RegisterForm } from './components/auth/RegisterForm/barrel';
-
 import BooksPage from './pages/BooksPage';
 import BookDetailsPage from './pages/BookDetailsPage';
-import NotificationsPage from './pages/NotificationsPage';
+import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import BookmarksPage from './pages/BookmarksPage';
 import BorrowHistoryPage from './pages/BorrowHistoryPage';
+import NotificationsPage from './pages/NotificationsPage';
+import AboutPage from './pages/AboutPage';
+import NotFoundPage from './pages/NotFoundPage';
+import EventsPage from './pages/EventsPage';
+import EventDetailsPage from './pages/EventDetailsPage';
+import MyEventsPage from './pages/MyEventsPage';
 
-// Импортируем страницы администратора
+// Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
-import UsersPage from './pages/admin/UsersPage';
 import AdminBooksPage from './pages/admin/BooksPage';
-import BorrowsPage from './pages/admin/BorrowsPage';
-import CategoriesPage from './pages/admin/CategoriesPage';
-import ReviewsPage from './pages/admin/ReviewsPage';
+import AdminUsersPage from './pages/admin/UsersPage';
+import AdminBorrowsPage from './pages/admin/BorrowsPage';
+import AdminCategoriesPage from './pages/admin/CategoriesPage';
+import AdminEventsPage from './pages/admin/EventsPage';
+import CreateEventPage from './pages/admin/CreateEventPage';
+import EditEventPage from './pages/admin/EditEventPage';
+import EventRegistrationsPage from './pages/admin/EventRegistrationsPage';
 
-// Импортируем компоненты для маршрутизации
-import ProtectedRoute from './components/routes/ProtectedRoute';
-import AdminLayout from './components/admin/common/AdminLayout';
-
-// Определяем маршруты
+// Route configuration
 const routes = [
   {
     path: '/',
     element: <HomePage />,
-  },
-  {
-    path: '/login',
-    element: <LoginPage />,
-  },
-  {
-    path: '/register',
-    element: <RegisterForm />,
   },
   {
     path: '/books',
@@ -48,70 +41,114 @@ const routes = [
     path: '/books/:id',
     element: <BookDetailsPage />,
   },
-  // Защищенные маршруты (требуют авторизации)
   {
-    path: '/',
-    element: <ProtectedRoute />,
-    children: [
-      {
-        path: '/profile',
-        element: <ProfilePage />,
-      },
-      {
-        path: '/bookmarks',
-        element: <BookmarksPage />,
-      },
-      {
-        path: '/borrows',
-        element: <BorrowHistoryPage />,
-      },
-      {
-        path: '/notifications',
-        element: <NotificationsPage />,
-      },
-    ],
+    path: '/login',
+    element: <LoginPage />,
   },
-  // Маршруты администратора (требуют роли admin)
+  {
+    path: '/profile',
+    element: <ProfilePage />,
+    protected: true,
+  },
+  {
+    path: '/bookmarks',
+    element: <BookmarksPage />,
+    protected: true,
+  },
+  {
+    path: '/borrows',
+    element: <BorrowHistoryPage />,
+    protected: true,
+  },
+  {
+    path: '/notifications',
+    element: <NotificationsPage />,
+    protected: true,
+  },
+  {
+    path: '/about',
+    element: <AboutPage />,
+  },
+  {
+    path: '/events',
+    element: <EventsPage />,
+  },
+  {
+    path: '/events/:id',
+    element: <EventDetailsPage />,
+  },
+  {
+    path: '/my-events',
+    element: <MyEventsPage />,
+    protected: true,
+  },
+  
+  // Admin routes
   {
     path: '/admin',
-    element: <ProtectedRoute requiredRole="admin" />,
-    children: [
-      {
-        path: '',
-        element: <AdminLayout />,
-        children: [
-          {
-            path: '',
-            element: <AdminDashboard />,
-          },
-          {
-            path: 'users',
-            element: <UsersPage />,
-          },
-          {
-            path: 'books',
-            element: <AdminBooksPage />,
-          },
-          {
-            path: 'borrows',
-            element: <BorrowsPage />,
-          },
-          {
-            path: 'categories',
-            element: <CategoriesPage />,
-          },
-          {
-            path: 'reviews',
-            element: <ReviewsPage />,
-          },
-        ],
-      },
-    ],
+    element: <Navigate to="/admin/dashboard" replace />,
+    protected: true,
+    roles: ['admin', 'moderator'],
   },
-  // Обработка несуществующих маршрутов
+  {
+    path: '/admin/dashboard',
+    element: <AdminDashboard />,
+    protected: true,
+    roles: ['admin', 'moderator'],
+  },
+  {
+    path: '/admin/books',
+    element: <AdminBooksPage />,
+    protected: true,
+    roles: ['admin', 'moderator'],
+  },
+  {
+    path: '/admin/users',
+    element: <AdminUsersPage />,
+    protected: true,
+    roles: ['admin'],
+  },
+  {
+    path: '/admin/borrows',
+    element: <AdminBorrowsPage />,
+    protected: true,
+    roles: ['admin', 'moderator'],
+  },
+  {
+    path: '/admin/categories',
+    element: <AdminCategoriesPage />,
+    protected: true,
+    roles: ['admin'],
+  },
+  {
+    path: '/admin/events',
+    element: <AdminEventsPage />,
+    protected: true,
+    roles: ['admin', 'moderator'],
+  },
+  {
+    path: '/admin/events/create',
+    element: <CreateEventPage />,
+    protected: true,
+    roles: ['admin', 'moderator'],
+  },
+  {
+    path: '/admin/events/edit/:id',
+    element: <EditEventPage />,
+    protected: true,
+    roles: ['admin', 'moderator'],
+  },
+  {
+    path: '/admin/events/:id/registrations',
+    element: <EventRegistrationsPage />,
+    protected: true,
+    roles: ['admin', 'moderator'],
+  },
+  
+  // Not found route
   {
     path: '*',
-    element: <Navigate to="/" replace />,
+    element: <NotFoundPage />,
   },
 ];
 

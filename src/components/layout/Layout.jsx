@@ -8,7 +8,7 @@
  * Әр түрлі құрылғыларға бейімделу функциясы қосылған.
  */
 import React, { useState, useEffect } from 'react';
-import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import {
   AppBar,
   Box,
@@ -50,13 +50,16 @@ import {
   KeyboardArrowDown as KeyboardArrowDownIcon,
   Settings as SettingsIcon,
   DarkMode as DarkModeIcon,
-  LightMode as LightModeIcon
+  LightMode as LightModeIcon,
+  Event as EventIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 // Импорт компонентов и хуков
 // import Sidebar from '../common/Sidebar';
 import NotificationMenu from '../notifications/NotificationMenu';
+import LanguageSwitcher from '../common/LanguageSwitcher';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { getAvatarUrl } from '../../utils';
@@ -65,10 +68,9 @@ import { getAvatarUrl } from '../../utils';
  * Layout компоненті - қолданбаның негізгі макеті
  * 
  * @param {Object} props - Компонент параметрлері
- * @param {React.ReactNode} props.children - Орналастырылатын мазмұн
  * @returns {JSX.Element} - Орналасу компоненті
  */
-const Layout = ({ children }) => {
+const Layout = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
@@ -76,6 +78,7 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const { user, isAuthenticated, logout, stats } = useAuth();
   const { success } = useToast();
+  const { t } = useTranslation();
   
   // Күйлер
   // const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
@@ -107,7 +110,7 @@ const Layout = ({ children }) => {
   const handleLogout = async () => {
     handleCloseUserMenu();
     await logout();
-    success('Сіз сәтті шықтыңыз');
+    success(t('auth.logoutSuccess'));
     navigate('/');
   };
   
@@ -135,11 +138,13 @@ const Layout = ({ children }) => {
   
   // Мәзір элементтері
   const menuItems = [
-    { text: 'Басты бет', icon: <HomeIcon />, path: '/' },
-    { text: 'Кітаптар', icon: <LibraryIcon />, path: '/books' },
-    { text: 'Бетбелгілер', icon: <BookmarkIcon />, path: '/bookmarks', auth: true },
-    { text: 'Қарыз тарихы', icon: <HistoryIcon />, path: '/borrows', auth: true },
-    { text: 'Админ панелі', icon: <SettingsIcon />, path: '/admin', auth: true, adminOnly: true },
+    { text: t('common.home'), icon: <HomeIcon />, path: '/' },
+    { text: t('books.catalog'), icon: <LibraryIcon />, path: '/books' },
+    { text: t('events.title'), icon: <EventIcon />, path: '/events' },
+    { text: t('bookmarks.title'), icon: <BookmarkIcon />, path: '/bookmarks', auth: true },
+    { text: t('borrowHistory.title'), icon: <HistoryIcon />, path: '/borrows', auth: true },
+    { text: t('events.myEvents.title'), icon: <EventIcon />, path: '/my-events', auth: true },
+    { text: t('admin.dashboard'), icon: <SettingsIcon />, path: '/admin', auth: true, adminOnly: true },
   ];
   
   // Анимация конфигурациясы
@@ -197,7 +202,7 @@ const Layout = ({ children }) => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Нархоз кітапханасы
+            {t('common.libraryName')}
           </Typography>
         </Box>
         
@@ -241,7 +246,7 @@ const Layout = ({ children }) => {
                     color: theme.palette.error.main, 
                     fontWeight: 'medium' 
                   }}>
-                    Әкімші <Box 
+                    {t('common.adminRole')} <Box 
                       component={RouterLink} 
                       to="/admin"
                       sx={{ 
@@ -255,10 +260,37 @@ const Layout = ({ children }) => {
                         textDecoration: 'none'
                       }}
                     >
-                      Басқару
+                      {t('common.manage')}
                     </Box>
                   </Box>
-                ) : (user.role === 'librarian' ? 'Кітапханашы' : 'Оқырман')}
+                ) : user.role === 'moderator' ? (
+                  <Box component="span" sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    color: theme.palette.warning.main, 
+                    fontWeight: 'medium' 
+                  }}>
+                    {t('common.moderatorRole')} <Box 
+                      component={RouterLink} 
+                      to="/admin/books"
+                      sx={{ 
+                        ml: 1, 
+                        fontSize: '0.75rem', 
+                        bgcolor: theme.palette.warning.main, 
+                        color: 'white', 
+                        px: 1, 
+                        py: 0.25, 
+                        borderRadius: 1,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      {t('common.manage')}
+                    </Box>
+                    <Typography variant="caption" display="block" sx={{ mt: 0.5, fontSize: '0.7rem' }}>
+                      {t('common.moderatorInfo')}
+                    </Typography>
+                  </Box>
+                ) : (user.role === 'librarian' ? t('common.librarianRole') : t('common.readerRole'))}
               </Typography>
             </Box>
           </Box>
@@ -322,100 +354,16 @@ const Layout = ({ children }) => {
       
       <Divider />
       
+      {/* Язык */}
+      <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+        <LanguageSwitcher />
+      </Box>
+      
       {/* Авторизация/шығу */}
       <List sx={{ px: 1, py: 1 }}>
         {isAuthenticated ? (
           <>
-            {/* <ListItem disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                component={RouterLink}
-                to="/profile"
-                selected={isActive('/profile')}
-                onClick={handleMobileDrawerToggle}
-                sx={{
-                  borderRadius: 1.5,
-                  py: 1.25,
-                  '&.Mui-selected': {
-                    bgcolor: alpha(theme.palette.primary.main, 0.08),
-                    '&:hover': {
-                      bgcolor: alpha(theme.palette.primary.main, 0.12),
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    color: isActive('/profile') ? theme.palette.primary.main : 'inherit',
-                    minWidth: 40
-                  }}
-                >
-                  <PersonIcon />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Профиль"
-                  primaryTypographyProps={{
-                    fontWeight: isActive('/profile') ? 'bold' : 'normal',
-                  }}
-                />
-              </ListItemButton>
-            </ListItem> */}
-            
-            {/* <ListItem disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                component={RouterLink}
-                to="/notifications"
-                selected={isActive('/notifications')}
-                onClick={handleMobileDrawerToggle}
-                sx={{
-                  borderRadius: 1.5,
-                  py: 1.25,
-                  '&.Mui-selected': {
-                    bgcolor: alpha(theme.palette.primary.main, 0.08),
-                    '&:hover': {
-                      bgcolor: alpha(theme.palette.primary.main, 0.12),
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    color: isActive('/notifications') ? theme.palette.primary.main : 'inherit',
-                    minWidth: 40
-                  }}
-                >
-                  <Badge badgeContent={stats?.notifications || 0} color="error">
-                    <NotificationsIcon />
-                  </Badge>
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Хабарламалар"
-                  primaryTypographyProps={{
-                    fontWeight: isActive('/notifications') ? 'bold' : 'normal',
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-            
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={handleLogout}
-                sx={{
-                  borderRadius: 1.5,
-                  py: 1.25,
-                  color: theme.palette.error.main,
-                }}
-              >
-                <ListItemIcon sx={{ color: theme.palette.error.main, minWidth: 40 }}>
-                  <LogoutIcon />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Шығу"
-                  primaryTypographyProps={{
-                    color: theme.palette.error.main,
-                  }}
-                />
-              </ListItemButton>
-            </ListItem> */}
+            {/* Профиль и уведомления отключены в сайдбаре для экономии места */}
           </>
         ) : (
           <>
@@ -445,155 +393,91 @@ const Layout = ({ children }) => {
                   <LoginIcon />
                 </ListItemIcon>
                 <ListItemText 
-                  primary="Кіру"
+                  primary={t('common.login')}
                   primaryTypographyProps={{
                     fontWeight: isActive('/login') ? 'bold' : 'normal',
                   }}
                 />
               </ListItemButton>
             </ListItem>
-{/*             
-            <ListItem disablePadding>
-              <ListItemButton
-                component={RouterLink}
-                to="/register"
-                selected={isActive('/register')}
-                onClick={handleMobileDrawerToggle}
-                sx={{
-                  borderRadius: 1.5,
-                  py: 1.25,
-                  '&.Mui-selected': {
-                    bgcolor: alpha(theme.palette.primary.main, 0.08),
-                    '&:hover': {
-                      bgcolor: alpha(theme.palette.primary.main, 0.12),
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    color: isActive('/register') ? theme.palette.primary.main : 'inherit',
-                    minWidth: 40
-                  }}
-                >
-                  <RegisterIcon />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Тіркелу"
-                  primaryTypographyProps={{
-                    fontWeight: isActive('/register') ? 'bold' : 'normal',
-                  }}
-                />
-              </ListItemButton>
-            </ListItem> */}
           </>
         )}
       </List>
-      
-      {/* Нұсқа ақпараты */}
-      {/* <Box 
-        sx={{ 
-          p: 2, 
-          textAlign: 'center',
-          bgcolor: alpha(theme.palette.primary.main, 0.03),
-        }}
-      >
-        <Typography variant="caption" color="text.secondary">
-          © {new Date().getFullYear()} Нархоз кітапханасы
-        </Typography>
-      </Box> */}
     </Box>
   );
   
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Жоғарғы тақырып */}
+      {/* AppBar */}
       <AppBar 
         position="sticky" 
         elevation={scrolled ? 4 : 0}
-        sx={{
-          transition: 'box-shadow 0.3s',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+        sx={{ 
+          background: scrolled 
+            ? theme.palette.primary.main 
+            : theme.palette.primary.main,
+          transition: 'all 0.3s',
         }}
       >
-        <Toolbar sx={{ px: { xs: 1.5, sm: 2, md: 3 } }}>
-          {/* Мобильді мәзір түймесі */}
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleMobileDrawerToggle}
-            sx={{ 
-              mr: 2,
-              display: { xs: 'flex', md: 'none' }
-            }}
-          >
-            <MenuIcon />
-          </IconButton>
-          
-          {/* Бүйірлік мәзір түймесі (десктоп)
-          <IconButton
-            color="inherit"
-            aria-label="toggle sidebar"
-            edge="start"
-            onClick={toggleSidebar}
-            sx={{ 
-              mr: 1,
-              display: { xs: 'none', md: 'flex' }
-            }}
-          >
-            <MenuIcon />
-          </IconButton> */}
-          
-          {/* Логотип */}
-          <Box
-            component={RouterLink}
-            to="/"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              mr: { xs: 1, md: 2 },
-              textDecoration: 'none',
-              color: 'inherit',
-            }}
-          >
-            <Avatar
-              alt="Нархоз"
-              variant="rounded"
-              sx={{ 
-                width: 32, 
-                height: 32, 
-                mr: 1,
-                bgcolor: 'transparent',
-                display: { xs: 'none', sm: 'flex' }
+        <Toolbar sx={{ display: 'flex' }}>
+          {/* Логотип и мобильное меню */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {/* Мобильная кнопка меню */}
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleMobileDrawerToggle}
+              sx={{ mr: 1, display: { md: 'none' } }}
+            >
+              <MenuIcon />
+            </IconButton>
+            
+            {/* Логотип и название */}
+            <RouterLink
+              to="/"
+              style={{ 
+                textDecoration: 'none', 
+                color: 'inherit', 
+                display: 'flex',
+                alignItems: 'center'
               }}
             >
-              Н
-            </Avatar>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 'bold',
-                fontSize: { xs: '1rem', sm: '1.25rem' }
-              }}
-            >
-              Нархоз кітапханасы
-            </Typography>
+              <Avatar
+                alt="Нархоз"
+                src="/images/narxoz-logo.png"
+                variant="rounded"
+                sx={{ 
+                  width: { xs: 32, md: 40 }, 
+                  height: { xs: 32, md: 40 }, 
+                  mr: 1.5,
+                  transition: 'all 0.3s',
+                  bgcolor: theme.palette.primary.main,
+                  display: { xs: 'none', sm: 'flex' }
+                }}
+              />
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: { xs: '1.1rem', md: '1.25rem' },
+                  transition: 'all 0.3s',
+                  display: 'inline-block',
+                }}
+              >
+                {t('common.libraryName')}
+              </Typography>
+            </RouterLink>
           </Box>
           
-          {/* Навигация тек десктоп үшін */}
-          <Box 
-            sx={{ 
-              display: { xs: 'none', lg: 'flex' },
-              flexGrow: 1,
-              ml: 2
-            }}
-          >
+          {/* Основное меню */}
+          <Box sx={{ ml: { sm: 4, md: 6 }, display: { xs: 'none', md: 'flex' }, flexGrow: 1 }}>
             {menuItems.map((item) => (
-              // Авторизация қажет және админ қажетті элементтерді тексеру
+              // Авторизация требуется и пользователь не авторизован - скрыть пункт меню
+              // Админ-онли и пользователь не админ - скрыть пункт меню
               (!item.auth || (item.auth && isAuthenticated)) && 
               (!item.adminOnly || (item.adminOnly && user?.role === 'admin')) && (
-                <Button
+                <Button 
                   key={item.text}
                   component={RouterLink}
                   to={item.path}
@@ -647,6 +531,9 @@ const Layout = ({ children }) => {
           
           {/* Хабарламалар мен профиль */}
           <Box sx={{ flexGrow: { xs: 1, lg: 0 }, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            {/* Переключатель языка */}
+            <LanguageSwitcher />
+            
             {/* Хабарламалар (тек авторизацияланған пайдаланушылар үшін) */}
             {isAuthenticated && (
               <NotificationMenu />
@@ -655,7 +542,7 @@ const Layout = ({ children }) => {
             {/* Авторизация/профиль */}
             {isAuthenticated ? (
               <Box sx={{ position: 'relative' }}>
-                <Tooltip title="Профиль мәзірі">
+                <Tooltip title={t('profile.title')}>
                   <IconButton
                     onClick={handleOpenUserMenu}
                     sx={{ 
@@ -667,7 +554,7 @@ const Layout = ({ children }) => {
                         border: `2px solid ${alpha(theme.palette.common.white, 0.5)}`,
                       }
                     }}
-                    aria-label="Профиль"
+                    aria-label={t('profile.title')}
                   >
                     <Avatar 
                       alt={user?.name} 
@@ -735,7 +622,7 @@ const Layout = ({ children }) => {
                         color="error"
                         sx={{ mt: 1, fontSize: '0.75rem' }}
                       >
-                        Админ панеліне өту
+                        {t('admin.goToAdmin')}
                       </Button>
                     )}
                   </Box>
@@ -744,7 +631,7 @@ const Layout = ({ children }) => {
                     <ListItemIcon>
                       <PersonIcon fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Профиль</ListItemText>
+                    <ListItemText>{t('profile.title')}</ListItemText>
                   </MenuItem>
                   
                   <MenuItem component={RouterLink} to="/notifications" onClick={handleCloseUserMenu}>
@@ -753,29 +640,8 @@ const Layout = ({ children }) => {
                         <NotificationsIcon fontSize="small" />
                       </Badge>
                     </ListItemIcon>
-                    <ListItemText>Хабарламалар</ListItemText>
+                    <ListItemText>{t('notifications.title')}</ListItemText>
                   </MenuItem>
-                  
-                  {/* <MenuItem component={RouterLink} to="/bookmarks" onClick={handleCloseUserMenu}>
-                    <ListItemIcon>
-                      <Badge badgeContent={stats?.bookmarks || 0} color="primary">
-                        <BookmarkIcon fontSize="small" />
-                      </Badge>
-                    </ListItemIcon>
-                    <ListItemText>Бетбелгілер</ListItemText>
-                  </MenuItem> */}
-                  
-                  {/* <MenuItem component={RouterLink} to="/borrows" onClick={handleCloseUserMenu}>
-                    <ListItemIcon>
-                      <Badge
-                        badgeContent={stats?.activeborrows || 0}
-                        color={stats?.overdueborrows > 0 ? "error" : "primary"}
-                      >
-                        <HistoryIcon fontSize="small" />
-                      </Badge>
-                    </ListItemIcon>
-                    <ListItemText>Қарыз тарихы</ListItemText>
-                  </MenuItem> */}
                   
                   <Divider />
                   
@@ -784,7 +650,7 @@ const Layout = ({ children }) => {
                       <LogoutIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText 
-                      primary="Шығу"
+                      primary={t('common.logout')}
                       primaryTypographyProps={{
                         color: theme.palette.error.main,
                       }}
@@ -806,25 +672,8 @@ const Layout = ({ children }) => {
                   }}
                   startIcon={<LoginIcon />}
                 >
-                  Кіру
+                  {t('common.login')}
                 </Button>
-                
-                {/* <Button
-                  variant="outlined"
-                  color="inherit"
-                  component={RouterLink}
-                  to="/register"
-                  sx={{ 
-                    ml: { xs: 1, sm: 2 },
-                    fontWeight: 'medium',
-                    borderWidth: 2,
-                    '&:hover': {
-                      borderWidth: 2,
-                    }
-                  }}
-                >
-                  Тіркелу
-                </Button> */}
               </Box>
             )}
           </Box>
@@ -847,30 +696,21 @@ const Layout = ({ children }) => {
         {mobileDrawer}
       </Drawer>
       
-      {/* Десктоп үшін тұрақты бүйірлік мәзір
-      <Sidebar
-        open={sidebarOpen}
-        onClose={toggleSidebar}
-        stats={stats}
-      /> */}
-      
-      {/* Негізгі мазмұны */}
-      <Box 
-        component="main" 
+      {/* Основной контент */}
+      <Box
+        component="main"
         sx={{
           flexGrow: 1,
-          pl: { xs: 0 },
-          transition: 'padding-left 0.3s ease',
+          display: 'flex',
+          flexDirection: 'column',
+          // minHeight: смещение относительно высоты хедера и контейнера
+          pt: scrolled ? '64px' : '64px',
+          // Добавляем отступ внизу для футера
+          pb: 8,
         }}
       >
-        <Box
-          component={motion.div}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          {children}
-        </Box>
+        {/* Используем Outlet для вывода дочерних компонентов маршрутов */}
+        <Outlet />
       </Box>
       
       {/* Футер */}
@@ -880,14 +720,13 @@ const Layout = ({ children }) => {
           py: 3,
           px: 2,
           mt: 'auto',
-          backgroundColor: (theme) => alpha(theme.palette.grey[200], 0.5),
-          pl: { xs: 0 },
-          transition: 'padding-left 0.3s ease',
+          backgroundColor: theme.palette.grey[100],
+          borderTop: `1px solid ${theme.palette.divider}`,
         }}
       >
         <Container maxWidth="lg">
           <Typography variant="body2" color="text.secondary" align="center">
-            © {new Date().getFullYear()} Нархоз Университеті Кітапханасы - Барлық құқықтар қорғалған
+            © {new Date().getFullYear()} {t('common.libraryName')}
           </Typography>
         </Container>
       </Box>

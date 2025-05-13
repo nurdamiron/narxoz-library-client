@@ -45,6 +45,9 @@ const useBookmarks = () => {
       setLoading(true);
       const response = await bookmarkService.toggleBookmark(bookId);
       
+      console.log('🔖 useBookmarks - Toggle response:', response);
+      
+      // baseService уже извлек response.data, поэтому проверяем response
       if (response.success) {
         if (response.data.bookmarked) {
           // Book was bookmarked, add to state

@@ -524,6 +524,14 @@ const adminBookService = {
       
       // Детальное логирование запроса
       console.log('📤 Мұқаба жүктеу сұранысы жіберілуде...');
+      console.log('📤 API endpoint:', `/books/${id}/cover`);
+      
+      // Напрямую используем URL бэкенда для гарантированного подключения
+      const apiUrl = 'http://localhost:5001/api';
+      console.log('📤 API URL:', apiUrl);
+      
+      // Бэкенд URL для будущего использования при построении полного URL
+      const backendBaseUrl = 'http://localhost:5001';
       
       const response = await apiClient.put(`/books/${id}/cover`, formData, {
         headers: {
@@ -537,7 +545,39 @@ const adminBookService = {
       });
       
       console.log('✅ Мұқаба сәтті жүктелді:', response.data);
-      return { success: true, data: response.data.data || response.data };
+      
+      // Проверяем, содержит ли ответ корректный URL
+      const responseData = response.data.data || response.data;
+      
+      if (responseData && responseData.cover) {
+        console.log('✅ Полученный URL обложки:', responseData.cover);
+        
+        // Убедимся, что URL абсолютный
+        if (!responseData.cover.startsWith('http')) {
+          // Используем жестко заданный URL бэкенда
+          const fullUrl = `${backendBaseUrl}${responseData.relativePath || responseData.cover}`;
+          console.log('✅ Преобразованный абсолютный URL:', fullUrl);
+          responseData.cover = fullUrl;
+        }
+        
+        // Проверяем доступность файла по этому URL
+        try {
+          const testUrl = responseData.cover;
+          console.log(`🧪 Тестируем доступность обложки по URL: ${testUrl}`);
+          const testResponse = await fetch(testUrl, { method: 'HEAD' });
+          if (testResponse.ok) {
+            console.log('✅ Обложка доступна по URL');
+          } else {
+            console.warn(`⚠️ Обложка не доступна по URL: ${testResponse.status} ${testResponse.statusText}`);
+          }
+        } catch (e) {
+          console.error(`❌ Ошибка при проверке доступности обложки: ${e.message}`);
+        }
+      } else {
+        console.warn('⚠️ В ответе отсутствует URL обложки');
+      }
+      
+      return { success: true, data: responseData };
     } catch (error) {
       console.error(`❌ Мұқаба жүктеу қатесі (ID: ${id}):`, error);
       

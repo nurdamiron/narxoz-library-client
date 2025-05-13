@@ -16,6 +16,7 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
+import EventIcon from '@mui/icons-material/Event';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import PeopleIcon from '@mui/icons-material/People';
@@ -26,8 +27,10 @@ import WarningIcon from '@mui/icons-material/Warning';
 import PageHeader from '../../components/common/PageHeader';
 import { StatCard, AdminCard, DashboardChart, CategoryStats } from '../../components/admin/common';
 import dashboardService from '../../services/dashboardService';
+import { useTranslation } from 'react-i18next';
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     users: 0,
     books: 0,
@@ -36,12 +39,10 @@ const AdminDashboard = () => {
   });
   const [overdueCount, setOverdueCount] = useState(0);
   const [trendingBooks, setTrendingBooks] = useState([]);
-  const [activeBorrowers, setActiveBorrowers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -62,51 +63,68 @@ const AdminDashboard = () => {
         const trending = await dashboardService.getTrendingBooks();
         setTrendingBooks(trending);
         
-        // Set active borrowers from statistics
-        setActiveBorrowers(statsData.mostActiveBorrowers || []);
-        
         // Get overdue borrows count
         const overdue = await dashboardService.getOverdueBorrows();
         setOverdueCount(overdue);
         
       } catch (err) {
         console.error('Error loading dashboard data:', err);
-        setError('Деректерді жүктеу кезінде қате пайда болды. Тағы қайталап көріңіз.');
+        setError(t('admin.dashboardDataError', 'Произошла ошибка при загрузке данных. Повторите попытку.'));
       } finally {
         setLoading(false);
       }
     };
 
     loadDashboardData();
-  }, []);
+  }, [t]);
 
+  const { user } = useAuth();
+  const isModerator = user && user.role === 'moderator';
+  
   // Админ панелі бөлімдеріне арналған карточкалар
-  const adminSections = [
+  // Filter sections based on user role
+  const allSections = [
     {
-      title: 'Пайдаланушылар',
+      title: t('admin.users', 'Пользователи'),
       icon: <PeopleIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
       path: '/admin/users',
-      description: 'Жүйе пайдаланушыларын басқару, жаңа пайдаланушылар қосу және рөлдерді өзгерту'
+      description: t('admin.usersDescription', 'Управление пользователями системы, добавление новых пользователей и изменение ролей'),
+      roles: ['admin'] // Only for admins
     },
     {
-      title: 'Кітаптар',
+      title: t('admin.books', 'Книги'),
       icon: <LibraryBooksIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
       path: '/admin/books',
-      description: 'Кітаптарды басқару, жаңа кітаптарды қосу, ақпаратты өңдеу'
+      description: t('admin.booksDescription', 'Управление книгами, добавление новых книг, редактирование информации'),
+      roles: ['admin', 'moderator'] // For admins and moderators
     },
     {
-      title: 'Қарыздар',
+      title: t('admin.borrows', 'Заимствования'),
       icon: <BookmarkIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
       path: '/admin/borrows',
-      description: 'Пайдаланушылардың кітаптарды қарызға алуын көру және басқару'
+      description: t('admin.borrowsDescription', 'Просмотр и управление заимствованиями книг пользователями'),
+      roles: ['admin', 'moderator'] // For admins and moderators
     },
     {
-      title: 'Санаттар',
+      title: t('admin.categories', 'Категории'),
       icon: <CategoryIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
       path: '/admin/categories',
-      description: 'Кітап санаттарын басқару, жаңа санаттар қосу'
+      description: t('admin.categoriesDescription', 'Управление категориями книг, добавление новых категорий'),
+      roles: ['admin'] // Only for admins
+    },
+    {
+      title: t('events.admin.title', 'Мероприятия'),
+      icon: <EventIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
+      path: '/admin/events',
+      description: t('events.admin.description', 'Создание и управление мероприятиями, семинарами и активностями'),
+      roles: ['admin', 'moderator'] // For admins and moderators
     }
   ];
+  
+  // Filter sections based on user role
+  const adminSections = allSections.filter(section => 
+    section.roles.includes(user?.role || 'admin')
+  );
 
   if (loading) {
     return (
@@ -119,8 +137,8 @@ const AdminDashboard = () => {
   return (
     <Container maxWidth="lg">
       <PageHeader 
-        title="Әкімші басқару тақтасы" 
-        subtitle={`Қош келдіңіз, ${user?.name || 'Әкімші'}`}
+        title={t('admin.dashboard', 'Панель управления')} 
+        subtitle={t('admin.welcomeUser', 'Добро пожаловать, {{name}}', { name: user?.name || t('common.adminRole', 'Администратор') })}
       />
 
       {error && (
@@ -129,46 +147,68 @@ const AdminDashboard = () => {
         </Alert>
       )}
 
-      {/* Статистика */}
+      {/* Статистика - show different stats for admin vs moderator */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        {!isModerator && (
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              titleKey="admin.users"
+              title={t('admin.users', 'Пользователи')}
+              value={stats.users}
+              icon={<PeopleIcon />}
+              color="primary"
+              subtitleKey="admin.totalUsers"
+              subtitle={t('admin.totalUsers', 'Всего пользователей')}
+              onClick={() => navigate('/admin/users')}
+            />
+          </Grid>
+        )}
+        <Grid item xs={12} sm={6} md={isModerator ? 4 : 3}>
           <StatCard
-            title="Пайдаланушылар"
-            value={stats.users}
-            icon={<PeopleIcon />}
-            color="primary"
-            subtitle="Жалпы пайдаланушылар саны"
-            onClick={() => navigate('/admin/users')}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Кітаптар"
+            titleKey="admin.books"
+            title={t('admin.books', 'Книги')}
             value={stats.books}
             icon={<LibraryBooksIcon />}
             color="info"
-            subtitle="Кітапханадағы барлық кітаптар"
+            subtitleKey="admin.totalBooks"
+            subtitle={t('admin.totalBooks', 'Всего книг в библиотеке')}
             onClick={() => navigate('/admin/books')}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={isModerator ? 4 : 3}>
           <StatCard
-            title="Қарыздар"
+            titleKey="admin.borrows"
+            title={t('admin.borrows', 'Заимствования')}
             value={stats.borrows}
             icon={<BookmarkIcon />}
             color="warning"
-            subtitle="Белсенді қарыздар"
+            subtitleKey="admin.activeLoans"
+            subtitle={t('admin.activeLoans', 'Активные заимствования')}
             onClick={() => navigate('/admin/borrows')}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        {!isModerator && (
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              titleKey="admin.categories"
+              title={t('admin.categories', 'Категории')}
+              value={stats.categories}
+              icon={<CategoryIcon />}
+              color="success"
+              subtitle={t('admin.bookCategories', 'Категории книг')}
+              onClick={() => navigate('/admin/categories')}
+            />
+          </Grid>
+        )}
+        <Grid item xs={12} sm={6} md={isModerator ? 4 : 3}>
           <StatCard
-            title="Санаттар"
-            value={stats.categories}
-            icon={<CategoryIcon />}
-            color="success"
-            subtitle="Кітап санаттары"
-            onClick={() => navigate('/admin/categories')}
+            titleKey="events.admin.title"
+            title={t('events.admin.title', 'Мероприятия')}
+            value={stats.events || 0}
+            icon={<EventIcon />}
+            color="secondary"
+            subtitle={t('events.upcoming', 'Предстоящие мероприятия')}
+            onClick={() => navigate('/admin/events')}
           />
         </Grid>
       </Grid>
@@ -189,11 +229,11 @@ const AdminDashboard = () => {
                 '&:hover': { textDecoration: 'none' } 
               }}
             >
-              Көру
+              {t('common.view', 'Просмотр')}
             </Box>
           }
         >
-          {overdueCount} кітаптың қайтару мерзімі өтіп кетті
+          {t('admin.overdueBooks', '{{count}} книг просрочено', { count: overdueCount })}
         </Alert>
       )}
 
@@ -233,7 +273,7 @@ const AdminDashboard = () => {
           {/* Top Borrowed Books */}
           <Paper elevation={2} sx={{ p: 2, mb: 4 }}>
             <Typography variant="h6" gutterBottom>
-              Ең көп қарызға алынған кітаптар
+              {t('admin.topBorrowedBooks', 'Наиболее востребованные книги')}
             </Typography>
             <List>
               {trendingBooks.length > 0 ? trendingBooks.slice(0, 5).map((book, index) => (
@@ -247,12 +287,15 @@ const AdminDashboard = () => {
                   </ListItemAvatar>
                   <ListItemText 
                     primary={book.book?.title || book.title} 
-                    secondary={`${book.book?.author || book.author} • ${book.borrowCount || book.bookmarkCount || 0} қарызға алу`} 
+                    secondary={t('admin.authorAndBorrows', '{{author}} • {{count}} заимствований', { 
+                      author: (book.book?.author || book.author || '').split(',')[0],
+                      count: book.borrowCount || book.bookmarkCount || 0
+                    })} 
                   />
                 </ListItem>
               )) : (
                 <ListItem>
-                  <ListItemText primary="Кітаптар табылмады" />
+                  <ListItemText primary={t('books.noBooks', 'Книги не найдены')} />
                 </ListItem>
               )}
             </List>
@@ -266,34 +309,9 @@ const AdminDashboard = () => {
         
         {/* Right column */}
         <Grid item xs={12} md={4}>
-          {/* Top Active Borrowers */}
-          <Paper elevation={2} sx={{ p: 2, mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Белсенді оқырмандар
-            </Typography>
-            <List>
-              {activeBorrowers.length > 0 ? activeBorrowers.slice(0, 5).map((borrower, index) => (
-                <ListItem key={borrower.userId} divider={index < activeBorrowers.length - 1}>
-                  <ListItemAvatar>
-                    <Avatar>
-                      {borrower.user?.name?.charAt(0) || 'U'}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText 
-                    primary={borrower.user?.name || 'Пайдаланушы'} 
-                    secondary={`${borrower.borrowCount} кітап қарызға алынған`} 
-                  />
-                </ListItem>
-              )) : (
-                <ListItem>
-                  <ListItemText primary="Белсенді оқырмандар табылмады" />
-                </ListItem>
-              )}
-            </List>
-          </Paper>
           
           {/* Category Statistics */}
-          <CategoryStats />
+          <CategoryStats sx={{ mb: 4 }} />
         </Grid>
       </Grid>
     </Container>

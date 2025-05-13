@@ -10,6 +10,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -50,6 +51,7 @@ const LoginPage = () => {
   const { login, isAuthenticated, user } = useAuth();
   const { success, error: showError } = useToast();
   const theme = useTheme();
+  const { t } = useTranslation();
   
   // Форма күйі
   const [formData, setFormData] = useState({
@@ -116,13 +118,13 @@ const LoginPage = () => {
     const errors = {};
     
     if (!formData.email) {
-      errors.email = 'Электрондық пошта міндетті';
+      errors.email = t('validation.required', 'Электрондық пошта міндетті');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Жарамды электрондық пошта енгізіңіз';
+      errors.email = t('validation.email', 'Жарамды электрондық пошта енгізіңіз');
     }
     
     if (!formData.password) {
-      errors.password = 'Құпия сөз міндетті';
+      errors.password = t('validation.required', 'Құпия сөз міндетті');
     }
     
     setFieldErrors(errors);
@@ -146,7 +148,7 @@ const LoginPage = () => {
       setError('');
       
       const response = await login(formData);
-      success('Сіз сәтті кірдіңіз!');
+      success(t('auth.loginSuccess', 'Сіз сәтті кірдіңіз!'));
       
       // Егер пайдаланушы админ болса, админ панеліне бағыттау
       if (response.data && response.data.role === 'admin') {
@@ -161,7 +163,7 @@ const LoginPage = () => {
       if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else {
-        setError('Кіру кезінде қате орын алды. Әрекетті қайталап көріңіз.');
+        setError(t('auth.loginError', 'Кіру кезінде қате орын алды. Әрекетті қайталап көріңіз.'));
       }
     } finally {
       setLoading(false);
@@ -182,7 +184,7 @@ const LoginPage = () => {
       };
       
       const response = await login(adminCredentials);
-      success('Админ ретінде сәтті кірдіңіз!');
+      success(t('auth.adminLoginSuccess', 'Админ ретінде сәтті кірдіңіз!'));
       
       // Админ панеліне бағыттау
       navigate('/admin');
@@ -192,7 +194,7 @@ const LoginPage = () => {
       if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else {
-        setError('Админ ретінде кіру кезінде қате орын алды. Әрекетті қайталап көріңіз.');
+        setError(t('auth.adminLoginError', 'Админ ретінде кіру кезінде қате орын алды. Әрекетті қайталап көріңіз.'));
       }
     } finally {
       setLoading(false);
@@ -241,10 +243,10 @@ const LoginPage = () => {
         <motion.div variants={itemVariants}>
           <Box sx={{ mt: 8, mb: 4, textAlign: 'center' }}>
             <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" color="primary">
-              Нархоз кітапханасына кіру
+              {t('auth.loginToLibrary', 'Нархоз кітапханасына кіру')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Кітапханалық қызметтерге қол жеткізу үшін кіріңіз
+              {t('auth.loginSubtitle', 'Кітапханалық қызметтерге қол жеткізу үшін кіріңіз')}
             </Typography>
           </Box>
         </motion.div>
@@ -290,7 +292,7 @@ const LoginPage = () => {
                 required
                 fullWidth
                 id="email"
-                label="Электрондық пошта"
+                label={t('common.email', 'Электрондық пошта')}
                 name="email"
                 autoComplete="email"
                 autoFocus
@@ -315,7 +317,7 @@ const LoginPage = () => {
                 required
                 fullWidth
                 name="password"
-                label="Құпия сөз"
+                label={t('common.password', 'Құпия сөз')}
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 autoComplete="current-password"
@@ -332,7 +334,7 @@ const LoginPage = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        aria-label="toggle password visibility"
+                        aria-label={t('auth.togglePassword', 'Құпия сөзді көрсету/жасыру')}
                         onClick={handleTogglePassword}
                         edge="end"
                       >
@@ -370,7 +372,7 @@ const LoginPage = () => {
                 disabled={loading}
                 startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
               >
-                {loading ? 'Кіру...' : 'Кіру'}
+                {loading ? t('auth.loggingIn', 'Кіру...') : t('common.login', 'Кіру')}
               </Button>
             </motion.div>
             
@@ -389,7 +391,7 @@ const LoginPage = () => {
                       } 
                     }}
                   >
-                    Құпия сөзді ұмыттыңыз ба?
+                    {t('auth.forgotPassword', 'Құпия сөзді ұмыттыңыз ба?')}
                   </Link>
                 </Grid>
               </Grid>

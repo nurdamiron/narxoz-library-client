@@ -22,6 +22,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import TuneIcon from '@mui/icons-material/Tune';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Компонент панели фильтрации для админ-панели
@@ -38,12 +39,17 @@ const FilterBar = ({
   activeFilters = {},
   onFilterChange,
   onSearch,
-  searchPlaceholder = 'Поиск...',
+  searchPlaceholder,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [tempFilters, setTempFilters] = useState({...activeFilters});
+  
+  // Определение плейсхолдера поиска с учетом локализации
+  const defaultSearchPlaceholder = t('common.search', 'Поиск...');
+  const searchPlaceholderText = searchPlaceholder || defaultSearchPlaceholder;
   
   // Обработчик открытия попапа фильтров
   const handleFilterClick = (event) => {
@@ -129,7 +135,7 @@ const FilterBar = ({
     >
       {/* Поле поиска */}
       <TextField
-        placeholder={searchPlaceholder}
+        placeholder={searchPlaceholderText}
         value={searchQuery}
         onChange={handleSearchChange}
         variant="outlined"
@@ -145,7 +151,7 @@ const FilterBar = ({
           endAdornment: searchQuery && (
             <InputAdornment position="end">
               <IconButton
-                aria-label="clear search"
+                aria-label={t('common.clearSearch', 'Очистить поиск')}
                 onClick={handleClearSearch}
                 edge="end"
                 size="small"
@@ -166,7 +172,7 @@ const FilterBar = ({
         aria-describedby={id}
         sx={{ minWidth: 130 }}
       >
-        Фильтры
+        {t('admin.filters', 'Фильтры')}
         {hasActiveFilters() && (
           <Chip 
             label={Object.values(activeFilters).flat().filter(Boolean).length} 
@@ -202,7 +208,7 @@ const FilterBar = ({
         }}
       >
         <Typography variant="h6" gutterBottom>
-          Фильтры
+          {t('admin.filters', 'Фильтры')}
         </Typography>
         
         <Divider sx={{ mb: 2 }} />
@@ -224,7 +230,7 @@ const FilterBar = ({
                   >
                     {!filter.multiple && (
                       <MenuItem value="">
-                        <em>Все</em>
+                        <em>{t('admin.filterAll', 'Все')}</em>
                       </MenuItem>
                     )}
                     {filter.options.map((option) => (
@@ -269,14 +275,14 @@ const FilterBar = ({
             variant="outlined"
             color="inherit"
           >
-            Сбросить
+            {t('admin.resetFilters', 'Сбросить')}
           </Button>
           <Button 
             onClick={handleApplyFilters}
             variant="contained"
             color="primary"
           >
-            Применить
+            {t('admin.applyFilters', 'Применить')}
           </Button>
         </Box>
       </Popover>

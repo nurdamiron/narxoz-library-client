@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Badge,
   IconButton,
@@ -58,6 +59,7 @@ import { formatDateTime, truncateString } from '../../utils';
 const NotificationMenu = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const { t } = useTranslation();
   
   const { 
     notifications, 
@@ -116,10 +118,10 @@ const NotificationMenu = () => {
     try {
       setMarkingAsRead(true);
       await markAllAsRead();
-      success('Барлық хабарламалар оқылды деп белгіленді');
+      success(t('notifications.markAllReadSuccess', 'Барлық хабарламалар оқылды деп белгіленді'));
     } catch (err) {
-      console.error('Хабарламаларды белгілеу қатесі:', err);
-      showError('Хабарламаларды оқылды деп белгілеу кезінде қате орын алды');
+      console.error(t('notifications.markAllReadErrorLog', 'Хабарламаларды белгілеу қатесі:'), err);
+      showError(t('notifications.markAllReadError', 'Хабарламаларды оқылды деп белгілеу кезінде қате орын алды'));
     } finally {
       setMarkingAsRead(false);
     }
@@ -144,10 +146,10 @@ const NotificationMenu = () => {
         setRecentlyRead(prev => prev.filter(itemId => itemId !== id));
       }, 2000);
       
-      success('Хабарлама оқылды деп белгіленді');
+      success(t('notifications.markReadSuccess', 'Хабарлама оқылды деп белгіленді'));
     } catch (err) {
-      console.error('Хабарламаны белгілеу қатесі:', err);
-      showError('Хабарламаны оқылды деп белгілеу кезінде қате орын алды');
+      console.error(t('notifications.markReadErrorLog', 'Хабарламаны белгілеу қатесі:'), err);
+      showError(t('notifications.markReadError', 'Хабарламаны оқылды деп белгілеу кезінде қате орын алды'));
     }
   };
   
@@ -245,11 +247,11 @@ const NotificationMenu = () => {
 
   return (
     <>
-      <Tooltip title="Хабарламалар">
+      <Tooltip title={t('notifications.title', 'Хабарламалар')}>
         <IconButton
           color="inherit"
           onClick={handleOpenMenu}
-          aria-label="Хабарламаларды көрсету"
+          aria-label={t('notifications.show', 'Хабарламаларды көрсету')}
           sx={{
             position: 'relative',
             transition: 'transform 0.2s',
@@ -329,7 +331,7 @@ const NotificationMenu = () => {
           }}
         >
           <Typography variant="subtitle1" fontWeight="medium">
-            Хабарламалар {unreadCount > 0 && (
+            {t('notifications.title', 'Хабарламалар')} {unreadCount > 0 && (
               <Box 
                 component="span" 
                 sx={{ 
@@ -361,7 +363,7 @@ const NotificationMenu = () => {
                 }
               }}
             >
-              Барлығын оқу
+              {t('notifications.markAllAsRead', 'Барлығын оқылды деп белгілеу')}
             </Button>
           )}
         </ListSubheader>
@@ -398,10 +400,10 @@ const NotificationMenu = () => {
                   }} 
                 />
                 <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                  Сізде хабарламалар жоқ
+                  {t('notifications.noNotifications', 'Сізде хабарламалар жоқ')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Жаңа хабарламалар осы жерде көрсетіледі
+                  {t('notifications.newNotifications', 'Жаңа хабарламалар осы жерде көрсетіледі')}
                 </Typography>
               </Box>
             </motion.div>
@@ -441,7 +443,7 @@ const NotificationMenu = () => {
                             !notification.read && !isRecentlyRead && (
                               <IconButton
                                 edge="end"
-                                aria-label="оқылды деп белгілеу"
+                                aria-label={t('notifications.markAsRead', 'Оқылды деп белгілеу')}
                                 onClick={(e) => handleMarkAsRead(notification.id, e)}
                                 sx={{
                                   mr: 1,
@@ -451,7 +453,7 @@ const NotificationMenu = () => {
                                   }
                                 }}
                               >
-                                <Tooltip title="Оқылды деп белгілеу">
+                                <Tooltip title={t('notifications.markAsRead', 'Оқылды деп белгілеу')}>
                                   <DoneIcon fontSize="small" />
                                 </Tooltip>
                               </IconButton>
@@ -585,7 +587,7 @@ const NotificationMenu = () => {
               fontWeight: 'medium'
             }}
           >
-            Барлық хабарламаларды көру
+            {t('notifications.viewAllNotifications', 'Барлық хабарламаларды көру')}
           </Button>
         </Box>
       </Menu>

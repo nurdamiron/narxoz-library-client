@@ -3,11 +3,13 @@ import { Box, Typography, CircularProgress, Paper, List, ListItem, ListItemText,
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import dashboardService from '../../../services/dashboardService';
+import { useTranslation } from 'react-i18next';
 
 const CategoryStats = () => {
   const [categoryStats, setCategoryStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { t } = useTranslation();
   
   useEffect(() => {
     const loadCategoryStats = async () => {
@@ -20,18 +22,18 @@ const CategoryStats = () => {
         setCategoryStats(stats);
       } catch (err) {
         console.error('Error loading category statistics:', err);
-        setError('Категория статистикасын жүктеу кезінде қате пайда болды');
+        setError(t('admin.categoryStatsError'));
       } finally {
         setLoading(false);
       }
     };
     
     loadCategoryStats();
-  }, []);
+  }, [t]);
   
   return (
     <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
-      <Typography variant="h6" gutterBottom>Категория бойынша статистика</Typography>
+      <Typography variant="h6" gutterBottom>{t('admin.categoryStats')}</Typography>
       
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
@@ -53,14 +55,14 @@ const CategoryStats = () => {
                       <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
                         <Chip 
                           icon={<LibraryBooksIcon />} 
-                          label={`${category.bookCount} кітап`}
+                          label={t('admin.booksCount', { count: category.bookCount })}
                           size="small"
                           color="primary"
                           variant="outlined"
                         />
                         <Chip 
                           icon={<BookmarkIcon />} 
-                          label={`${category.borrowCount} қарыз`}
+                          label={t('admin.borrowsCount', { count: category.borrowCount })}
                           size="small"
                           color="secondary"
                           variant="outlined"
@@ -74,7 +76,7 @@ const CategoryStats = () => {
             ))
           ) : (
             <ListItem>
-              <ListItemText primary="Категориялар табылмады" />
+              <ListItemText primary={t('admin.noCategories')} />
             </ListItem>
           )}
         </List>

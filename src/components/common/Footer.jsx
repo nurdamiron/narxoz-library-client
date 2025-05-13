@@ -18,6 +18,7 @@
  */
 import React, { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -71,6 +72,7 @@ const Footer = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Мобильді құрылғыны тексеру
   const isSmall = useMediaQuery(theme.breakpoints.down('sm')); // Кішкентай экранды тексеру
   const currentYear = new Date().getFullYear(); // Ағымдағы жылды алу (авторлық құқық үшін)
+  const { t } = useTranslation(); // Локализация функциясы
 
   // Жазылым күйлері
   const [email, setEmail] = useState('');
@@ -144,26 +146,26 @@ const Footer = () => {
 
   // Негізгі навигация сілтемелері
   const mainLinks = [
-    { title: 'Басты бет', path: '/' },
-    { title: 'Каталог', path: '/books' },
-    { title: 'Танымал кітаптар', path: '/books?popular=true' },
-    { title: 'Кітапхана туралы', path: '/about' },
-    { title: 'Көмек', path: '/help' },
+    { title: t('common.home'), path: '/' },
+    { title: t('books.catalog'), path: '/books' },
+    { title: t('home.popularBooks'), path: '/books?popular=true' },
+    { title: t('about.title'), path: '/about' },
+    { title: t('common.more'), path: '/help' },
   ];
 
   // Аккаунт сілтемелері
   const accountLinks = [
-    { title: 'Менің профилім', path: '/profile' },
-    { title: 'Тапсырыс тарихы', path: '/history' },
-    { title: 'Менің бетбелгілерім', path: '/bookmarks' },
+    { title: t('profile.title'), path: '/profile' },
+    { title: t('borrowHistory.title'), path: '/history' },
+    { title: t('bookmarks.title'), path: '/bookmarks' },
   ];
 
   // Контактілік ақпарат
   const contactInfo = [
-    { icon: <LocationOnIcon />, text: 'Жандосов көшесі, 55, Алматы' },
+    { icon: <LocationOnIcon />, text: t('footer.address') },
     { icon: <PhoneIcon />, text: '+7 (727) 377-11-11' },
     { icon: <EmailIcon />, text: 'library@narxoz.kz' },
-    { icon: <ScheduleIcon />, text: 'Дүй-Жұм: 9:00 - 20:00, Сб: 10:00 - 17:00' },
+    { icon: <ScheduleIcon />, text: t('footer.schedule') },
   ];
 
   // Анимация конфигурациясы
@@ -206,11 +208,11 @@ const Footer = () => {
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <SchoolIcon sx={{ fontSize: 36, mr: 1.5, color: theme.palette.primary.main }} />
                 <Typography variant="h5" fontWeight="bold" component="div">
-                  НАРХОЗ Кітапханасы
+                  {t('footer.libraryName')}
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ mt: 1.5, opacity: 0.9 }}>
-                Нархоз Университетінің студенттері мен оқытушыларына арналған электронды кітапхана жүйесі
+                {t('footer.description')}
               </Typography>
 
               {/* Жазылым формасы */}
@@ -230,7 +232,7 @@ const Footer = () => {
               >
                 <TextField
                   size="small"
-                  placeholder="Жаңалықтарға жазылу"
+                  placeholder={t('footer.subscribe')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   variant="standard"
@@ -280,7 +282,7 @@ const Footer = () => {
                 }}
                 onClick={isMobile ? () => toggleSection('navigation') : undefined}
               >
-                Навигация
+                {t('footer.navigation')}
                 {isMobile && (
                   sectionsOpen.navigation ? <ExpandLess /> : <ExpandMore />
                 )}
@@ -343,7 +345,7 @@ const Footer = () => {
                 }}
                 onClick={isMobile ? () => toggleSection('account') : undefined}
               >
-                Жеке кабинет
+                {t('footer.account')}
                 {isMobile && (
                   sectionsOpen.account ? <ExpandLess /> : <ExpandMore />
                 )}
@@ -417,7 +419,7 @@ const Footer = () => {
                 }}
                 onClick={isMobile ? () => toggleSection('contact') : undefined}
               >
-                Байланыс ақпараты
+                {t('footer.contactInfo')}
                 {isMobile && (
                   sectionsOpen.contact ? <ExpandLess /> : <ExpandMore />
                 )}
@@ -470,7 +472,7 @@ const Footer = () => {
                       },
                     }}
                   >
-                    Картадан көру
+                    {t('footer.viewOnMap')}
                   </Button>
                 </Paper>
               </Collapse>
@@ -479,7 +481,7 @@ const Footer = () => {
             {/* Әлеуметтік желілер */}
             <Grid item xs={12} md={5}>
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                Бізді әлеуметтік желілерде бақылаңыз
+                {t('footer.followUs')}
               </Typography>
               
               <Box sx={{ 
@@ -520,7 +522,7 @@ const Footer = () => {
               </Box>
               
               <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
-                Бізбен байланысты жоғалтпаңыз! Әлеуметтік желілерде ең соңғы жаңалықтар, жаңа кітаптар туралы ақпарат және арнайы іс-шаралар туралы хабарландырулар.
+                {t('footer.followUsDescription')}
               </Typography>
             </Grid>
           </Grid>
@@ -533,7 +535,7 @@ const Footer = () => {
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={6}>
             <Typography variant="body2" sx={{ opacity: 0.8, textAlign: { xs: 'center', md: 'left' } }}>
-              © {currentYear} Нархоз Университеті. Барлық құқықтар қорғалған.
+              {t('footer.copyright', { year: currentYear })}
             </Typography>
           </Grid>
           <Grid item xs={12} md={6}>
@@ -550,7 +552,7 @@ const Footer = () => {
                 variant="body2"
                 sx={{ opacity: 0.8, '&:hover': { opacity: 1, color: theme.palette.primary.main } }}
               >
-                Құпиялылық саясаты
+                {t('footer.privacyPolicy')}
               </Link>
               <Link
                 component={RouterLink}
@@ -559,16 +561,16 @@ const Footer = () => {
                 variant="body2"
                 sx={{ opacity: 0.8, '&:hover': { opacity: 1, color: theme.palette.primary.main } }}
               >
-                Пайдалану шарттары
+                {t('footer.termsOfUse')}
               </Link>
             </Box>
           </Grid>
         </Grid>
         
         {/* Кнопка прокрутки вверх - справа внизу */}
-        <Tooltip title="Жоғары">
+        <Tooltip title={t('footer.scrollToTop')}>
           <IconButton
-            aria-label="Жоғары"
+            aria-label={t('footer.scrollToTop')}
             onClick={handleScrollToTop}
             sx={{
               position: 'absolute',
@@ -603,7 +605,7 @@ const Footer = () => {
           variant="filled"
           sx={{ width: '100%' }}
         >
-          Сіз сәтті жазылдыңыз!
+          {t('footer.subscribeSuccess')}
         </Alert>
       </Snackbar>
       
@@ -620,7 +622,7 @@ const Footer = () => {
           variant="filled"
           sx={{ width: '100%' }}
         >
-          Жарамды электрондық пошта мекенжайын енгізіңіз
+          {t('footer.subscribeError')}
         </Alert>
       </Snackbar>
     </Box>

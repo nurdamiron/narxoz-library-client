@@ -6,6 +6,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { NotificationsActive as NotificationsIcon } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 // Импорт подкомпонентов
 import NotificationItem from './NotificationItem';
@@ -20,11 +21,12 @@ import EmptyState from '../common/EmptyState';
  */
 const NotificationsList = ({ notifications, onReadNotification }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h6" fontWeight="bold" gutterBottom>
-        Хабарламалар
+        {t('notifications.title', 'Хабарламалар')}
       </Typography>
       
       {notifications.length > 0 ? (
@@ -48,10 +50,11 @@ const NotificationsList = ({ notifications, onReadNotification }) => {
  * Хабарламалар жоқ күйі компоненті
  */
 const EmptyNotificationsState = () => {
+  const { t } = useTranslation();
   return (
     <EmptyState
       icon={<NotificationsIcon />}
-      title="Сізде хабарламалар жоқ"
+      title={t('notifications.noNotifications', 'Сізде хабарламалар жоқ')}
     />
   );
 };

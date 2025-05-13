@@ -1,10 +1,15 @@
 // src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 
+// Импортируем конфигурацию i18n
+import './i18n';
+
+// Закомментировано, так как перенаправление лучше делать через react-router
+/*
 // Функция для отслеживания изменений в сессии
 const setupAdminRedirect = () => {
   const userEmail = sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail');
@@ -24,6 +29,8 @@ const setupAdminRedirect = () => {
 
 // Вызываем функцию проверки
 setupAdminRedirect();
+*/
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

@@ -40,11 +40,13 @@ import {
 import { format } from 'date-fns';
 import PageHeader from '../../components/common/PageHeader';
 import adminBorrowService from '../../services/adminBorrowService';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Қарызға алуларды басқару беті
  */
 const BorrowsPage = () => {
+  const { t } = useTranslation();
   // Күй айнымалылары
   const [borrows, setBorrows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,11 +97,11 @@ const BorrowsPage = () => {
         setBorrows(response.data);
         setTotalCount(response.total || response.count);
       } else {
-        showSnackbar('Қарызға алулар тізімін жүктеу қатесі', 'error');
+        showSnackbar(t('admin.borrowsLoadError', 'Қарызға алулар тізімін жүктеу қатесі'), 'error');
       }
     } catch (error) {
-      console.error('Error fetching borrows:', error);
-      showSnackbar('Қарызға алулар тізімін жүктеу қатесі', 'error');
+      console.error(t('admin.errorFetchingBorrows', 'Error fetching borrows:'), error);
+      showSnackbar(t('admin.borrowsLoadError', 'Қарызға алулар тізімін жүктеу қатесі'), 'error');
     } finally {
       setLoading(false);
     }
@@ -114,14 +116,17 @@ const BorrowsPage = () => {
       const response = await adminBorrowService.checkOverdueBorrows();
       
       if (response.success) {
-        showSnackbar(`Мерзімі өткен қарызға алулар тексерілді. ${response.updatedCount} жазба жаңартылды.`, 'success');
+        showSnackbar(
+          t('admin.overdueChecked', { count: response.updatedCount }, 'Мерзімі өткен қарызға алулар тексерілді. {{count}} жазба жаңартылды.'),
+          'success'
+        );
         fetchBorrows();
       } else {
-        showSnackbar('Мерзімі өткен қарызға алуларды тексеру қатесі', 'error');
+        showSnackbar(t('admin.errorCheckingOverdue', 'Мерзімі өткен қарызға алуларды тексеру қатесі'), 'error');
       }
     } catch (error) {
-      console.error('Error checking overdue borrows:', error);
-      showSnackbar('Мерзімі өткен қарызға алуларды тексеру қатесі', 'error');
+      console.error(t('admin.errorCheckingOverdue', 'Error checking overdue borrows:'), error);
+      showSnackbar(t('admin.errorCheckingOverdue', 'Мерзімі өткен қарызға алуларды тексеру қатесі'), 'error');
     } finally {
       setLoading(false);
     }
@@ -136,13 +141,16 @@ const BorrowsPage = () => {
       const response = await adminBorrowService.sendDueReminders();
       
       if (response.success) {
-        showSnackbar(`Еске салу хабарландырулары жіберілді. ${response.notificationsCreated} хабарландыру жасалды.`, 'success');
+        showSnackbar(
+          t('admin.remindersSent', { count: response.notificationsCreated }, 'Еске салу хабарландырулары жіберілді. {{count}} хабарландыру жасалды.'),
+          'success'
+        );
       } else {
-        showSnackbar('Еске салу хабарландыруларын жіберу қатесі', 'error');
+        showSnackbar(t('admin.errorSendingReminders', 'Еске салу хабарландыруларын жіберу қатесі'), 'error');
       }
     } catch (error) {
-      console.error('Error sending reminders:', error);
-      showSnackbar('Еске салу хабарландыруларын жіберу қатесі', 'error');
+      console.error(t('admin.errorSendingReminders', 'Error sending reminders:'), error);
+      showSnackbar(t('admin.errorSendingReminders', 'Еске салу хабарландыруларын жіберу қатесі'), 'error');
     } finally {
       setLoading(false);
     }
@@ -172,14 +180,14 @@ const BorrowsPage = () => {
       const response = await adminBorrowService.updateBorrow(borrowId, { status: 'active' });
       
       if (response.success) {
-        showSnackbar('Қарызға алу сәтті бекітілді', 'success');
+        showSnackbar(t('admin.borrowApproveSuccess', 'Қарызға алу сәтті бекітілді'), 'success');
         fetchBorrows();
       } else {
-        showSnackbar('Қарызға алуды бекіту қатесі', 'error');
+        showSnackbar(t('admin.borrowApproveError', 'Қарызға алуды бекіту қатесі'), 'error');
       }
     } catch (error) {
-      console.error('Error approving borrow:', error);
-      showSnackbar('Қарызға алуды бекіту қатесі', 'error');
+      console.error(t('admin.errorApprovingBorrow', 'Error approving borrow:'), error);
+      showSnackbar(t('admin.borrowApproveError', 'Қарызға алуды бекіту қатесі'), 'error');
     } finally {
       setLoading(false);
     }
@@ -199,16 +207,16 @@ const BorrowsPage = () => {
       );
       
       if (response.success) {
-        showSnackbar('Қарызға алу қабылданбады', 'success');
+        showSnackbar(t('admin.borrowRejectSuccess', 'Қарызға алу қабылданбады'), 'success');
         fetchBorrows();
         setOpenRejectDialog(false);
         setRejectReason('');
       } else {
-        showSnackbar('Қарызға алуды қабылдамау қатесі', 'error');
+        showSnackbar(t('admin.borrowRejectError', 'Қарызға алуды қабылдамау қатесі'), 'error');
       }
     } catch (error) {
-      console.error('Error rejecting borrow:', error);
-      showSnackbar('Қарызға алуды қабылдамау қатесі', 'error');
+      console.error(t('admin.errorRejectingBorrow', 'Error rejecting borrow:'), error);
+      showSnackbar(t('admin.borrowRejectError', 'Қарызға алуды қабылдамау қатесі'), 'error');
     } finally {
       setLoading(false);
     }
@@ -228,15 +236,15 @@ const BorrowsPage = () => {
       );
       
       if (response.success) {
-        showSnackbar('Кітап қайтару сәтті расталды', 'success');
+        showSnackbar(t('admin.borrowReturnSuccess', 'Кітап қайтару сәтті расталды'), 'success');
         fetchBorrows();
         setOpenReturnDialog(false);
       } else {
-        showSnackbar('Кітап қайтаруды растау қатесі', 'error');
+        showSnackbar(t('admin.borrowReturnError', 'Кітап қайтаруды растау қатесі'), 'error');
       }
     } catch (error) {
-      console.error('Error confirming return:', error);
-      showSnackbar('Кітап қайтаруды растау қатесі', 'error');
+      console.error(t('admin.errorReturningBorrow', 'Error confirming return:'), error);
+      showSnackbar(t('admin.borrowReturnError', 'Кітап қайтаруды растау қатесі'), 'error');
     } finally {
       setLoading(false);
     }
@@ -257,15 +265,15 @@ const BorrowsPage = () => {
       );
       
       if (response.success) {
-        showSnackbar('Хабарландыру сәтті жіберілді', 'success');
+        showSnackbar(t('admin.notificationSentSuccess', 'Хабарландыру сәтті жіберілді'), 'success');
         setOpenSendNotificationDialog(false);
         setNotificationText('');
       } else {
-        showSnackbar('Хабарландыру жіберу қатесі', 'error');
+        showSnackbar(t('admin.notificationSentError', 'Хабарландыру жіберу қатесі'), 'error');
       }
     } catch (error) {
-      console.error('Error sending notification:', error);
-      showSnackbar('Хабарландыру жіберу қатесі', 'error');
+      console.error(t('admin.errorSendingNotification', 'Error sending notification:'), error);
+      showSnackbar(t('admin.notificationSentError', 'Хабарландыру жіберу қатесі'), 'error');
     } finally {
       setLoading(false);
     }
@@ -347,20 +355,20 @@ const BorrowsPage = () => {
   };
 
   /**
-   * Статусты қазақ тіліне аудару
+   * Статусты аудару
    */
   const getStatusTranslation = (status) => {
     switch (status) {
-      case 'active':
-        return 'Берілген';
-      case 'returned':
-        return 'Қайтарылған';
-      case 'overdue':
-        return 'Мерзімі өткен';
       case 'pending':
-        return 'Күтуде';
+        return t('admin.statusPending', 'Күтуде');
+      case 'active':
+        return t('admin.statusActive', 'Берілген');
+      case 'overdue':
+        return t('admin.statusOverdue', 'Мерзімі өткен');
+      case 'returned':
+        return t('admin.statusReturned', 'Қайтарылған');
       case 'rejected':
-        return 'Қабылданбаған';
+        return t('admin.statusRejected', 'Қабылданбаған');
       default:
         return status;
     }
@@ -370,55 +378,71 @@ const BorrowsPage = () => {
    * Күнді форматтау
    */
   const formatDate = (dateString) => {
-    if (!dateString) return '-';
+    if (!dateString) return null;
     try {
       return format(new Date(dateString), 'dd.MM.yyyy');
     } catch (error) {
+      console.error(t('admin.errorFormattingDate', 'Күнді форматтау қатесі:'), error);
       return dateString;
     }
   };
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="xl">
       <PageHeader 
-        title="Қарызға алуларды басқару" 
-        subtitle="Кітап сұраныстарын, қайтаруларды және хабарландыруларды өңдеу"
+        title={t('admin.borrows', 'Заимствования')} 
+        subtitle={t('admin.borrowsDescription', 'Обработка запросов на книги, возвратов и уведомлений')}
       />
-
-      <Paper elevation={3} sx={{ mb: 4, p: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">Қарызға алулар тізімі</Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button 
-              variant="outlined" 
-              color="primary" 
-              startIcon={<RefreshIcon />}
+      
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 1 }}>
+          <Typography variant="h6">{t('admin.borrowsList', 'Список заимствований')}</Typography>
+          
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              color="warning"
+              startIcon={<HistoryIcon />}
               onClick={handleCheckOverdue}
+              disabled={loading}
             >
-              Мерзімі өткендерді тексеру
+              {t('admin.checkOverdues', 'Проверить просроченные')}
             </Button>
-            <Button 
-              variant="outlined" 
-              color="secondary" 
+            
+            <Button
+              variant="outlined"
+              color="info"
               startIcon={<SendIcon />}
               onClick={handleSendReminders}
+              disabled={loading}
             >
-              Еске салу жіберу
+              {t('admin.sendReminders', 'Отправить напоминания')}
             </Button>
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel id="status-filter-label">Мәртебе</InputLabel>
+            
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<RefreshIcon />}
+              onClick={fetchBorrows}
+              disabled={loading}
+            >
+              {t('common.refresh', 'Обновить')}
+            </Button>
+            
+            <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
+              <InputLabel id="status-filter-label">{t('admin.borrowStatus', 'Статус')}</InputLabel>
               <Select
                 labelId="status-filter-label"
                 value={statusFilter}
-                label="Мәртебе"
                 onChange={(e) => setStatusFilter(e.target.value)}
+                label={t('admin.borrowStatus', 'Статус')}
               >
-                <MenuItem value="all">Барлығы</MenuItem>
-                <MenuItem value="pending">Күтудегі</MenuItem>
-                <MenuItem value="active">Берілген</MenuItem>
-                <MenuItem value="returned">Қайтарылған</MenuItem>
-                <MenuItem value="overdue">Мерзімі өткен</MenuItem>
-                <MenuItem value="rejected">Қабылданбаған</MenuItem>
+                <MenuItem value="all">{t('admin.filterAll', 'Все')}</MenuItem>
+                <MenuItem value="pending">{t('admin.statusPending', 'Ожидание')}</MenuItem>
+                <MenuItem value="active">{t('admin.statusActive', 'Выдано')}</MenuItem>
+                <MenuItem value="overdue">{t('admin.statusOverdue', 'Просрочено')}</MenuItem>
+                <MenuItem value="returned">{t('admin.statusReturned', 'Возвращено')}</MenuItem>
+                <MenuItem value="rejected">{t('admin.statusRejected', 'Отклонено')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -428,23 +452,23 @@ const BorrowsPage = () => {
           <Table sx={{ minWidth: 650 }} aria-label="borrows table">
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Пайдаланушы</TableCell>
-                <TableCell>Кітап</TableCell>
-                <TableCell>Берілген күні</TableCell>
-                <TableCell>Қайтару мерзімі</TableCell>
-                <TableCell>Мәртебесі</TableCell>
-                <TableCell>Әрекеттер</TableCell>
+                <TableCell>{t('admin.id', 'ID')}</TableCell>
+                <TableCell>{t('admin.borrowUser', 'Пайдаланушы')}</TableCell>
+                <TableCell>{t('admin.borrowBook', 'Кітап')}</TableCell>
+                <TableCell>{t('admin.borrowDate', 'Берілген күні')}</TableCell>
+                <TableCell>{t('admin.dueDate', 'Қайтару мерзімі')}</TableCell>
+                <TableCell>{t('admin.borrowStatus', 'Мәртебесі')}</TableCell>
+                <TableCell>{t('admin.actions', 'Әрекеттер')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">Жүктелуде...</TableCell>
+                  <TableCell colSpan={7} align="center">{t('common.loading', 'Жүктелуде...')}</TableCell>
                 </TableRow>
               ) : borrows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">Қарызға алулар табылмады</TableCell>
+                  <TableCell colSpan={7} align="center">{t('admin.noBorrows', 'Қарызға алулар табылмады')}</TableCell>
                 </TableRow>
               ) : (
                 borrows.map((borrow) => (
@@ -466,7 +490,7 @@ const BorrowsPage = () => {
                         aria-label="view details" 
                         color="info"
                         onClick={() => openBorrowDetailsDialog(borrow)}
-                        title="Мәліметтерді көру"
+                        title={t('admin.viewReview', 'Мәліметтерді көру')}
                       >
                         <ViewIcon />
                       </IconButton>
@@ -477,7 +501,7 @@ const BorrowsPage = () => {
                             aria-label="approve" 
                             color="success"
                             onClick={() => handleApproveBorrow(borrow.id)}
-                            title="Бекіту"
+                            title={t('admin.approve', 'Бекіту')}
                           >
                             <ApproveIcon />
                           </IconButton>
@@ -485,7 +509,7 @@ const BorrowsPage = () => {
                             aria-label="reject" 
                             color="error"
                             onClick={() => openRejectBorrowDialog(borrow)}
-                            title="Қабылдамау"
+                            title={t('admin.reject', 'Қабылдамау')}
                           >
                             <RejectIcon />
                           </IconButton>
@@ -497,7 +521,7 @@ const BorrowsPage = () => {
                           aria-label="return" 
                           color="primary"
                           onClick={() => openReturnBorrowDialog(borrow)}
-                          title="Қайтаруды растау"
+                          title={t('admin.return', 'Қайтаруды растау')}
                         >
                           <HistoryIcon />
                         </IconButton>
@@ -508,7 +532,7 @@ const BorrowsPage = () => {
                           aria-label="send notification" 
                           color="secondary"
                           onClick={() => openNotificationDialog(borrow)}
-                          title="Хабарландыру жіберу"
+                          title={t('admin.sendNotification', 'Хабарландыру жіберу')}
                         >
                           <SendIcon />
                         </IconButton>
@@ -529,55 +553,69 @@ const BorrowsPage = () => {
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Бет сайын:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} / ${count}`}
+          labelRowsPerPage={t('pagination.rowsPerPage', 'Бет сайын:')}
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} ${t('pagination.of', '/')} ${count}`}
         />
       </Paper>
 
       {/* Қарызға алу мәліметтерін көрсету диалогы */}
       <Dialog open={openDetailsDialog} onClose={() => setOpenDetailsDialog(false)} maxWidth="md">
-        <DialogTitle>Қарызға алу мәліметтері</DialogTitle>
+        <DialogTitle>{t('admin.borrowDetails', 'Қарызға алу мәліметтері')}</DialogTitle>
         <DialogContent>
           {selectedBorrow && (
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1" fontWeight="bold">Пайдаланушы:</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {t('admin.borrowUser', 'Пайдаланушы')}:
+                </Typography>
                 <Typography variant="body1">{selectedBorrow.user?.firstName} {selectedBorrow.user?.lastName}</Typography>
                 <Typography variant="body2" color="text.secondary">{selectedBorrow.user?.email}</Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1" fontWeight="bold">Кітап:</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {t('admin.borrowBook', 'Кітап')}:
+                </Typography>
                 <Typography variant="body1">{selectedBorrow.book?.title}</Typography>
-                <Typography variant="body2" color="text.secondary">Автор: {selectedBorrow.book?.author}</Typography>
+                <Typography variant="body2" color="text.secondary">{t('books.author', 'Автор')}: {selectedBorrow.book?.author}</Typography>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <Typography variant="subtitle1" fontWeight="bold">Берілген күні:</Typography>
-                <Typography variant="body1">{formatDate(selectedBorrow.borrowDate) || 'Берілмеген'}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {t('admin.borrowDate', 'Берілген күні')}:
+                </Typography>
+                <Typography variant="body1">{formatDate(selectedBorrow.borrowDate) || t('admin.notIssued', 'Берілмеген')}</Typography>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <Typography variant="subtitle1" fontWeight="bold">Қайтару мерзімі:</Typography>
-                <Typography variant="body1">{formatDate(selectedBorrow.dueDate) || 'Орнатылмаған'}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {t('admin.dueDate', 'Қайтару мерзімі')}:
+                </Typography>
+                <Typography variant="body1">{formatDate(selectedBorrow.dueDate) || t('admin.notSet', 'Орнатылмаған')}</Typography>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <Typography variant="subtitle1" fontWeight="bold">Қайтарылған күні:</Typography>
-                <Typography variant="body1">{formatDate(selectedBorrow.returnDate) || 'Қайтарылмаған'}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {t('admin.returnDate', 'Қайтарылған күні')}:
+                </Typography>
+                <Typography variant="body1">{formatDate(selectedBorrow.returnDate) || t('admin.notReturned', 'Қайтарылмаған')}</Typography>
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="bold">Мәртебесі:</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {t('admin.borrowStatus', 'Мәртебесі')}:
+                </Typography>
                 <Chip 
                   label={getStatusTranslation(selectedBorrow.status)} 
                   color={getStatusColor(selectedBorrow.status)} 
                 />
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="bold">Ескертпелер:</Typography>
-                <Typography variant="body1">{selectedBorrow.notes || 'Ескертпелер жоқ'}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {t('admin.notes', 'Ескертпелер')}:
+                </Typography>
+                <Typography variant="body1">{selectedBorrow.notes || t('admin.noNotes', 'Ескертпелер жоқ')}</Typography>
               </Grid>
             </Grid>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDetailsDialog(false)}>Жабу</Button>
+          <Button onClick={() => setOpenDetailsDialog(false)}>{t('common.close', 'Жабу')}</Button>
         </DialogActions>
       </Dialog>
 
@@ -587,17 +625,18 @@ const BorrowsPage = () => {
         onClose={() => setOpenRejectDialog(false)}
         aria-labelledby="reject-dialog-title"
       >
-        <DialogTitle id="reject-dialog-title">Қарызға алуды қабылдамау</DialogTitle>
+        <DialogTitle id="reject-dialog-title">{t('admin.reject', 'Қарызға алуды қабылдамау')}</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            "{selectedBorrow?.book?.title}" кітабына 
-            {selectedBorrow?.user?.firstName} {selectedBorrow?.user?.lastName} 
-            пайдаланушысының сұранысын қабылдамауға сенімдісіз бе?
+            {t('admin.rejectConfirm', {
+              book: selectedBorrow?.book?.title,
+              user: `${selectedBorrow?.user?.firstName} ${selectedBorrow?.user?.lastName}`
+            }, '"{{book}}" кітабына {{user}} пайдаланушысының сұранысын қабылдамауға сенімдісіз бе?')}
           </DialogContentText>
           <TextField
             autoFocus
             margin="dense"
-            label="Қабылдамау себебі"
+            label={t('admin.rejectReason', 'Қабылдамау себебі')}
             fullWidth
             multiline
             rows={2}
@@ -606,9 +645,9 @@ const BorrowsPage = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenRejectDialog(false)}>Бас тарту</Button>
+          <Button onClick={() => setOpenRejectDialog(false)}>{t('common.cancel', 'Бас тарту')}</Button>
           <Button onClick={handleRejectBorrow} color="error" autoFocus>
-            Қабылдамау
+            {t('admin.reject', 'Қабылдамау')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -619,18 +658,19 @@ const BorrowsPage = () => {
         onClose={() => setOpenReturnDialog(false)}
         aria-labelledby="return-dialog-title"
       >
-        <DialogTitle id="return-dialog-title">Қайтаруды растау</DialogTitle>
+        <DialogTitle id="return-dialog-title">{t('admin.returnConfirmation', 'Қайтаруды растау')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            {selectedBorrow?.user?.firstName} {selectedBorrow?.user?.lastName} 
-            пайдаланушысының "{selectedBorrow?.book?.title}" кітабын 
-            қайтаруын растайсыз ба?
+            {t('admin.returnConfirm', {
+              user: `${selectedBorrow?.user?.firstName} ${selectedBorrow?.user?.lastName}`,
+              book: selectedBorrow?.book?.title
+            }, '{{user}} пайдаланушысының "{{book}}" кітабын қайтаруын растайсыз ба?')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenReturnDialog(false)}>Бас тарту</Button>
+          <Button onClick={() => setOpenReturnDialog(false)}>{t('common.cancel', 'Бас тарту')}</Button>
           <Button onClick={handleConfirmReturn} color="primary" autoFocus>
-            Растау
+            {t('common.confirm', 'Растау')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -644,16 +684,20 @@ const BorrowsPage = () => {
         fullWidth
       >
         <DialogTitle id="notification-dialog-title">
-          {selectedBorrow?.user?.firstName} {selectedBorrow?.user?.lastName} пайдаланушысына хабарландыру жіберу
+          {t('admin.sendNotificationTo', {
+            user: `${selectedBorrow?.user?.firstName} ${selectedBorrow?.user?.lastName}`
+          }, '{{user}} пайдаланушысына хабарландыру жіберу')}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            "{selectedBorrow?.book?.title}" кітабы туралы пайдаланушыға хабарландыру мәтінін жазыңыз.
+            {t('admin.notificationForBook', {
+              book: selectedBorrow?.book?.title
+            }, '"{{book}}" кітабы туралы пайдаланушыға хабарландыру мәтінін жазыңыз.')}
           </DialogContentText>
           <TextField
             autoFocus
             margin="dense"
-            label="Хабарландыру мәтіні"
+            label={t('admin.notificationText', 'Хабарландыру мәтіні')}
             fullWidth
             multiline
             rows={4}
@@ -662,13 +706,13 @@ const BorrowsPage = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenSendNotificationDialog(false)}>Бас тарту</Button>
+          <Button onClick={() => setOpenSendNotificationDialog(false)}>{t('common.cancel', 'Бас тарту')}</Button>
           <Button 
             onClick={handleSendNotification} 
             color="primary" 
             disabled={!notificationText.trim()}
           >
-            Жіберу
+            {t('common.send', 'Жіберу')}
           </Button>
         </DialogActions>
       </Dialog>

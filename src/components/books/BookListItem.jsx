@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -14,6 +15,12 @@ import {
   Tooltip,
   Paper,
   styled,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Skeleton,
+  Badge,
+  alpha,
 } from '@mui/material';
 import {
   Bookmark,
@@ -21,7 +28,11 @@ import {
   InfoOutlined,
   CheckCircleOutline,
   WarningAmber,
+  LocalLibrary,
+  VisibilityOff,
+  BrokenImage,
 } from '@mui/icons-material';
+import { getBookCoverUrl } from '../../utils';
 
 // Hover эффектісі бар сурет контейнері
 const ImageContainer = styled(Box)(({ theme }) => ({
@@ -42,219 +53,209 @@ const ImageContainer = styled(Box)(({ theme }) => ({
  * 
  * @param {Object} props - Компонент параметрлері
  * @param {Object} props.book - Кітап туралы деректер
+ * @param {Function} props.onToggleBookmark - Function called when bookmark is toggled
+ * @param {Function} props.onBorrow - Function called when borrow button is clicked
+ * @param {boolean} props.isLoading - Loading state
+ * @param {Object} props.sx - Additional MUI styles
  */
-const BookListItem = ({ book }) => {
+const BookListItem = ({
+  book,
+  onToggleBookmark,
+  onBorrow,
+  isLoading = false,
+  sx = {}
+}) => {
   const theme = useTheme();
   const [bookmarked, setBookmarked] = useState(book.isBookmarked || false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   // Таңдаулыға қосу/алу функциясы
   const handleBookmarkToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setBookmarked(!bookmarked);
+    // Don't manually update state - the parent component will handle this
+    // based on the server response
+    if (onToggleBookmark) {
+      onToggleBookmark(book);
+    }
+  };
+
+  // Для состояния загрузки
+  if (isLoading || !book) {
+    return (
+      <ListItem 
+        sx={{ 
+          width: '100%', 
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          ...sx
+        }}
+      >
+        <ListItemAvatar>
+          <Skeleton variant="circular" width={56} height={56} animation="wave" />
+        </ListItemAvatar>
+        <ListItemText
+          primary={<Skeleton variant="text" width="60%" />}
+          secondary={<Skeleton variant="text" width="80%" />}
+        />
+      </ListItem>
+    );
+  }
+
+  // URL обложки
+  const coverUrl = getBookCoverUrl(book.cover);
+  
+  // Debug logging for cover URLs
+  console.log(`📘 List item book cover URL for "${book.title}": ${coverUrl}`);
+  console.log(`📕 List item original cover path: ${book.cover}`);
+  
+  // Категория (если есть)
+  const categoryName = book.category?.name || '';
+  
+  // Обработчики загрузки изображения
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+    setImageError(false);
+  };
+  
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoaded(true);
+    console.error(`Ошибка загрузки обложки книги: ${book.title}, URL: ${coverUrl}`);
   };
 
   return (
-    <Paper
-      elevation={1}
-      sx={{
-        display: 'flex',
-        borderRadius: 2,
-        overflow: 'hidden',
-        transition: 'all 0.3s ease-in-out',
+    <ListItem 
+      component={RouterLink}
+      to={`/books/${book.id}`}
+      sx={{ 
+        width: '100%', 
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        textDecoration: 'none',
+        color: 'inherit',
         '&:hover': {
-          boxShadow: theme.shadows[4],
-          transform: 'translateY(-3px)',
+          backgroundColor: alpha(theme.palette.primary.light, 0.1),
         },
-        height: '100%',
+        display: 'flex',
+        p: 2,
+        ...sx
       }}
     >
-      {/* Кітап толық бетіне сілтеме және кітаптың мұқабасы (сол жақ бөлік) */}
-      <CardActionArea 
-        component={RouterLink} 
-        to={`/books/${book.id}`}
-        sx={{ 
-          display: 'flex', 
-          flexDirection: 'row',
-          alignItems: 'stretch',
-          width: '100%',
-          p: 0,
-        }}
-      >
-        {/* Кітап мұқабасы */}
-        <ImageContainer sx={{ width: 110, flexShrink: 0 }}>
+      {/* Обложка книги */}
+      <ListItemAvatar sx={{ minWidth: 72 }}>
+        {!imageLoaded && !imageError && (
+          <Skeleton
+            variant="rectangular"
+            width={56}
+            height={72}
+            animation="wave"
+            sx={{ borderRadius: 1 }}
+          />
+        )}
+        
+        {imageError ? (
           <Box
-            component="img"
-            src={book.cover 
-              ? book.cover.startsWith('/uploads')
-                ? `${window.location.protocol}//${window.location.host.replace(/:\d+/, ':5001')}${book.cover}`
-                : book.cover
-              : 'https://via.placeholder.com/150x220?text=Мұқаба+жоқ'
-            }
-            alt={book.title}
             sx={{
-              width: '100%',
-              height: '100%',
+              width: 56,
+              height: 72,
+              borderRadius: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.palette.grey[200],
+              color: theme.palette.text.secondary
+            }}
+          >
+            <BrokenImage />
+          </Box>
+        ) : (
+          <img
+            src={coverUrl}
+            alt={book.title}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+            style={{
+              width: 56,
+              height: 72,
+              borderRadius: 4,
               objectFit: 'cover',
+              display: imageLoaded ? 'block' : 'none'
             }}
           />
-        </ImageContainer>
-
-        {/* Кітап туралы ақпарат (оң жақ бөлік) */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          p: 2, 
-          width: '100%',
-          justifyContent: 'space-between',
-        }}>
-          {/* Жоғарғы бөлік: Категория, кітап атауы және авторы */}
-          <Box>
-            {/* Категория мен таңдаулы */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-              <Chip
-                label={book.category}
-                size="small"
-                sx={{
-                  backgroundColor: theme.palette.primary.lighter || 'rgba(213, 0, 50, 0.1)',
-                  color: theme.palette.primary.main,
-                  fontWeight: 500,
-                  height: 20,
-                  '& .MuiChip-label': {
-                    px: 1,
-                  },
-                }}
-              />
-              <IconButton
-                size="small"
-                sx={{ p: 0.5 }}
-                onClick={handleBookmarkToggle}
-              >
-                {bookmarked ? (
-                  <Bookmark color="primary" fontSize="small" />
-                ) : (
-                  <BookmarkBorder fontSize="small" />
-                )}
-              </IconButton>
-            </Box>
-
-            {/* Кітап атауы */}
-            <Typography
-              variant="subtitle1"
-              component="h2"
-              fontWeight={600}
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 1,
-                WebkitBoxOrient: 'vertical',
-              }}
-            >
-              {book.title}
-            </Typography>
-
-            {/* Автор */}
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 1,
-                WebkitBoxOrient: 'vertical',
-                mb: 0.5,
-              }}
-            >
-              {book.author}
-            </Typography>
-
-            {/* Рейтинг және жыл */}
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-              <Rating
-                name={`rating-${book.id}`}
-                value={book.rating || 0}
-                precision={0.5}
-                size="small"
-                readOnly
-              />
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                ({book.reviewCount || 0})
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
-                {book.publicationYear}
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Төменгі бөлік: Қолжетімділік және батырмалар */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            mt: 1,
-          }}>
-            {/* Қолжетімділік және сипаттама */}
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              {book.available ? (
-                <Tooltip title="В наличии">
-                  <CheckCircleOutline
-                    fontSize="small"
-                    color="success"
-                    sx={{ mr: 0.5 }}
-                  />
-                </Tooltip>
-              ) : (
-                <Tooltip title="Нет в наличии">
-                  <WarningAmber
-                    fontSize="small"
-                    color="error"
-                    sx={{ mr: 0.5 }}
-                  />
-                </Tooltip>
-              )}
-              <Typography
-                variant="body2"
-                color={book.available ? 'success.main' : 'error.main'}
-                fontWeight={500}
-              >
-                {book.available ? 'В наличии' : 'Нет в наличии'}
-              </Typography>
-              
-              <Tooltip title="Описание">
-                <IconButton size="small" sx={{ ml: 1 }}>
-                  <InfoOutlined fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-
-            {/* "Взять книгу" батырмасы - тек қолжетімді болса */}
-            {book.available && (
-              <Button
-                variant="contained"
-                disableElevation
-                size="small"
-                sx={{ 
-                  borderRadius: 1.5,
-                  fontSize: '0.75rem',
-                  py: 0.5,
-                  ml: 1,
-                  minWidth: 'auto',
-                  background: 'linear-gradient(45deg, #d50032 30%, #ff5252 90%)',
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #c30029 30%, #f04848 90%)',
-                  },
-                }}
-              >
-                Взять
-              </Button>
-            )}
-          </Box>
+        )}
+      </ListItemAvatar>
+      
+      {/* Информация о книге */}
+      <Box sx={{ flex: 1, ml: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Typography variant="subtitle1" component="h3" noWrap sx={{ fontWeight: 'medium' }}>
+            {book.title}
+          </Typography>
+          
+          {/* Кнопка закладки */}
+          <IconButton 
+            size="small" 
+            onClick={handleBookmarkToggle}
+            color={bookmarked ? 'primary' : 'default'}
+            sx={{ ml: 1, p: 0.5 }}
+          >
+            {bookmarked ? <Bookmark /> : <BookmarkBorder />}
+          </IconButton>
         </Box>
-      </CardActionArea>
-    </Paper>
+        
+        <Typography variant="body2" color="text.secondary" noWrap>
+          {book.author}
+        </Typography>
+        
+        <Box sx={{ mt: 0.5, display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Категория */}
+          {categoryName && (
+            <Chip 
+              label={categoryName} 
+              size="small" 
+              sx={{ mr: 1, mt: 0.5, height: 20, fontSize: '0.7rem' }}
+            />
+          )}
+          
+          {/* Год издания */}
+          <Chip
+            label={book.publicationYear}
+            size="small"
+            variant="outlined"
+            sx={{ mr: 1, mt: 0.5, height: 20, fontSize: '0.7rem' }}
+          />
+          
+          {/* Язык */}
+          <Chip
+            label={book.language}
+            size="small"
+            variant="outlined"
+            sx={{ mr: 1, mt: 0.5, height: 20, fontSize: '0.7rem' }}
+          />
+          
+          {/* Доступность */}
+          <Tooltip title={book.availableCopies > 0 ? `Доступно: ${book.availableCopies}` : 'Нет в наличии'}>
+            <Chip
+              icon={book.availableCopies > 0 ? <LocalLibrary /> : <VisibilityOff />}
+              label={book.availableCopies > 0 ? `${book.availableCopies}/${book.totalCopies}` : 'Нет в наличии'}
+              size="small"
+              color={book.availableCopies > 0 ? 'success' : 'error'}
+              variant="outlined"
+              sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
+            />
+          </Tooltip>
+        </Box>
+      </Box>
+    </ListItem>
   );
+};
+
+BookListItem.propTypes = {
+  book: PropTypes.object,
+  onToggleBookmark: PropTypes.func,
+  onBorrow: PropTypes.func,
+  isLoading: PropTypes.bool,
+  sx: PropTypes.object
 };
 
 export default BookListItem;

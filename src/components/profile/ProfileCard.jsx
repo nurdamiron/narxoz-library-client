@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Avatar,
   Box,
@@ -27,6 +28,7 @@ import ProfileContactInfo from './ProfileContactInfo';
  */
 const ProfileCard = ({ userData, onEditClick }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   if (!userData) {
     return null;
@@ -74,7 +76,7 @@ const ProfileCard = ({ userData, onEditClick }) => {
             color="text.secondary"
             gutterBottom
           >
-            Студент • {userData.year} курс
+            {t('profile.studentYear', { year: userData.year })}
           </Typography>
           
           {/* Пайдаланушы мамандығы */}
@@ -157,6 +159,8 @@ const ProfileSpecialization = ({ specialization }) => {
  * Профильді өңдеу түймесі компоненті
  */
 const EditProfileButton = ({ onEditClick }) => {
+  const { t } = useTranslation();
+  
   return (
     <Button
       variant="outlined"
@@ -174,7 +178,7 @@ const EditProfileButton = ({ onEditClick }) => {
         },
       }}
     >
-      Профильді өңдеу
+      {t('profile.editProfile')}
     </Button>
   );
 };

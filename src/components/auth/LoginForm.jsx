@@ -8,6 +8,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -49,6 +50,7 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
   
   // Получение необходимых функций из AuthContext
   const { login, loading: authLoading, error: authError, clearError } = useAuth();
@@ -97,11 +99,11 @@ const LoginForm = () => {
    * @returns {string} - Сообщение об ошибке или пустая строка
    */
   const validateEmail = (value) => {
-    if (!value) return 'Email міндетті түрде енгізілуі керек';
+    if (!value) return t('validation.required', 'Email міндетті түрде енгізілуі керек');
     
     // Простая регулярка для проверки формата email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value)) return 'Жарамды email мекенжайын енгізіңіз';
+    if (!emailRegex.test(value)) return t('validation.email', 'Жарамды email мекенжайын енгізіңіз');
     
     return '';
   };
@@ -113,8 +115,8 @@ const LoginForm = () => {
    * @returns {string} - Сообщение об ошибке или пустая строка
    */
   const validatePassword = (value) => {
-    if (!value) return 'Құпия сөз міндетті түрде енгізілуі керек';
-    if (value.length < 6) return 'Құпия сөз кемінде 6 таңбадан тұруы керек';
+    if (!value) return t('validation.required', 'Құпия сөз міндетті түрде енгізілуі керек');
+    if (value.length < 6) return t('validation.minLength', {min: 6}, 'Құпия сөз кемінде 6 таңбадан тұруы керек');
     return '';
   };
   
@@ -252,166 +254,146 @@ const LoginForm = () => {
               />
             </motion.div>
             
-            <Typography
-              variant="h5"
-              component="h1"
-              fontWeight="bold"
-              gutterBottom
-            >
-              Жүйеге кіру
-            </Typography>
+            <motion.div variants={itemVariants}>
+              <Typography component="h1" variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+                {t('auth.loginToLibrary', 'Нархоз кітапханасына кіру')}
+              </Typography>
+            </motion.div>
             
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              align="center"
-            >
-              Нархоз кітапхана жүйесіне қош келдіңіз
-            </Typography>
+            <motion.div variants={itemVariants}>
+              <Typography variant="body2" color="text.secondary" align="center">
+                {t('auth.loginSubtitle', 'Кітапханалық қызметтерге қол жеткізу үшін кіріңіз')}
+              </Typography>
+            </motion.div>
           </Box>
           
           {/* Сообщение об ошибке */}
-          <Slide direction="down" in={!!error} mountOnEnter unmountOnExit>
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          </Slide>
+          {error && (
+            <Fade in={!!error}>
+              <Alert 
+                severity="error" 
+                sx={{ mb: 2 }}
+                onClose={() => setError('')}
+              >
+                {error}
+              </Alert>
+            </Fade>
+          )}
           
-          {/* Форма входа */}
-          <form onSubmit={handleSubmit}>
-            <motion.div variants={itemVariants}>
-              {/* Поле email */}
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="email"
-                label="Email"
-                name="email"
-                autoComplete="email"
-                value={email}
-                onChange={handleEmailChange}
-                error={!!errors.email}
-                helperText={errors.email}
-                disabled={isLoading}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Email color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 2 }}
+          {/* Форма */}
+          <motion.form onSubmit={handleSubmit} variants={itemVariants}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label={t('common.email', 'Электрондық пошта')}
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={handleEmailChange}
+              error={!!errors.email}
+              helperText={errors.email}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Email color="primary" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 2 }}
+            />
+            
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label={t('common.password', 'Құпия сөз')}
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={handlePasswordChange}
+              error={!!errors.password}
+              helperText={errors.password}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Lock color="primary" />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={t('auth.togglePassword', 'Құпия сөзді көрсету/жасыру')}
+                      onClick={handleToggleShowPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 1 }}
+            />
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={rememberMe}
+                    onChange={handleRememberMeChange}
+                    color="primary"
+                    size="small"
+                  />
+                }
+                label={
+                  <Typography variant="body2">
+                    {t('auth.rememberMe', 'Мені есте сақтау')}
+                  </Typography>
+                }
               />
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              {/* Поле пароля */}
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Құпия сөз"
-                id="password"
-                autoComplete="current-password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={handlePasswordChange}
-                error={!!errors.password}
-                helperText={errors.password}
-                disabled={isLoading}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Lock color="action" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={handleToggleShowPassword}
-                        edge="end"
-                        disabled={isLoading}
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 2 }}
-              />
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              {/* Дополнительные опции */}
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
-                  mb: 2 
-                }}
-              >
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={rememberMe}
-                      onChange={handleRememberMeChange}
-                      color="primary"
-                      disabled={isLoading}
-                    />
-                  }
-                  label="Мені есте сақтау"
-                />
-                
-                <Link
-                  component={RouterLink}
-                  to="/forgot-password"
-                  variant="body2"
-                  color="primary"
-                  sx={{ 
-                    '&:hover': {
-                      textDecoration: 'underline',
-                    }
-                  }}
-                >
-                  Құпия сөзді ұмыттыңыз ба?
-                </Link>
-              </Box>
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              {/* Кнопка входа */}
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
+              <Link 
+                component={RouterLink} 
+                to="/forgot-password" 
+                variant="body2"
                 color="primary"
-                disabled={isLoading}
-                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
                 sx={{ 
-                  mt: 2, 
-                  py: 1.5, 
-                  borderRadius: 2,
-                  fontWeight: 'bold',
-                  position: 'relative',
-                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                  fontWeight: 'medium',
                   '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: (theme) => `0 6px 12px ${theme.palette.primary.main}30`
-                  },
-                  '&:active': {
-                    transform: 'translateY(0)',
-                    boxShadow: (theme) => `0 3px 6px ${theme.palette.primary.main}30`
+                    textDecoration: 'underline'
                   }
                 }}
               >
-                {isLoading ? 'Жүктелуде...' : 'Кіру'}
-              </Button>
-            </motion.div>
-          </form>
+                {t('auth.forgotPassword', 'Құпия сөзді ұмыттыңыз ба?')}
+              </Link>
+            </Box>
+            
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              color="primary"
+              disabled={isLoading}
+              startIcon={isLoading ? <CircularProgress size={24} color="inherit" /> : <LoginIcon />}
+              sx={{ 
+                mt: 2, 
+                mb: 2,
+                py: 1.5,
+                fontWeight: 'bold',
+                borderRadius: 2,
+                boxShadow: 1,
+                '&:hover': {
+                  boxShadow: 2
+                }
+              }}
+            >
+              {isLoading ? t('auth.loggingIn', 'Кіру...') : t('common.login', 'Кіру')}
+            </Button>
+            
+          </motion.form>
         </Paper>
       </motion.div>
     </Container>

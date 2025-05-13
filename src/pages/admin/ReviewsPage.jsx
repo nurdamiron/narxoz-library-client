@@ -50,11 +50,13 @@ import {
 import { format } from 'date-fns';
 import PageHeader from '../../components/common/PageHeader';
 import { reviewService, bookService } from '../../services';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Пікірлерді әкімші панелінде басқару беті
  */
 const ReviewsPage = () => {
+  const { t } = useTranslation();
   // Күй айнымалылары
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +118,7 @@ const ReviewsPage = () => {
                 bookDetailsTemp[bookId] = bookResponse.data;
               }
             } catch (err) {
-              console.error(`Error fetching book ${bookId}:`, err);
+              console.error(t('admin.errorFetchingBook', 'Error fetching book {{bookId}}:', {bookId}), err);
             }
           })
         );
@@ -124,7 +126,7 @@ const ReviewsPage = () => {
         setBookDetails(bookDetailsTemp);
       }
     } catch (err) {
-      console.error('Error fetching reviews:', err);
+      console.error(t('admin.errorFetchingReviews', 'Error fetching reviews:'), err);
     } finally {
       setLoading(false);
     }
@@ -138,12 +140,22 @@ const ReviewsPage = () => {
    */
   const handleApproveReview = async (reviewId, isApproved) => {
     try {
-      await reviewService.approveReview(reviewId, isApproved);
+      const response = await reviewService.approveReview(reviewId, isApproved);
+      
+      if (response && response.success) {
+        if (isApproved) {
+          console.log(t('admin.reviewApproveSuccess', 'Пікір сәтті бекітілді'));
+        } else {
+          console.log(t('admin.reviewRejectSuccess', 'Пікір сәтті қабылданбады'));
+        }
+      }
       
       // Тізімді жаңарту
       fetchReviews();
     } catch (err) {
-      console.error('Error approving review:', err);
+      console.error(isApproved 
+        ? t('admin.errorApprovingReview', 'Error approving review:') 
+        : t('admin.errorRejectingReview', 'Error rejecting review:'), err);
     }
   };
 
@@ -152,13 +164,18 @@ const ReviewsPage = () => {
    */
   const handleDeleteReview = async () => {
     try {
-      await reviewService.deleteReview(selectedReview.id);
+      const response = await reviewService.deleteReview(selectedReview.id);
+      
+      if (response && response.success) {
+        console.log(t('admin.reviewDeleteSuccess', 'Пікір сәтті жойылды'));
+      }
+      
       setOpenDeleteDialog(false);
       
       // Тізімді жаңарту
       fetchReviews();
     } catch (err) {
-      console.error('Error deleting review:', err);
+      console.error(t('admin.errorDeletingReview', 'Error deleting review:'), err);
     }
   };
 
@@ -222,7 +239,7 @@ const ReviewsPage = () => {
     try {
       return format(new Date(dateString), 'dd.MM.yyyy HH:mm');
     } catch {
-      return 'Белгісіз күн';
+      return t('admin.unknownDate', 'Белгісіз күн');
     }
   };
 
@@ -236,7 +253,7 @@ const ReviewsPage = () => {
     if (review.user) {
       return `${review.user.firstName || ''} ${review.user.lastName || ''}`.trim() || review.user.username;
     }
-    return 'Белгісіз пайдаланушы';
+    return t('admin.unknownUser', 'Белгісіз пайдаланушы');
   };
 
   /**
@@ -249,36 +266,36 @@ const ReviewsPage = () => {
     if (bookDetails[bookId]) {
       return bookDetails[bookId].title;
     }
-    return 'Кітап анықталмады';
+    return t('admin.bookNotFound', 'Кітап анықталмады');
   };
 
   return (
     <Container maxWidth="lg">
       <PageHeader
-        title="Пікірлерді басқару"
-        subtitle="Кітап пікірлерін модерациялау, бекіту және жою"
+        title={t('admin.reviewsManagement', 'Пікірлерді басқару')}
+        subtitle={t('admin.reviewsDescription', 'Кітап пікірлерін модерациялау, бекіту және жою')}
       />
 
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={6}>
             <FormControl fullWidth>
-              <InputLabel>Пікірлер фильтрі</InputLabel>
+              <InputLabel>{t('admin.reviewsFilter', 'Пікірлер фильтрі')}</InputLabel>
               <Select
                 value={filter}
-                label="Пікірлер фильтрі"
+                label={t('admin.reviewsFilter', 'Пікірлер фильтрі')}
                 onChange={handleFilterChange}
               >
-                <MenuItem value="all">Барлық пікірлер</MenuItem>
-                <MenuItem value="pending">Күтудегі пікірлер</MenuItem>
-                <MenuItem value="approved">Бекітілген пікірлер</MenuItem>
-                <MenuItem value="reported">Шағым білдірілген пікірлер</MenuItem>
+                <MenuItem value="all">{t('admin.allReviews', 'Барлық пікірлер')}</MenuItem>
+                <MenuItem value="pending">{t('admin.pendingReviews', 'Күтудегі пікірлер')}</MenuItem>
+                <MenuItem value="approved">{t('admin.approvedReviews', 'Бекітілген пікірлер')}</MenuItem>
+                <MenuItem value="reported">{t('admin.reportedReviews', 'Шағым білдірілген пікірлер')}</MenuItem>
               </Select>
             </FormControl>
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="body2" color="text.secondary">
-              Барлығы: {totalCount} пікір
+              {t('admin.totalReviews', 'Барлығы: {{count}} пікір', { count: totalCount })}
             </Typography>
           </Grid>
         </Grid>
@@ -288,23 +305,23 @@ const ReviewsPage = () => {
         <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Пайдаланушы</TableCell>
-              <TableCell>Кітап</TableCell>
-              <TableCell>Рейтинг</TableCell>
-              <TableCell>Күні</TableCell>
-              <TableCell>Мәртебесі</TableCell>
-              <TableCell>Әрекеттер</TableCell>
+              <TableCell>{t('admin.id', 'ID')}</TableCell>
+              <TableCell>{t('admin.reviewUser', 'Пайдаланушы')}</TableCell>
+              <TableCell>{t('admin.reviewBook', 'Кітап')}</TableCell>
+              <TableCell>{t('admin.reviewRating', 'Рейтинг')}</TableCell>
+              <TableCell>{t('admin.reviewDate', 'Күні')}</TableCell>
+              <TableCell>{t('admin.reviewStatus', 'Мәртебесі')}</TableCell>
+              <TableCell>{t('admin.actions', 'Әрекеттер')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">Жүктелуде...</TableCell>
+                <TableCell colSpan={7} align="center">{t('common.loading', 'Жүктелуде...')}</TableCell>
               </TableRow>
             ) : reviews.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">Пікірлер табылмады</TableCell>
+                <TableCell colSpan={7} align="center">{t('admin.noReviews', 'Пікірлер табылмады')}</TableCell>
               </TableRow>
             ) : (
               reviews.map((review) => (
@@ -320,16 +337,16 @@ const ReviewsPage = () => {
                     {review.isReported && (
                       <Chip
                         icon={<FlagIcon />}
-                        label="Шағым"
+                        label={t('admin.reported', 'Шағым')}
                         color="error"
                         size="small"
                         sx={{ mr: 1 }}
                       />
                     )}
                     {review.isApproved ? (
-                      <Chip label="Бекітілген" color="success" size="small" />
+                      <Chip label={t('admin.statusApproved', 'Бекітілген')} color="success" size="small" />
                     ) : (
-                      <Chip label="Күтуде" color="warning" size="small" />
+                      <Chip label={t('admin.statusPending', 'Күтуде')} color="warning" size="small" />
                     )}
                   </TableCell>
                   <TableCell>
@@ -337,7 +354,7 @@ const ReviewsPage = () => {
                       size="small"
                       color="primary"
                       onClick={() => openReviewViewDialog(review)}
-                      title="Пікірді қарау"
+                      title={t('admin.viewReview', 'Пікірді қарау')}
                     >
                       <VisibilityIcon fontSize="small" />
                     </IconButton>
@@ -347,7 +364,7 @@ const ReviewsPage = () => {
                         size="small"
                         color="success"
                         onClick={() => handleApproveReview(review.id, true)}
-                        title="Пікірді бекіту"
+                        title={t('admin.approveReview', 'Пікірді бекіту')}
                       >
                         <CheckIcon fontSize="small" />
                       </IconButton>
@@ -358,7 +375,7 @@ const ReviewsPage = () => {
                         size="small"
                         color="warning"
                         onClick={() => handleApproveReview(review.id, false)}
-                        title="Пікірді қабылдамау"
+                        title={t('admin.rejectReview', 'Пікірді қабылдамау')}
                       >
                         <VisibilityOffIcon fontSize="small" />
                       </IconButton>
@@ -368,7 +385,7 @@ const ReviewsPage = () => {
                       size="small"
                       color="error"
                       onClick={() => openReviewDeleteDialog(review)}
-                      title="Пікірді жою"
+                      title={t('admin.deleteReview', 'Пікірді жою')}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -388,8 +405,8 @@ const ReviewsPage = () => {
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        labelRowsPerPage="Бет сайын:"
-        labelDisplayedRows={({ from, to, count }) => `${from}-${to} / ${count}`}
+        labelRowsPerPage={t('pagination.rowsPerPage', 'Бет сайын:')}
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} ${t('pagination.of', '/')} ${count}`}
       />
 
       {/* Пікірді қарау диалогы */}
@@ -401,13 +418,13 @@ const ReviewsPage = () => {
           fullWidth
         >
           <DialogTitle>
-            Пікірді қарау
+            {t('admin.reviewDetails', 'Пікірді қарау')}
           </DialogTitle>
           <DialogContent>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  Кітап:
+                  {t('admin.reviewBook', 'Кітап')}:
                 </Typography>
                 <Typography variant="body1">
                   {getBookTitle(selectedReview.bookId)}
@@ -416,7 +433,7 @@ const ReviewsPage = () => {
               
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  Пайдаланушы:
+                  {t('admin.reviewUser', 'Пайдаланушы')}:
                 </Typography>
                 <Typography variant="body1">
                   {getUserName(selectedReview)}
@@ -425,7 +442,7 @@ const ReviewsPage = () => {
               
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  Күні:
+                  {t('admin.reviewDate', 'Күні')}:
                 </Typography>
                 <Typography variant="body1">
                   {formatDate(selectedReview.createdAt)}
@@ -434,14 +451,14 @@ const ReviewsPage = () => {
               
               <Grid item xs={12}>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  Рейтинг:
+                  {t('admin.reviewRating', 'Рейтинг')}:
                 </Typography>
                 <Rating value={selectedReview.rating} readOnly />
               </Grid>
               
               <Grid item xs={12}>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  Пікір мәтіні:
+                  {t('admin.reviewContent', 'Пікір мәтіні')}:
                 </Typography>
                 <Paper variant="outlined" sx={{ p: 2, mt: 1, whiteSpace: 'pre-wrap' }}>
                   {selectedReview.text}
@@ -451,7 +468,7 @@ const ReviewsPage = () => {
               {selectedReview.isReported && (
                 <Grid item xs={12}>
                   <Typography variant="subtitle1" fontWeight="bold" color="error">
-                    Шағым себебі:
+                    {t('admin.reportReason', 'Шағым себебі')}:
                   </Typography>
                   <Paper variant="outlined" sx={{ p: 2, mt: 1, bgcolor: 'error.light', color: 'error.contrastText' }}>
                     {selectedReview.reportReason}
@@ -461,21 +478,21 @@ const ReviewsPage = () => {
               
               <Grid item xs={12}>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  Мәртебесі:
+                  {t('admin.status', 'Мәртебесі')}:
                 </Typography>
                 <Box sx={{ mt: 1 }}>
                   {selectedReview.isReported && (
                     <Chip
                       icon={<FlagIcon />}
-                      label="Шағым білдірілген"
+                      label={t('admin.reported', 'Шағым білдірілген')}
                       color="error"
                       sx={{ mr: 1 }}
                     />
                   )}
                   {selectedReview.isApproved ? (
-                    <Chip label="Бекітілген" color="success" />
+                    <Chip label={t('admin.statusApproved', 'Бекітілген')} color="success" />
                   ) : (
-                    <Chip label="Күтуде" color="warning" />
+                    <Chip label={t('admin.statusPending', 'Күтуде')} color="warning" />
                   )}
                 </Box>
               </Grid>
@@ -491,7 +508,7 @@ const ReviewsPage = () => {
                   setOpenViewDialog(false);
                 }}
               >
-                Бекіту
+                {t('admin.approve', 'Бекіту')}
               </Button>
             )}
             
@@ -504,7 +521,7 @@ const ReviewsPage = () => {
                   setOpenViewDialog(false);
                 }}
               >
-                Қабылдамау
+                {t('admin.reject', 'Қабылдамау')}
               </Button>
             )}
             
@@ -516,11 +533,11 @@ const ReviewsPage = () => {
                 openReviewDeleteDialog(selectedReview);
               }}
             >
-              Жою
+              {t('admin.delete', 'Жою')}
             </Button>
             
             <Button onClick={() => setOpenViewDialog(false)}>
-              Жабу
+              {t('common.close', 'Жабу')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -532,19 +549,19 @@ const ReviewsPage = () => {
         onClose={() => setOpenDeleteDialog(false)}
       >
         <DialogTitle>
-          Пікірді жою
+          {t('admin.deleteReview', 'Пікірді жою')}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Бұл пікірді жоюға сенімдісіз бе? Бұл әрекетті болдырмау мүмкін емес.
+            {t('admin.deleteReviewConfirm', 'Бұл пікірді жоюға сенімдісіз бе? Бұл әрекетті болдырмау мүмкін емес.')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDeleteDialog(false)}>
-            Бас тарту
+            {t('common.cancel', 'Бас тарту')}
           </Button>
           <Button onClick={handleDeleteReview} color="error">
-            Жою
+            {t('common.delete', 'Жою')}
           </Button>
         </DialogActions>
       </Dialog>

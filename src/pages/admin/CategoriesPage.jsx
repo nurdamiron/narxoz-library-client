@@ -32,11 +32,13 @@ import {
 } from '@mui/icons-material';
 import adminBookService from '../../services/adminBookService';
 import PageHeader from '../../components/common/PageHeader';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Кітап санаттарын басқару беті
  */
 const CategoriesPage = () => {
+  const { t } = useTranslation();
   // Күй айнымалылары
   const [categories, setCategories] = useState([]);
   const [bookCounts, setBookCounts] = useState({});
@@ -74,11 +76,11 @@ const CategoriesPage = () => {
       if (response.success) {
         setCategories(response.data);
       } else {
-        showSnackbar('Санаттар тізімін жүктеу қатесі', 'error');
+        showSnackbar(t('admin.categoriesLoadError', 'Санаттар тізімін жүктеу қатесі'), 'error');
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
-      showSnackbar('Санаттар тізімін жүктеу қатесі', 'error');
+      console.error(t('admin.errorFetchingCategories', 'Error fetching categories:'), error);
+      showSnackbar(t('admin.categoriesLoadError', 'Санаттар тізімін жүктеу қатесі'), 'error');
     } finally {
       setLoading(false);
     }
@@ -100,7 +102,7 @@ const CategoriesPage = () => {
         setBookCounts(counts);
       }
     } catch (error) {
-      console.error('Error fetching category stats:', error);
+      console.error(t('admin.errorFetchingCategoryStats', 'Error fetching category stats:'), error);
     }
   };
 
@@ -126,16 +128,16 @@ const CategoriesPage = () => {
       const response = await adminBookService.createCategory(formData);
       
       if (response.success) {
-        showSnackbar('Санат сәтті қосылды', 'success');
+        showSnackbar(t('admin.categoryAddSuccess', 'Санат сәтті қосылды'), 'success');
         fetchCategories();
         setOpenAddDialog(false);
         resetForm();
       } else {
-        showSnackbar('Санат қосу қатесі', 'error');
+        showSnackbar(t('admin.categoryAddError', 'Санат қосу қатесі'), 'error');
       }
     } catch (error) {
-      console.error('Error creating category:', error);
-      showSnackbar('Санат қосу қатесі', 'error');
+      console.error(t('admin.errorCreatingCategory', 'Error creating category:'), error);
+      showSnackbar(t('admin.categoryAddError', 'Санат қосу қатесі'), 'error');
     } finally {
       setLoading(false);
     }
@@ -155,16 +157,16 @@ const CategoriesPage = () => {
       );
       
       if (response.success) {
-        showSnackbar('Санат сәтті жаңартылды', 'success');
+        showSnackbar(t('admin.categoryUpdateSuccess', 'Санат сәтті жаңартылды'), 'success');
         fetchCategories();
         setOpenEditDialog(false);
         resetForm();
       } else {
-        showSnackbar('Санатты жаңарту қатесі', 'error');
+        showSnackbar(t('admin.categoryUpdateError', 'Санатты жаңарту қатесі'), 'error');
       }
     } catch (error) {
-      console.error('Error updating category:', error);
-      showSnackbar('Санатты жаңарту қатесі', 'error');
+      console.error(t('admin.errorUpdatingCategory', 'Error updating category:'), error);
+      showSnackbar(t('admin.categoryUpdateError', 'Санатты жаңарту қатесі'), 'error');
     } finally {
       setLoading(false);
     }
@@ -181,16 +183,22 @@ const CategoriesPage = () => {
       const response = await adminBookService.deleteCategory(selectedCategory.id);
       
       if (response.success) {
-        showSnackbar('Санат сәтті жойылды', 'success');
+        showSnackbar(t('admin.categoryDeleteSuccess', 'Санат сәтті жойылды'), 'success');
         fetchCategories();
         fetchCategoryStats();
         setOpenDeleteDialog(false);
       } else {
-        showSnackbar('Санатты жою қатесі: ' + (response.message || 'Белгісіз қате'), 'error');
+        showSnackbar(
+          t('admin.categoryDeleteError', { message: response.message || t('admin.unknownError', 'Белгісіз қате') }, 'Санатты жою қатесі: {{message}}'), 
+          'error'
+        );
       }
     } catch (error) {
-      console.error('Error deleting category:', error);
-      showSnackbar('Санатты жою қатесі: ' + (error.message || 'Белгісіз қате'), 'error');
+      console.error(t('admin.errorDeletingCategory', 'Error deleting category:'), error);
+      showSnackbar(
+        t('admin.categoryDeleteError', { message: error.message || t('admin.unknownError', 'Белгісіз қате') }, 'Санатты жою қатесі: {{message}}'), 
+        'error'
+      );
     } finally {
       setLoading(false);
     }
@@ -202,12 +210,12 @@ const CategoriesPage = () => {
   const openEditCategoryDialog = (category) => {
     setSelectedCategory(category);
     setFormData({
-      name: category.name,
+      name: category.name || '',
       description: category.description || ''
     });
     setOpenEditDialog(true);
   };
-
+  
   /**
    * Санатты жою диалогын ашу
    */
@@ -215,35 +223,34 @@ const CategoriesPage = () => {
     setSelectedCategory(category);
     setOpenDeleteDialog(true);
   };
-
+  
   /**
-   * Форманы қалпына келтіру
+   * Форма сбросын өңдеушісі
    */
   const resetForm = () => {
     setFormData({
       name: '',
       description: ''
     });
-    setSelectedCategory(null);
   };
-
+  
   /**
-   * Бет айналымын өңдеу
+   * Бет ауысуын өңдеу
    */
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
-
+  
   /**
-   * Беттегі жолдар санын өзгерту
+   * Бет өлшемін өзгертуді өңдеу
    */
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
+  
   /**
-   * Snackbar хабарландыруын көрсету
+   * Snackbar көрсетеді
    */
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({
@@ -252,9 +259,9 @@ const CategoriesPage = () => {
       severity
     });
   };
-
+  
   /**
-   * Snackbar хабарландыруын жабу
+   * Snackbar жабады
    */
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({
@@ -264,44 +271,51 @@ const CategoriesPage = () => {
   };
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="xl">
       <PageHeader 
-        title="Санаттарды басқару" 
-        subtitle="Кітап санаттарын қарау, қосу, өңдеу және жою"
+        title={t('admin.categories', 'Категории')} 
+        subtitle={t('admin.categoriesManagement', 'Управление категориями книг библиотеки')} 
       />
-
-      <Paper elevation={3} sx={{ mb: 4, p: 2 }}>
+      
+      <Paper sx={{ p: 2, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">Санаттар тізімі</Typography>
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Typography variant="h6">{t('admin.categoriesList', 'Список категорий')}</Typography>
+          <Button
+            variant="contained"
+            color="primary"
             startIcon={<AddIcon />}
-            onClick={() => setOpenAddDialog(true)}
+            onClick={() => {
+              resetForm();
+              setOpenAddDialog(true);
+            }}
           >
-            Санат қосу
+            {t('admin.addCategory', 'Добавить категорию')}
           </Button>
         </Box>
-
+        
         <TableContainer>
-          <Table sx={{ minWidth: 650 }} aria-label="categories table">
+          <Table>
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Атауы</TableCell>
-                <TableCell>Сипаттама</TableCell>
-                <TableCell>Кітаптар саны</TableCell>
-                <TableCell>Әрекеттер</TableCell>
+                <TableCell>{t('admin.id', 'ID')}</TableCell>
+                <TableCell>{t('admin.name', 'Название')}</TableCell>
+                <TableCell>{t('admin.description', 'Описание')}</TableCell>
+                <TableCell>{t('admin.booksCount', 'Кол-во книг')}</TableCell>
+                <TableCell>{t('admin.actions', 'Действия')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">Жүктелуде...</TableCell>
+                  <TableCell colSpan={5} align="center">
+                    {t('common.loading', 'Загрузка...')}
+                  </TableCell>
                 </TableRow>
               ) : categories.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">Санаттар табылмады</TableCell>
+                  <TableCell colSpan={5} align="center">
+                    {t('admin.noCategories', 'Нет категорий')}
+                  </TableCell>
                 </TableRow>
               ) : (
                 categories
@@ -312,28 +326,25 @@ const CategoriesPage = () => {
                       <TableCell>{category.name}</TableCell>
                       <TableCell>{category.description}</TableCell>
                       <TableCell>
-                        <Chip 
-                          icon={<BookIcon />} 
-                          label={bookCounts[category.id] || 0} 
-                          color="primary" 
-                          size="small" 
-                          variant="outlined"
+                        <Chip
+                          icon={<BookIcon />}
+                          label={bookCounts[category.id] || 0}
+                          color={bookCounts[category.id] > 0 ? 'primary' : 'default'}
+                          size="small"
                         />
                       </TableCell>
                       <TableCell>
-                        <IconButton 
-                          aria-label="edit" 
+                        <IconButton
                           color="primary"
                           onClick={() => openEditCategoryDialog(category)}
-                          title="Өңдеу"
+                          title={t('common.edit', 'Редактировать')}
                         >
                           <EditIcon />
                         </IconButton>
-                        <IconButton 
-                          aria-label="delete" 
+                        <IconButton
                           color="error"
                           onClick={() => openDeleteCategoryDialog(category)}
-                          title="Жою"
+                          title={t('common.delete', 'Удалить')}
                           disabled={bookCounts[category.id] > 0}
                         >
                           <DeleteIcon />
@@ -354,139 +365,156 @@ const CategoriesPage = () => {
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Бет сайын:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} / ${count}`}
+          labelRowsPerPage={t('pagination.rowsPerPage', 'Строк на странице:')}
+          labelDisplayedRows={({ from, to, count }) => 
+            `${from}-${to} ${t('pagination.of', 'из')} ${count}`
+          }
         />
       </Paper>
-
-      {/* Санат қосу диалогы */}
-      <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Санат қосу</DialogTitle>
+      
+      {/* Диалог добавления категории */}
+      <Dialog 
+        open={openAddDialog} 
+        onClose={() => setOpenAddDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{t('admin.addCategory', 'Добавить категорию')}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Атауы"
+                label={t('admin.name', 'Название')}
                 name="name"
                 value={formData.name}
                 onChange={handleFormChange}
                 required
+                autoFocus
+                margin="normal"
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Сипаттама"
+                label={t('admin.description', 'Описание')}
                 name="description"
                 value={formData.description}
                 onChange={handleFormChange}
                 multiline
                 rows={3}
+                margin="normal"
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenAddDialog(false)}>Бас тарту</Button>
+          <Button onClick={() => setOpenAddDialog(false)}>
+            {t('common.cancel', 'Отмена')}
+          </Button>
           <Button 
             onClick={handleAddCategory} 
             variant="contained" 
             color="primary"
             disabled={!formData.name.trim()}
           >
-            Қосу
+            {t('common.add', 'Добавить')}
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Санатты өңдеу диалогы */}
-      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Санатты өңдеу</DialogTitle>
+      
+      {/* Диалог редактирования категории */}
+      <Dialog 
+        open={openEditDialog} 
+        onClose={() => setOpenEditDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{t('admin.editCategory', 'Редактировать категорию')}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Атауы"
+                label={t('admin.name', 'Название')}
                 name="name"
                 value={formData.name}
                 onChange={handleFormChange}
                 required
+                autoFocus
+                margin="normal"
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Сипаттама"
+                label={t('admin.description', 'Описание')}
                 name="description"
                 value={formData.description}
                 onChange={handleFormChange}
                 multiline
                 rows={3}
+                margin="normal"
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenEditDialog(false)}>Бас тарту</Button>
+          <Button onClick={() => setOpenEditDialog(false)}>
+            {t('common.cancel', 'Отмена')}
+          </Button>
           <Button 
             onClick={handleEditCategory} 
             variant="contained" 
-            color="primary" 
+            color="primary"
             disabled={!formData.name.trim()}
           >
-            Сақтау
+            {t('common.save', 'Сохранить')}
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Санатты жою диалогы */}
+      
+      {/* Диалог удаления категории */}
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">Жоюды растау</DialogTitle>
+        <DialogTitle>{t('admin.deleteCategory', 'Удалить категорию')}</DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            "{selectedCategory?.name}" санатын жоюға сенімдісіз бе? 
-            Бұл әрекетті болдырмау мүмкін емес.
-            
-            {bookCounts[selectedCategory?.id] > 0 && (
-              <Box component="div" sx={{ mt: 2, color: 'error.main' }}>
-                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                  Бұл санатқа {bookCounts[selectedCategory?.id]} кітап жатады.
-                  Алдымен бұл кітаптарды басқа санатқа жатқызу керек.
-                </Typography>
-              </Box>
-            )}
+          <DialogContentText>
+            {t('admin.deleteCategoryConfirm', { name: selectedCategory?.name }, 'Вы уверены, что хотите удалить категорию "{{name}}"? Это действие нельзя будет отменить.')}
           </DialogContentText>
+          {bookCounts[selectedCategory?.id] > 0 && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              {t('admin.categoryHasBooks', { count: bookCounts[selectedCategory?.id] }, 'Эта категория содержит {{count}} книг. Сначала переместите книги в другую категорию.')}
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)}>Бас тарту</Button>
+          <Button onClick={() => setOpenDeleteDialog(false)}>
+            {t('common.cancel', 'Отмена')}
+          </Button>
           <Button 
             onClick={handleDeleteCategory} 
-            color="error" 
-            autoFocus
+            color="error"
             disabled={bookCounts[selectedCategory?.id] > 0}
           >
-            Жою
+            {t('common.delete', 'Удалить')}
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Snackbar хабарландыруы */}
-      <Snackbar 
-        open={snackbar.open} 
-        autoHideDuration={6000} 
+      
+      {/* Snackbar для уведомлений */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert 
           onClose={handleCloseSnackbar} 
-          severity={snackbar.severity} 
+          severity={snackbar.severity}
+          variant="filled"
           sx={{ width: '100%' }}
         >
           {snackbar.message}

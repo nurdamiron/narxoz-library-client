@@ -13,6 +13,7 @@ import {
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Компонент диалога подтверждения действия
@@ -31,13 +32,20 @@ const ConfirmDialog = ({
   open,
   onClose,
   onConfirm,
-  title = 'Подтвердите действие',
-  message = 'Вы уверены, что хотите продолжить?',
-  confirmButtonText = 'Подтвердить',
-  cancelButtonText = 'Отмена',
+  title,
+  message,
+  confirmButtonText,
+  cancelButtonText,
   type = 'confirm'
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
+  
+  // Используем значения из переводов, если не указаны явно
+  const dialogTitle = title || t('common.confirm');
+  const dialogMessage = message || t('common.confirmMessage', 'Вы уверены, что хотите продолжить?');
+  const confirmText = confirmButtonText || t('common.confirm');
+  const cancelText = cancelButtonText || t('common.cancel');
   
   // Определение иконки и цвета в зависимости от типа диалога
   const getDialogSettings = () => {
@@ -93,18 +101,18 @@ const ConfirmDialog = ({
         <Box sx={{ mr: 1, color }}>
           {icon}
         </Box>
-        <Typography variant="h6">{title}</Typography>
+        <Typography variant="h6">{dialogTitle}</Typography>
       </DialogTitle>
       
       <DialogContent sx={{ mt: 2 }}>
         <DialogContentText>
-          {message}
+          {dialogMessage}
         </DialogContentText>
       </DialogContent>
       
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button onClick={onClose} variant="outlined">
-          {cancelButtonText}
+          {cancelText}
         </Button>
         <Button 
           onClick={onConfirm} 
@@ -112,7 +120,7 @@ const ConfirmDialog = ({
           color={confirmButtonColor}
           autoFocus
         >
-          {confirmButtonText}
+          {confirmText}
         </Button>
       </DialogActions>
     </Dialog>

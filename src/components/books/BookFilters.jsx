@@ -43,6 +43,7 @@ import {
   Check as CheckIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 /**
  * BookFilters компоненті
@@ -71,6 +72,7 @@ const BookFilters = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const { t } = useTranslation();
   
   // Жергілікті фильтр күйлері
   const [localFilters, setLocalFilters] = useState({
@@ -101,7 +103,7 @@ const BookFilters = ({
   if (localFilters.search) {
     activeFilters.push({
       id: 'search',
-      label: `Іздеу: ${localFilters.search}`,
+      label: `${t('common.search')}: ${localFilters.search}`,
       value: localFilters.search,
       onDelete: () => handleFilterChange('search', '')
     });
@@ -111,7 +113,7 @@ const BookFilters = ({
     const category = categories.find(c => c.id === localFilters.categoryId);
     activeFilters.push({
       id: 'category',
-      label: `Категория: ${category ? category.name : localFilters.categoryId}`,
+      label: `${t('books.category')}: ${category ? category.name : localFilters.categoryId}`,
       value: localFilters.categoryId,
       onDelete: () => handleFilterChange('categoryId', '')
     });
@@ -120,7 +122,7 @@ const BookFilters = ({
   if (localFilters.year) {
     activeFilters.push({
       id: 'year',
-      label: `Жыл: ${localFilters.year}`,
+      label: `${t('admin.year')}: ${localFilters.year}`,
       value: localFilters.year,
       onDelete: () => handleFilterChange('year', '')
     });
@@ -129,7 +131,7 @@ const BookFilters = ({
   if (localFilters.language) {
     activeFilters.push({
       id: 'language',
-      label: `Тіл: ${localFilters.language}`,
+      label: `${t('books.language')}: ${localFilters.language}`,
       value: localFilters.language,
       onDelete: () => handleFilterChange('language', '')
     });
@@ -138,39 +140,39 @@ const BookFilters = ({
   if (localFilters.available) {
     activeFilters.push({
       id: 'available',
-      label: `Тек қолжетімді кітаптар`,
+      label: t('books.available'),
       value: true,
       onDelete: () => handleFilterChange('available', false)
     });
   }
   
   if (localFilters.sort && localFilters.sort !== '-createdAt') {
-    let sortLabel = 'Сұрыптау: ';
+    let sortLabel = `${t('admin.sort', 'Сұрыптау')}: `;
     
     switch (localFilters.sort) {
       case '-publicationYear':
-        sortLabel += 'Жаңадан ескіге';
+        sortLabel += t('filters.sortNewestFirst', 'Жаңадан ескіге');
         break;
       case 'publicationYear':
-        sortLabel += 'Ескіден жаңаға';
+        sortLabel += t('filters.sortOldestFirst', 'Ескіден жаңаға');
         break;
       case 'title':
-        sortLabel += 'Атауы (А-Я)';
+        sortLabel += t('filters.sortTitleAZ', 'Атауы (А-Я)');
         break;
       case '-title':
-        sortLabel += 'Атауы (Я-А)';
+        sortLabel += t('filters.sortTitleZA', 'Атауы (Я-А)');
         break;
       case 'author':
-        sortLabel += 'Автор (А-Я)';
+        sortLabel += t('filters.sortAuthorAZ', 'Автор (А-Я)');
         break;
       case '-author':
-        sortLabel += 'Автор (Я-А)';
+        sortLabel += t('filters.sortAuthorZA', 'Автор (Я-А)');
         break;
       case '-rating':
-        sortLabel += 'Рейтинг (жоғарыдан төменге)';
+        sortLabel += t('filters.sortRatingDesc', 'Рейтинг (жоғарыдан төменге)');
         break;
       case 'rating':
-        sortLabel += 'Рейтинг (төменнен жоғарыға)';
+        sortLabel += t('filters.sortRatingAsc', 'Рейтинг (төменнен жоғарыға)');
         break;
       default:
         sortLabel += localFilters.sort;
@@ -304,7 +306,7 @@ const BookFilters = ({
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <FilterIcon sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            Фильтрлер
+            {t('admin.filters', 'Фильтрлер')}
           </Typography>
         </Box>
         
@@ -326,7 +328,7 @@ const BookFilters = ({
               opacity: hasActiveFilters ? 1 : 0.5
             }}
           >
-            Тазалау
+            {t('admin.resetFilters', 'Тазалау')}
           </Button>
         </Box>
       </Box>
@@ -376,7 +378,7 @@ const BookFilters = ({
       <Box sx={{ mb: 2 }}>
         <TextField
           fullWidth
-          placeholder="Кітаптарды іздеу..."
+          placeholder={t('books.searchPlaceholder', 'Кітаптарды іздеу...')}
           value={localFilters.search}
           onChange={(e) => handleFilterChange('search', e.target.value)}
           size="small"
@@ -424,12 +426,14 @@ const BookFilters = ({
               size="small"
               sx={{ mb: 2 }}
             >
-              <InputLabel id="category-label">Категория</InputLabel>
+              <InputLabel id="category-label">
+                {t('books.category', 'Категория')}
+              </InputLabel>
               <Select
                 labelId="category-label"
                 id="category-select"
                 value={localFilters.categoryId}
-                label="Категория"
+                label={t('books.category', 'Категория')}
                 onChange={(e) => handleFilterChange('categoryId', e.target.value)}
                 startAdornment={
                   <InputAdornment position="start">
@@ -437,7 +441,9 @@ const BookFilters = ({
                   </InputAdornment>
                 }
               >
-                <MenuItem value="">Барлығы</MenuItem>
+                <MenuItem value="">
+                  <em>{t('admin.filterAll', 'Барлығы')}</em>
+                </MenuItem>
                 {categories.map((category) => (
                   <MenuItem key={category.id} value={category.id}>
                     {category.name}
@@ -455,12 +461,14 @@ const BookFilters = ({
               size="small"
               sx={{ mb: 2 }}
             >
-              <InputLabel id="year-label">Жыл</InputLabel>
+              <InputLabel id="year-label">
+                {t('admin.year', 'Жыл')}
+              </InputLabel>
               <Select
                 labelId="year-label"
                 id="year-select"
                 value={localFilters.year}
-                label="Жыл"
+                label={t('admin.year', 'Жыл')}
                 onChange={(e) => handleFilterChange('year', e.target.value)}
                 startAdornment={
                   <InputAdornment position="start">
@@ -468,7 +476,9 @@ const BookFilters = ({
                   </InputAdornment>
                 }
               >
-                <MenuItem value="">Барлық жылдар</MenuItem>
+                <MenuItem value="">
+                  <em>{t('admin.filterAll', 'Барлығы')}</em>
+                </MenuItem>
                 {getYearOptions().map((year) => (
                   <MenuItem key={year} value={year}>
                     {year}
@@ -486,12 +496,14 @@ const BookFilters = ({
               size="small"
               sx={{ mb: 2 }}
             >
-              <InputLabel id="language-label">Тіл</InputLabel>
+              <InputLabel id="language-label">
+                {t('books.language', 'Тіл')}
+              </InputLabel>
               <Select
                 labelId="language-label"
                 id="language-select"
                 value={localFilters.language}
-                label="Тіл"
+                label={t('books.language', 'Тіл')}
                 onChange={(e) => handleFilterChange('language', e.target.value)}
                 startAdornment={
                   <InputAdornment position="start">
@@ -499,7 +511,9 @@ const BookFilters = ({
                   </InputAdornment>
                 }
               >
-                <MenuItem value="">Барлық тілдер</MenuItem>
+                <MenuItem value="">
+                  <em>{t('admin.filterAll', 'Барлығы')}</em>
+                </MenuItem>
                 {languages.map((language) => (
                   <MenuItem key={language} value={language}>
                     {language}
@@ -524,7 +538,7 @@ const BookFilters = ({
                   }}
                 />
               }
-              label="Тек қолжетімді кітаптар"
+              label={t('books.available', 'Қолжетімді')}
               sx={{ mb: 2 }}
             />
           </motion.div>
@@ -539,12 +553,14 @@ const BookFilters = ({
               size="small"
               sx={{ mb: 2 }}
             >
-              <InputLabel id="sort-label">Сұрыптау</InputLabel>
+              <InputLabel id="sort-label">
+                {t('admin.sort', 'Сұрыптау')}
+              </InputLabel>
               <Select
                 labelId="sort-label"
                 id="sort-select"
                 value={localFilters.sort}
-                label="Сұрыптау"
+                label={t('admin.sort', 'Сұрыптау')}
                 onChange={(e) => handleFilterChange('sort', e.target.value)}
                 startAdornment={
                   <InputAdornment position="start">
@@ -552,15 +568,33 @@ const BookFilters = ({
                   </InputAdornment>
                 }
               >
-                <MenuItem value="-createdAt">Жаңадан ескіге</MenuItem>
-                <MenuItem value="-publicationYear">Жыл (жаңадан ескіге)</MenuItem>
-                <MenuItem value="publicationYear">Жыл (ескіден жаңаға)</MenuItem>
-                <MenuItem value="title">Атауы (А-Я)</MenuItem>
-                <MenuItem value="-title">Атауы (Я-А)</MenuItem>
-                <MenuItem value="author">Автор (А-Я)</MenuItem>
-                <MenuItem value="-author">Автор (Я-А)</MenuItem>
-                <MenuItem value="-rating">Рейтинг (жоғарыдан төменге)</MenuItem>
-                <MenuItem value="rating">Рейтинг (төменнен жоғарыға)</MenuItem>
+                <MenuItem value="-createdAt">
+                  {t('filters.sortNewest', 'Ең жаңа')}
+                </MenuItem>
+                <MenuItem value="-publicationYear">
+                  {t('filters.sortNewestFirst', 'Жаңадан ескіге')}
+                </MenuItem>
+                <MenuItem value="publicationYear">
+                  {t('filters.sortOldestFirst', 'Ескіден жаңаға')}
+                </MenuItem>
+                <MenuItem value="title">
+                  {t('filters.sortTitleAZ', 'Атауы (А-Я)')}
+                </MenuItem>
+                <MenuItem value="-title">
+                  {t('filters.sortTitleZA', 'Атауы (Я-А)')}
+                </MenuItem>
+                <MenuItem value="author">
+                  {t('filters.sortAuthorAZ', 'Автор (А-Я)')}
+                </MenuItem>
+                <MenuItem value="-author">
+                  {t('filters.sortAuthorZA', 'Автор (Я-А)')}
+                </MenuItem>
+                <MenuItem value="-rating">
+                  {t('filters.sortRatingDesc', 'Рейтинг (жоғарыдан төменге)')}
+                </MenuItem>
+                <MenuItem value="rating">
+                  {t('filters.sortRatingAsc', 'Рейтинг (төменнен жоғарыға)')}
+                </MenuItem>
               </Select>
             </FormControl>
           </motion.div>
@@ -584,7 +618,7 @@ const BookFilters = ({
                 fontWeight: 'bold'
               }}
             >
-              Қолдану
+              {t('admin.applyFilters', 'Қолдану')}
             </Button>
           </motion.div>
         </motion.div>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Box, Container, Paper, Tabs, Tab, Typography, Breadcrumbs, Link, useTheme } from '@mui/material';
-import { Link as RouterLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Box, Container, Paper, Tabs, Tab, Typography, Breadcrumbs, Link, useTheme, Button } from '@mui/material';
+import { Link as RouterLink, Outlet, useLocation, useNavigate, NavLink } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
@@ -8,52 +8,77 @@ import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import CategoryIcon from '@mui/icons-material/Category';
 import RateReviewIcon from '@mui/icons-material/RateReview';
+import EventIcon from '@mui/icons-material/Event';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../../context/AuthContext';
 
 const AdminLayout = () => {
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const [value, setValue] = useState(getTabValue(location.pathname));
-
-  // Ағымдағы жолға негізделген белсенді қойындыны анықтайды
-  function getTabValue(path) {
-    if (path === '/admin') return 0;
-    if (path.includes('/admin/users')) return 1;
-    if (path.includes('/admin/books')) return 2;
-    if (path.includes('/admin/borrows')) return 3;
-    if (path.includes('/admin/categories')) return 4;
-    if (path.includes('/admin/reviews')) return 5;
-    return 0;
-  }
-
-  // Қойынды өзгерісін өңдеуші
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-    switch (newValue) {
-      case 0:
-        navigate('/admin');
-        break;
-      case 1:
-        navigate('/admin/users');
-        break;
-      case 2:
-        navigate('/admin/books');
-        break;
-      case 3:
-        navigate('/admin/borrows');
-        break;
-      case 4:
-        navigate('/admin/categories');
-        break;
-      case 5:
-        navigate('/admin/reviews');
-        break;
-      default:
-        navigate('/admin');
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const isModerator = user && user.role === 'moderator';
+  
+  console.log('AdminLayout rendered:', { 
+    currentPath: location.pathname,
+    userRole: user?.role, 
+    isModerator 
+  });
+  
+  // Конфигурация маршрутов для навигации
+  const adminRoutes = isModerator ? [
+    { path: '/admin', index: 0, label: 'admin.dashboard', icon: <DashboardIcon /> },
+    { path: '/admin/books', index: 1, label: 'admin.books', icon: <LibraryBooksIcon /> },
+    { path: '/admin/borrows', index: 2, label: 'admin.borrows', icon: <BookmarkIcon /> },
+    { path: '/admin/events', index: 3, label: 'events.admin.title', icon: <EventIcon /> },
+    { path: '/admin/reviews', index: 4, label: 'admin.reviews', icon: <RateReviewIcon /> }
+  ] : [
+    { path: '/admin', index: 0, label: 'admin.dashboard', icon: <DashboardIcon /> },
+    { path: '/admin/users', index: 1, label: 'admin.users', icon: <PeopleIcon /> },
+    { path: '/admin/books', index: 2, label: 'admin.books', icon: <LibraryBooksIcon /> },
+    { path: '/admin/borrows', index: 3, label: 'admin.borrows', icon: <BookmarkIcon /> },
+    { path: '/admin/categories', index: 4, label: 'admin.categories', icon: <CategoryIcon /> },
+    { path: '/admin/events', index: 5, label: 'events.admin.title', icon: <EventIcon /> },
+    { path: '/admin/reviews', index: 6, label: 'admin.reviews', icon: <RateReviewIcon /> }
+  ];
+  
+  console.log('Available routes:', adminRoutes);
+  
+  // Определяем текущий индекс вкладки на основе пути
+  const getCurrentTabIndex = (path) => {
+    // Точное соответствие имеет приоритет
+    for (const route of adminRoutes) {
+      if (route.path === path) {
+        console.log(`Exact match: Path ${path} matches route ${route.path}, index: ${route.index}`);
+        return route.index;
+      }
     }
+    
+    // Затем проверяем вложенные пути
+    for (const route of adminRoutes) {
+      // Особое условие для /admin, чтобы избежать совпадения со всеми маршрутами /admin/*
+      if (route.path !== '/admin' && path.startsWith(route.path)) {
+        console.log(`Nested match: Path ${path} starts with route ${route.path}, index: ${route.index}`);
+        return route.index;
+      }
+    }
+    
+    const defaultIndex = isModerator ? 0 : 0;
+    console.log(`No matching route for ${path}, using default index: ${defaultIndex}`);
+    return defaultIndex; // По умолчанию первый таб
   };
-
-  // Ағымдағы жолға негізделген нан қиқымдарын жасайды
+  
+  const [tabIndex, setTabIndex] = useState(getCurrentTabIndex(location.pathname));
+  
+  // Обновляем индекс вкладки при изменении маршрута
+  useEffect(() => {
+    const currentIndex = getCurrentTabIndex(location.pathname);
+    console.log(`Route changed to ${location.pathname}, updating tab index to ${currentIndex}`);
+    setTabIndex(currentIndex);
+  }, [location.pathname]);
+  
+  // Функция для навигационных хлебных крошек
   const getBreadcrumbs = () => {
     const pathnames = location.pathname.split('/').filter((x) => x);
     return (
@@ -66,20 +91,23 @@ const AdminLayout = () => {
           color="inherit"
         >
           <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
-          Басты бет
+          {t('common.home')}
         </Link>
         
         {pathnames.map((name, index) => {
           const isLast = index === pathnames.length - 1;
           const route = `/${pathnames.slice(0, index + 1).join('/')}`;
           
-          let displayName = name.charAt(0).toUpperCase() + name.slice(1);
-          if (name === 'admin') displayName = 'Әкімшілік';
-          if (name === 'users') displayName = 'Пайдаланушылар';
-          if (name === 'books') displayName = 'Кітаптар';
-          if (name === 'borrows') displayName = 'Қарыздар';
-          if (name === 'categories') displayName = 'Санаттар';
-          if (name === 'reviews') displayName = 'Пікірлер';
+          let displayName;
+          if (name === 'admin' && location.pathname === '/admin') displayName = t('admin.dashboard');
+          else if (name === 'admin') displayName = t('admin.management');
+          else if (name === 'users') displayName = t('admin.users');
+          else if (name === 'books') displayName = t('admin.books');
+          else if (name === 'borrows') displayName = t('admin.borrows');
+          else if (name === 'categories') displayName = t('admin.categories');
+          else if (name === 'events') displayName = t('events.admin.title');
+          else if (name === 'reviews') displayName = t('admin.reviews');
+          else displayName = name.charAt(0).toUpperCase() + name.slice(1);
           
           return isLast ? (
             <Typography key={route} color="text.primary">
@@ -101,65 +129,59 @@ const AdminLayout = () => {
     );
   };
 
+  console.log('Current tab index:', tabIndex);
+
   return (
     <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
       {getBreadcrumbs()}
       
+      {/* Замена Tabs на более надежный вариант с прямыми ссылками */}
       <Paper elevation={3} sx={{ mb: 3, borderRadius: 2, overflow: 'hidden' }}>
-        <Tabs
-          value={value}
-          onChange={handleChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          indicatorColor="primary"
-          textColor="primary"
-          aria-label="admin navigation tabs"
-          sx={{
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexWrap: 'wrap',
             borderBottom: `1px solid ${theme.palette.divider}`,
             backgroundColor: theme.palette.background.paper,
-            '& .MuiTab-root': {
-              minHeight: 64,
-              fontSize: '0.9rem',
-            },
+            px: 1
           }}
         >
-          <Tab 
-            icon={<DashboardIcon />} 
-            label="Басқару тақтасы" 
-            iconPosition="start"
-            sx={{ minWidth: 140 }}
-          />
-          <Tab 
-            icon={<PeopleIcon />} 
-            label="Пайдаланушылар" 
-            iconPosition="start"
-            sx={{ minWidth: 140 }}
-          />
-          <Tab 
-            icon={<LibraryBooksIcon />} 
-            label="Кітаптар" 
-            iconPosition="start"
-            sx={{ minWidth: 120 }}
-          />
-          <Tab 
-            icon={<BookmarkIcon />} 
-            label="Қарыздар" 
-            iconPosition="start"
-            sx={{ minWidth: 120 }}
-          />
-          <Tab 
-            icon={<CategoryIcon />} 
-            label="Санаттар" 
-            iconPosition="start"
-            sx={{ minWidth: 120 }}
-          />
-          <Tab 
-            icon={<RateReviewIcon />} 
-            label="Пікірлер" 
-            iconPosition="start"
-            sx={{ minWidth: 120 }}
-          />
-        </Tabs>
+          {adminRoutes.map((route) => {
+            // Для корректной работы с вложенными маршрутами
+            const isExact = route.path === location.pathname;
+            const isNested = route.path !== '/admin' && location.pathname.startsWith(route.path);
+            const isActive = route.path === '/admin' ? isExact : (isExact || isNested);
+            
+            return (
+              <NavLink
+                key={route.path}
+                to={route.path}
+                style={{ 
+                  color: 'inherit', 
+                  textDecoration: 'none',
+                  marginRight: 8
+                }}
+                end={route.path === '/admin'}
+              >
+                <Button
+                  startIcon={route.icon}
+                  variant={isActive ? "contained" : "text"}
+                  color={isActive ? "primary" : "inherit"}
+                  sx={{ 
+                    minHeight: 64,
+                    px: 2,
+                    borderRadius: 0,
+                    fontSize: '0.9rem',
+                    textTransform: 'none',
+                    borderBottom: isActive ? `3px solid ${theme.palette.primary.main}` : 'none'
+                  }}
+                >
+                  {t(route.label)}
+                </Button>
+              </NavLink>
+            );
+          })}
+        </Box>
       </Paper>
       
       <Box sx={{ py: 2 }}>

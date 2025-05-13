@@ -1,6 +1,28 @@
-# Getting Started with Create React App
+# Narxoz Library Client
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the client application for the Narxoz Library system. It was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+## Build Issues Solution
+
+If you encounter source map errors, please see [BUILD_FIX.md](./BUILD_FIX.md) for solutions.
+
+## Quick Start
+
+To run the application without source map errors:
+
+```bash
+./start-no-sourcemaps.sh
+```
+
+Or manually:
+
+```bash
+GENERATE_SOURCEMAP=false npm start
+```
+
+## Moderator Role
+
+The moderator role has been fully implemented in the system. For details, see [MODERATOR_ROLE.md](../MODERATOR_ROLE.md).
 
 ## Available Scripts
 
@@ -11,60 +33,64 @@ In the project directory, you can run:
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
 ### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Launches the test runner in the interactive watch mode.
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Builds the app for production to the `build` folder.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### `./fix-build.sh`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Fixes source map errors and provides alternative build methods.
 
-### `npm run eject`
+### `./start-no-sourcemaps.sh`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Starts the development server without source maps to avoid build errors.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Fixing Build Errors
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+If you encounter build errors, try one of these approaches:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1. Run the fix script:
+
+```bash
+./fix-build.sh
+```
+
+2. Start without source maps:
+
+```bash
+./start-no-sourcemaps.sh
+```
+
+3. Use environment variables:
+
+```bash
+GENERATE_SOURCEMAP=false SKIP_PREFLIGHT_CHECK=true npm start
+```
+
+## Features
+
+- Book catalog browsing
+- Admin panel for managing books, users, and borrows
+- User account management
+- Bookmarking and borrowing books
+- Event management and registration
+- Multi-language support (Kazakh, Russian, English)
+- Moderator role implementation
+
+## Technologies Used
+
+- React.js
+- Material UI
+- React Router
+- i18next for internationalization
+- Context API for state management
 
 ## Learn More
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)

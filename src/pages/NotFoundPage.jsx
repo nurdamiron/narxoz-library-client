@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -27,6 +28,7 @@ import {
 const NotFoundPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 4, md: 8 } }}>
@@ -82,7 +84,7 @@ const NotFoundPage = () => {
           gutterBottom
           sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}
         >
-          Страница не найдена
+          {t('notFound.title', 'Страница не найдена')}
         </Typography>
         
         {/* Түсіндірме */}
@@ -96,8 +98,7 @@ const NotFoundPage = () => {
             fontSize: { xs: '0.9rem', md: '1rem' },
           }}
         >
-          Запрашиваемая страница не существует или была удалена.
-          Проверьте URL-адрес или воспользуйтесь одной из ссылок ниже, чтобы вернуться на сайт.
+          {t('notFound.description', 'Запрашиваемая страница не существует или была удалена. Проверьте URL-адрес или воспользуйтесь одной из ссылок ниже, чтобы вернуться на сайт.')}
         </Typography>
         
         {/* Түймелер */}
@@ -122,7 +123,7 @@ const NotFoundPage = () => {
               fontWeight: 'bold',
             }}
           >
-            На главную
+            {t('notFound.homeButton', 'На главную')}
           </Button>
           
           <Button
@@ -138,7 +139,7 @@ const NotFoundPage = () => {
               fontWeight: 'bold',
             }}
           >
-            В каталог книг
+            {t('notFound.catalogButton', 'В каталог книг')}
           </Button>
         </Box>
       </Paper>

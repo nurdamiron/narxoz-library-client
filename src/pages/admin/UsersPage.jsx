@@ -24,7 +24,11 @@ import {
   TablePagination,
   Alert,
   AlertTitle,
-  useTheme
+  useTheme,
+  FormControl,
+  InputLabel,
+  Select,
+  Stack
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Warning as WarningIcon } from '@mui/icons-material';
 import adminUserService from '../../services/adminUserService';
@@ -32,9 +36,12 @@ import PageHeader from '../../components/common/PageHeader';
 import { AdminTable, FilterBar, ConfirmDialog } from '../../components/admin/common';
 import { useToast } from '../../context/ToastContext';
 import { translateError } from '../../utils/errorMessages';
+import { useTranslation } from 'react-i18next';
 
 const UsersPage = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -45,6 +52,7 @@ const UsersPage = () => {
   const [formError, setFormError] = useState('');
   const [addUserLoading, setAddUserLoading] = useState(false);
   const [editUserLoading, setEditUserLoading] = useState(false);
+  const [roleFilter, setRoleFilter] = useState('all');
   const { success, error: showError } = useToast();
   const [formData, setFormData] = useState({
     username: '',
@@ -64,6 +72,16 @@ const UsersPage = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+  
+  // Фильтрация пользователей при изменении фильтра роли или списка пользователей
+  useEffect(() => {
+    if (roleFilter === 'all') {
+      setFilteredUsers(users);
+    } else {
+      setFilteredUsers(users.filter(user => user.role === roleFilter));
+    }
+    setPage(0); // Сброс страницы при изменении фильтра
+  }, [roleFilter, users]);
 
   // Функция для загрузки списка пользователей
   const fetchUsers = async () => {
@@ -74,7 +92,8 @@ const UsersPage = () => {
         setUsers(response.data);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error(t('admin.errorFetchingUsers', 'Error fetching users:'), error);
+      showError(t('admin.usersLoadingError', 'Ошибка загрузки пользователей'));
     } finally {
       setLoading(false);
     }
@@ -108,7 +127,7 @@ const UsersPage = () => {
       // Проверка обязательных полей перед отправкой запроса
       if (!formData.username || !formData.password || !formData.firstName || 
           !formData.lastName || !formData.email || !formData.role) {
-        setFormError('Барлық міндетті өрістерді толтырыңыз');
+        setFormError(t('validation.requiredFields', 'Барлық міндетті өрістерді толтырыңыз'));
         return;
       }
       
@@ -117,7 +136,7 @@ const UsersPage = () => {
       
       if (response.success) {
         // Успешное создание пользователя
-        success(`Пайдаланушы ${formData.firstName} ${formData.lastName} сәтті құрылды`);
+        success(t('admin.userCreated', { firstName: formData.firstName, lastName: formData.lastName }, 'Пайдаланушы {{firstName}} {{lastName}} сәтті құрылды'));
         fetchUsers();
         setOpenAddDialog(false);
         resetForm();
@@ -148,18 +167,18 @@ const UsersPage = () => {
           } else if (data.error || data.message) {
             setFormError(translateError(data.error || data.message));
           } else {
-            setFormError('Пайдаланушыны құру кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.');
+            setFormError(t('admin.userCreateError', 'Пайдаланушыны құру кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.'));
           }
         } else {
           // Если структура ошибки не распознана
-          setFormError('Пайдаланушыны құру кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.');
+          setFormError(t('admin.userCreateError', 'Пайдаланушыны құру кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.'));
         }
       } else if (typeof error === 'string') {
         // Если ошибка представлена строкой
         setFormError(translateError(error));
       } else {
         // Для неопределенных ошибок
-        setFormError('Белгісіз қате орын алды. Әрекетті қайталап көріңіз.');
+        setFormError(t('admin.unknownError', 'Белгісіз қате орын алды. Әрекетті қайталап көріңіз.'));
       }
       
       // Отображение дополнительной информации в консоли для отладки
@@ -169,7 +188,7 @@ const UsersPage = () => {
       }
       
       // Показать ошибку также через Toast
-      showError('Пайдаланушы құру сәтсіз аяқталды');
+      showError(t('admin.userCreateFailed', 'Пайдаланушы құру сәтсіз аяқталды'));
     } finally {
       setAddUserLoading(false);
     }
@@ -187,7 +206,7 @@ const UsersPage = () => {
       const response = await adminUserService.updateUser(selectedUser.id, formData);
       
       if (response.success) {
-        success(`Пайдаланушы ${formData.firstName} ${formData.lastName} сәтті жаңартылды`);
+        success(t('admin.userUpdated', { firstName: formData.firstName, lastName: formData.lastName }, 'Пайдаланушы {{firstName}} {{lastName}} сәтті жаңартылды'));
         fetchUsers();
         setOpenEditDialog(false);
         resetForm();
@@ -197,98 +216,34 @@ const UsersPage = () => {
       
       // Улучшенная обработка ошибок
       if (typeof error === 'object') {
-        // Проверка на поле сообщения об ошибке
         if (error.message) {
           setFormError(error.message);
-          
-          // Выделение и фокус на поле с ошибкой
-          if (error.field) {
-            const errorField = document.querySelector(`input[name="${error.field}"]`);
-            if (errorField) {
-              errorField.focus();
-              errorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }
-        } 
-        // Проверка на Sequelize ошибку
-        else if (error.name === 'SequelizeUniqueConstraintError' && error.errors && error.errors.length > 0) {
-          const fieldError = error.errors[0];
-          console.error('🔍 Ошибка уникального ограничения:', fieldError);
-          
-          if (fieldError.path === 'email') {
-            setFormError('Бұл email бұрыннан тіркелген. Басқа email пайдаланыңыз.');
-            const emailField = document.querySelector('input[name="email"]');
-            if (emailField) {
-              emailField.focus();
-            }
-          } else if (fieldError.path === 'username') {
-            setFormError('Бұл логин бұрыннан тіркелген. Басқа логин таңдаңыз.');
-            const usernameField = document.querySelector('input[name="username"]');
-            if (usernameField) {
-              usernameField.focus();
-            }
-          } else {
-            setFormError(`${fieldError.path} өрісі бірегей болуы керек.`);
-          }
-        } 
-        // Проверка на ответ API
-        else if (error.response && error.response.data) {
+        } else if (error.response && error.response.data) {
           const { data } = error.response;
           
-          // Проверка ответа на Sequelize ошибку
-          if (data && data.name === 'SequelizeUniqueConstraintError' && data.errors && data.errors.length > 0) {
-            const fieldError = data.errors[0];
-            if (fieldError.path === 'email') {
-              setFormError('Бұл email бұрыннан тіркелген. Басқа email пайдаланыңыз.');
-              const emailField = document.querySelector('input[name="email"]');
-              if (emailField) {
-                emailField.focus();
-              }
-            } else if (fieldError.path === 'username') {
-              setFormError('Бұл логин бұрыннан тіркелген. Басқа логин таңдаңыз.');
-              const usernameField = document.querySelector('input[name="username"]');
-              if (usernameField) {
-                usernameField.focus();
-              }
-            } else {
-              setFormError(`${fieldError.path} өрісі бірегей болуы керек.`);
-            }
-          } 
-          // Обработка строковых ответов
-          else if (typeof data === 'string') {
+          if (typeof data === 'string') {
             setFormError(translateError(data));
-          } 
-          // Проверка на сообщения об ошибках в ответе
-          else if (data.error || data.message) {
+          } else if (data.error || data.message) {
             setFormError(translateError(data.error || data.message));
-          } 
-          // Общее сообщение об ошибке
-          else {
-            setFormError('Пайдаланушыны жаңарту кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.');
+          } else {
+            setFormError(t('admin.userUpdateError', 'Пайдаланушыны жаңарту кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.'));
           }
-        } 
-        // Если структура ошибки не распознана
-        else {
-          setFormError('Пайдаланушыны жаңарту кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.');
+        } else {
+          setFormError(t('admin.userUpdateError', 'Пайдаланушыны жаңарту кезінде қате орын алды. Деректерді тексеріп, қайталап көріңіз.'));
         }
-      } 
-      // Если ошибка представлена строкой
-      else if (typeof error === 'string') {
+      } else if (typeof error === 'string') {
         setFormError(translateError(error));
-      } 
-      // Для неопределенных ошибок
-      else {
-        setFormError('Белгісіз қате орын алды. Әрекетті қайталап көріңіз.');
+      } else {
+        setFormError(t('admin.unknownError', 'Белгісіз қате орын алды. Әрекетті қайталап көріңіз.'));
       }
       
-      // Отображение дополнительной информации в консоли для отладки
+      // Отображение ошибки в консоли для отладки
       if (error.response) {
         console.error('Error status:', error.response.status);
         console.error('Error data:', error.response.data);
       }
       
-      // Показать ошибку также через Toast
-      showError('Пайдаланушы жаңарту сәтсіз аяқталды');
+      showError(t('admin.userUpdateFailed', 'Пайдаланушыны жаңарту сәтсіз аяқталды'));
     } finally {
       setEditUserLoading(false);
     }
@@ -299,47 +254,42 @@ const UsersPage = () => {
     try {
       if (!selectedUser) return;
       
-      setLoading(true);
       const response = await adminUserService.deleteUser(selectedUser.id);
       
       if (response.success) {
-        success(`Пайдаланушы ${selectedUser.firstName} ${selectedUser.lastName} сәтті жойылды`);
+        success(t('admin.userDeleted', { firstName: selectedUser.firstName, lastName: selectedUser.lastName }, 'Пайдаланушы {{firstName}} {{lastName}} сәтті жойылды'));
         fetchUsers();
         setOpenDeleteDialog(false);
+      } else {
+        showError(response.message || t('admin.deleteError', 'Жою кезінде қате орын алды'));
       }
     } catch (error) {
-      console.error('❌ Error deleting user:', error);
+      console.error('Error deleting user:', error);
       
-      let errorMessage = 'Пайдаланушыны жою кезінде қате орын алды';
+      let errorMessage = 'Жою кезінде қате орын алды';
       
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (error.response && error.response.data) {
+      if (error.response && error.response.data) {
         const { data } = error.response;
-        if (typeof data === 'string') {
-          errorMessage = translateError(data);
-        } else if (data.error || data.message) {
-          errorMessage = translateError(data.error || data.message);
-        }
+        errorMessage = typeof data === 'string' ? data : (data.message || data.error || errorMessage);
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
-      showError(errorMessage);
-    } finally {
-      setLoading(false);
+      showError(translateError(errorMessage));
     }
   };
 
-  // Открытие диалога редактирования
+  // Открытие диалога редактирования пользователя
   const openEditUserDialog = (user) => {
     setSelectedUser(user);
     setFormData({
-      username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
+      username: user.username || '',
+      password: '', // Не заполняем пароль при редактировании
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
       phoneNumber: user.phoneNumber || '',
-      password: '',
-      role: user.role,
+      role: user.role || 'student',
       faculty: user.faculty || '',
       specialization: user.specialization || '',
       studentId: user.studentId || ''
@@ -347,27 +297,27 @@ const UsersPage = () => {
     setOpenEditDialog(true);
   };
 
-  // Открытие диалога удаления
+  // Открытие диалога удаления пользователя
   const openDeleteUserDialog = (user) => {
     setSelectedUser(user);
     setOpenDeleteDialog(true);
   };
-
+  
   // Сброс формы
   const resetForm = () => {
     setFormData({
       username: '',
+      password: '',
       firstName: '',
       lastName: '',
       email: '',
       phoneNumber: '',
-      password: '',
       role: 'student',
       faculty: '',
       specialization: '',
       studentId: ''
     });
-    setSelectedUser(null);
+    setFormError('');
   };
 
   // Получение цвета для роли пользователя
@@ -375,6 +325,8 @@ const UsersPage = () => {
     switch (role) {
       case 'admin':
         return 'error';
+      case 'moderator':
+        return 'warning';
       case 'student':
         return 'primary';
       default:
@@ -382,451 +334,460 @@ const UsersPage = () => {
     }
   };
 
-  return (
-    <Container maxWidth="lg">
-      <PageHeader 
-        title="Пайдаланушыларды басқару" 
-        subtitle="Жүйе пайдаланушыларын қарау, қосу, өңдеу және жою"
-      />
+  // Преобразование роли для отображения
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case 'admin':
+        return t('roles.admin', 'Администратор');
+      case 'moderator':
+        return t('roles.moderator', 'Модератор');
+      case 'student':
+        return t('roles.student', 'Студент');
+      default:
+        return role;
+    }
+  };
 
-      <Paper elevation={3} sx={{ mb: 4, p: 2 }}>
+  // Заголовки столбцов таблицы
+  const columns = [
+    { 
+      id: 'id', 
+      label: 'ID', 
+      width: 70 
+    },
+    { 
+      id: 'fullName', 
+      label: t('user.fullName', 'ФИО'), 
+      render: (value, row) => {
+        if (!row) return '-';
+        return row.lastName ? `${row.lastName} ${row.firstName || ''}` : '-';
+      }
+    },
+    { 
+      id: 'username', 
+      label: t('user.username', 'Имя пользователя') 
+    },
+    { 
+      id: 'email', 
+      label: t('user.email', 'Email') 
+    },
+    { 
+      id: 'role', 
+      label: t('user.role', 'Роль'),
+      render: (value, row) => {
+        if (!row || !row.role) return '-';
+        return (
+          <Chip 
+            label={getRoleLabel(row.role)} 
+            color={getRoleColor(row.role)} 
+            size="small" 
+          />
+        );
+      }
+    },
+    { 
+      id: 'actions', 
+      label: t('admin.actions', 'Действия'),
+      width: 150,
+      render: (value, row) => {
+        if (!row) return null;
+        return (
+          <Box>
+            <IconButton 
+              color="primary" 
+              onClick={() => openEditUserDialog(row)}
+              title={t('common.edit', 'Редактировать')}
+            >
+              <EditIcon />
+            </IconButton>
+            <IconButton 
+              color="error" 
+              onClick={() => openDeleteUserDialog(row)}
+              title={t('common.delete', 'Удалить')}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        );
+      }
+    },
+  ];
+
+  return (
+    <Container maxWidth="xl">
+      <PageHeader 
+        title={t('admin.users', 'Пользователи')} 
+        subtitle={t('admin.usersManagement', 'Управление пользователями системы')}
+      />
+      
+      <Paper sx={{ p: 2, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">Пайдаланушылар тізімі</Typography>
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Typography variant="h6">{t('admin.usersList', 'Список пользователей')}</Typography>
+          <Button
+            variant="contained"
+            color="primary"
             startIcon={<AddIcon />}
-            onClick={() => setOpenAddDialog(true)}
+            onClick={() => {
+              resetForm();
+              setOpenAddDialog(true);
+            }}
           >
-            Пайдаланушы қосу
+            {t('admin.addUser', 'Добавить пользователя')}
           </Button>
         </Box>
 
-        <TableContainer>
-          <Table sx={{ minWidth: 650 }} aria-label="users table">
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Аты-жөні</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Рөлі</TableCell>
-                <TableCell>Факультет</TableCell>
-                <TableCell>Мамандық</TableCell>
-                <TableCell>Әрекеттер</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">Жүктелуде...</TableCell>
-                </TableRow>
-              ) : users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">Пайдаланушылар табылмады</TableCell>
-                </TableRow>
-              ) : (
-                users
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.id}</TableCell>
-                      <TableCell>{user.firstName} {user.lastName}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={user.role} 
-                          color={getRoleColor(user.role)} 
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{user.faculty}</TableCell>
-                      <TableCell>{user.specialization}</TableCell>
-                      <TableCell>
-                        <IconButton 
-                          aria-label="edit" 
-                          color="primary"
-                          onClick={() => openEditUserDialog(user)}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton 
-                          aria-label="delete" 
-                          color="error"
-                          onClick={() => openDeleteUserDialog(user)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Box sx={{ mb: 2 }}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel id="role-filter-label">{t('user.role', 'Роль')}</InputLabel>
+              <Select
+                labelId="role-filter-label"
+                value={roleFilter}
+                label={t('user.role', 'Роль')}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <MenuItem value="all">{t('admin.filterAll', 'Все')}</MenuItem>
+                <MenuItem value="admin">{t('roles.admin', 'Администратор')}</MenuItem>
+                <MenuItem value="moderator">{t('roles.moderator', 'Модератор')}</MenuItem>
+                <MenuItem value="student">{t('roles.student', 'Студент')}</MenuItem>
+              </Select>
+            </FormControl>
+            
+            {roleFilter !== 'all' && (
+              <Button 
+                variant="outlined" 
+                size="small"
+                onClick={() => setRoleFilter('all')}
+              >
+                {t('admin.resetFilters', 'Сбросить')}
+              </Button>
+            )}
+            
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
+              {t('admin.totalUsers', 'Всего пользователей')}: {filteredUsers.length}
+            </Typography>
+          </Stack>
+        </Box>
         
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={users.length}
-          rowsPerPage={rowsPerPage}
+        <AdminTable
+          columns={columns}
+          data={filteredUsers}
+          loading={loading}
           page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Бет сайын:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
+          rowsPerPage={rowsPerPage}
+          handleChangePage={handleChangePage}
+          handleChangeRowsPerPage={handleChangeRowsPerPage}
+          emptyMessage={t('admin.noUsers', 'Нет пользователей')}
         />
       </Paper>
 
       {/* Диалог добавления пользователя */}
-      <Dialog open={openAddDialog} onClose={() => { setOpenAddDialog(false); setFormError(''); }} maxWidth="md" fullWidth>
-        <DialogTitle>Жаңа пайдаланушы қосу</DialogTitle>
+      <Dialog 
+        open={openAddDialog} 
+        onClose={() => !addUserLoading && setOpenAddDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>{t('admin.addUser', 'Добавить пользователя')}</DialogTitle>
         <DialogContent>
           {formError && (
-            <Alert 
-              severity="error" 
-              sx={{ mt: 2, mb: 2 }}
-              variant={formError.includes('email') ? "filled" : "standard"}
-            >
-              <AlertTitle sx={{ fontWeight: 600 }}>
-                {formError.includes('email') 
-                  ? 'Email қатесі: Email бұрыннан тіркелген' 
-                  : formError.includes('логин') 
-                    ? 'Логин қатесі: Логин бұрыннан тіркелген'
-                    : 'Пайдаланушы құру қатесі'}
-              </AlertTitle>
-              <Typography sx={{ mb: 1 }} variant="body1">
-                {formError}
-              </Typography>
-              {formError.includes('email') && (
-                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.15)', p: 1, borderRadius: 1 }}>
-                  <WarningIcon fontSize="small" sx={{ mr: 1, color: theme.palette.warning.light }} />
-                  <Typography variant="body2">
-                    <strong>Шешім:</strong> Басқа email пайдаланыңыз немесе пайдаланушының бар екенін тексеріңіз.
-                  </Typography>
-                </Box>
-              )}
-              {formError.includes('логин') && (
-                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.15)', p: 1, borderRadius: 1 }}>
-                  <WarningIcon fontSize="small" sx={{ mr: 1, color: theme.palette.warning.light }} />
-                  <Typography variant="body2">
-                    <strong>Шешім:</strong> Басқа логин таңдаңыз немесе пайдаланушының бар екенін тексеріңіз.
-                  </Typography>
-                </Box>
-              )}
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {formError}
             </Alert>
           )}
+          
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Логин"
+                label={t('user.firstName', 'Имя')}
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleFormChange}
+                required
+                margin="dense"
+              />
+              <TextField
+                fullWidth
+                label={t('user.lastName', 'Фамилия')}
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleFormChange}
+                required
+                margin="dense"
+              />
+              <TextField
+                fullWidth
+                label={t('user.username', 'Имя пользователя')}
                 name="username"
                 value={formData.username}
                 onChange={handleFormChange}
                 required
-                error={formError && formError.includes('логин')}
+                margin="dense"
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Құпия сөз"
+                label={t('user.password', 'Пароль')}
                 name="password"
                 type="password"
                 value={formData.password}
                 onChange={handleFormChange}
                 required
-                error={formError && formError.includes('құпия сөз')}
+                margin="dense"
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Аты"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleFormChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Тегі"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleFormChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Email"
+                label={t('user.email', 'Email')}
                 name="email"
                 type="email"
                 value={formData.email}
                 onChange={handleFormChange}
                 required
-                error={formError && formError.includes('email')}
+                margin="dense"
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Телефон"
+                label={t('user.phone', 'Телефон')}
                 name="phoneNumber"
                 value={formData.phoneNumber}
                 onChange={handleFormChange}
+                margin="dense"
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <TextField
-                fullWidth
                 select
-                label="Рөлі"
+                fullWidth
+                label={t('user.role', 'Роль')}
                 name="role"
                 value={formData.role}
                 onChange={handleFormChange}
+                required
+                margin="dense"
               >
                 <MenuItem value="student">Студент</MenuItem>
+                <MenuItem value="moderator">Модератор</MenuItem>
                 <MenuItem value="admin">Әкімші</MenuItem>
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Факультет"
-                name="faculty"
-                value={formData.faculty}
-                onChange={handleFormChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Мамандық"
-                name="specialization"
-                value={formData.specialization}
-                onChange={handleFormChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Студент ID"
-                name="studentId"
-                value={formData.studentId}
-                onChange={handleFormChange}
-              />
-            </Grid>
+            
+            {/* Дополнительные поля для студентов */}
+            {formData.role === 'student' && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label={t('user.faculty', 'Факультет')}
+                    name="faculty"
+                    value={formData.faculty}
+                    onChange={handleFormChange}
+                    margin="dense"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label={t('user.specialization', 'Специальность')}
+                    name="specialization"
+                    value={formData.specialization}
+                    onChange={handleFormChange}
+                    margin="dense"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label={t('user.studentId', 'ID студента')}
+                    name="studentId"
+                    value={formData.studentId}
+                    onChange={handleFormChange}
+                    margin="dense"
+                  />
+                </Grid>
+              </>
+            )}
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button 
-            onClick={() => { 
-              setOpenAddDialog(false); 
-              setFormError(''); 
-            }}
+            onClick={() => setOpenAddDialog(false)} 
             disabled={addUserLoading}
           >
-            Бас тарту
+            {t('common.cancel', 'Отмена')}
           </Button>
           <Button 
             onClick={handleAddUser} 
-            variant="contained" 
+            variant="contained"
             color="primary"
             disabled={addUserLoading}
           >
-            {addUserLoading ? 'Қосылуда...' : 'Қосу'}
+            {addUserLoading ? t('common.loading', 'Загрузка...') : t('common.add', 'Добавить')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Диалог редактирования пользователя */}
-      <Dialog open={openEditDialog} onClose={() => { setOpenEditDialog(false); setFormError(''); }} maxWidth="md" fullWidth>
-        <DialogTitle>Пайдаланушыны өңдеу</DialogTitle>
+      <Dialog 
+        open={openEditDialog} 
+        onClose={() => !editUserLoading && setOpenEditDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>{t('admin.editUser', 'Редактировать пользователя')}</DialogTitle>
         <DialogContent>
           {formError && (
-            <Alert 
-              severity="error" 
-              sx={{ mt: 2, mb: 2 }}
-              variant={formError.includes('email') ? "filled" : "standard"}
-            >
-              <AlertTitle sx={{ fontWeight: 600 }}>
-                {formError.includes('email') 
-                  ? 'Email қатесі: Email бұрыннан тіркелген' 
-                  : formError.includes('логин') || formError.includes('username')
-                    ? 'Логин қатесі: Логин бұрыннан тіркелген'
-                    : 'Пайдаланушы өңдеу қатесі'}
-              </AlertTitle>
-              <Typography sx={{ mb: 1 }} variant="body1">
-                {formError}
-              </Typography>
-              {formError.includes('email') && (
-                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.15)', p: 1, borderRadius: 1 }}>
-                  <WarningIcon fontSize="small" sx={{ mr: 1, color: theme.palette.warning.light }} />
-                  <Typography variant="body2">
-                    <strong>Шешім:</strong> Басқа email пайдаланыңыз немесе пайдаланушының бар екенін тексеріңіз.
-                  </Typography>
-                </Box>
-              )}
-              {(formError.includes('логин') || formError.includes('username')) && (
-                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.15)', p: 1, borderRadius: 1 }}>
-                  <WarningIcon fontSize="small" sx={{ mr: 1, color: theme.palette.warning.light }} />
-                  <Typography variant="body2">
-                    <strong>Шешім:</strong> Басқа логин таңдаңыз немесе пайдаланушының бар екенін тексеріңіз.
-                  </Typography>
-                </Box>
-              )}
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {formError}
             </Alert>
           )}
+          
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Логин"
-                name="username"
-                value={formData.username}
-                onChange={handleFormChange}
-                required
-                error={formError && (formError.includes('логин') || formError.includes('username'))}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Жаңа құпия сөз (өзгертпеу үшін бос қалдырыңыз)"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleFormChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Аты"
+                label={t('user.firstName', 'Имя')}
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleFormChange}
                 required
+                margin="dense"
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Тегі"
+                label={t('user.lastName', 'Фамилия')}
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleFormChange}
                 required
+                margin="dense"
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Email"
+                label={t('user.username', 'Имя пользователя')}
+                name="username"
+                value={formData.username}
+                onChange={handleFormChange}
+                required
+                margin="dense"
+                disabled
+              />
+              <TextField
+                fullWidth
+                label={t('user.password', 'Новый пароль')}
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleFormChange}
+                helperText={t('admin.passwordHint', 'Оставьте пустым, если не хотите менять пароль')}
+                margin="dense"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label={t('user.email', 'Email')}
                 name="email"
                 type="email"
                 value={formData.email}
                 onChange={handleFormChange}
                 required
-                error={formError && formError.includes('email')}
+                margin="dense"
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Телефон"
+                label={t('user.phone', 'Телефон')}
                 name="phoneNumber"
                 value={formData.phoneNumber}
                 onChange={handleFormChange}
+                margin="dense"
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <TextField
-                fullWidth
                 select
-                label="Рөлі"
+                fullWidth
+                label={t('user.role', 'Роль')}
                 name="role"
                 value={formData.role}
                 onChange={handleFormChange}
+                required
+                margin="dense"
               >
                 <MenuItem value="student">Студент</MenuItem>
+                <MenuItem value="moderator">Модератор</MenuItem>
                 <MenuItem value="admin">Әкімші</MenuItem>
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Факультет"
-                name="faculty"
-                value={formData.faculty}
-                onChange={handleFormChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Мамандық"
-                name="specialization"
-                value={formData.specialization}
-                onChange={handleFormChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Студент ID"
-                name="studentId"
-                value={formData.studentId}
-                onChange={handleFormChange}
-              />
-            </Grid>
+            
+            {/* Дополнительные поля для студентов */}
+            {formData.role === 'student' && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label={t('user.faculty', 'Факультет')}
+                    name="faculty"
+                    value={formData.faculty}
+                    onChange={handleFormChange}
+                    margin="dense"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label={t('user.specialization', 'Специальность')}
+                    name="specialization"
+                    value={formData.specialization}
+                    onChange={handleFormChange}
+                    margin="dense"
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label={t('user.studentId', 'ID студента')}
+                    name="studentId"
+                    value={formData.studentId}
+                    onChange={handleFormChange}
+                    margin="dense"
+                  />
+                </Grid>
+              </>
+            )}
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button 
-            onClick={() => { 
-              setOpenEditDialog(false); 
-              setFormError(''); 
-            }}
+            onClick={() => setOpenEditDialog(false)} 
             disabled={editUserLoading}
           >
-            Бас тарту
+            {t('common.cancel', 'Отмена')}
           </Button>
           <Button 
             onClick={handleEditUser} 
-            variant="contained" 
+            variant="contained"
             color="primary"
             disabled={editUserLoading}
           >
-            {editUserLoading ? 'Сақталуда...' : 'Сақтау'}
+            {editUserLoading ? t('common.loading', 'Загрузка...') : t('common.save', 'Сохранить')}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Диалог удаления пользователя */}
-      <Dialog
+      {/* Диалог подтверждения удаления */}
+      <ConfirmDialog
         open={openDeleteDialog}
-        onClose={() => setOpenDeleteDialog(false)}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">Жоюды растау</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            {selectedUser?.name} пайдаланушысын жоюға сенімдісіз бе? Бұл әрекетті болдырмау мүмкін емес.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)}>Бас тарту</Button>
-          <Button onClick={handleDeleteUser} color="error" autoFocus>
-            Жою
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title={t('admin.deleteUser', 'Удалить пользователя')}
+        message={
+          selectedUser 
+            ? t(
+                'admin.deleteUserConfirm', 
+                { name: `${selectedUser.firstName} ${selectedUser.lastName}` },
+                'Вы уверены, что хотите удалить пользователя {{name}}? Это действие нельзя будет отменить.'
+              )
+            : t('admin.deleteUserConfirmGeneric', 'Вы уверены, что хотите удалить этого пользователя? Это действие нельзя будет отменить.')
+        }
+        onConfirm={handleDeleteUser}
+        onCancel={() => setOpenDeleteDialog(false)}
+      />
     </Container>
   );
 };

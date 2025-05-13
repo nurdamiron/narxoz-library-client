@@ -9,6 +9,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Typography,
@@ -68,6 +69,7 @@ const NotificationsPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const { t } = useTranslation();
   
   const { 
     notifications, 
@@ -95,10 +97,10 @@ const NotificationsPage = () => {
   const handleMarkAsRead = async (id) => {
     try {
       await markAsRead(id);
-      success('Хабарлама оқылды деп белгіленді');
+      success(t('notifications.markReadSuccess', 'Хабарлама оқылды деп белгіленді'));
     } catch (err) {
-      console.error('Хабарламаны белгілеу қатесі:', err);
-      showError('Хабарламаны оқылды деп белгілеу кезінде қате орын алды');
+      console.error(t('notifications.markReadErrorLog', 'Хабарламаны белгілеу қатесі:'), err);
+      showError(t('notifications.markReadError', 'Хабарламаны оқылды деп белгілеу кезінде қате орын алды'));
     }
   };
 
@@ -108,10 +110,10 @@ const NotificationsPage = () => {
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead();
-      success('Барлық хабарламалар оқылды деп белгіленді');
+      success(t('notifications.markAllReadSuccess', 'Барлық хабарламалар оқылды деп белгіленді'));
     } catch (err) {
-      console.error('Барлық хабарламаларды белгілеу қатесі:', err);
-      showError('Барлық хабарламаларды оқылды деп белгілеу кезінде қате орын алды');
+      console.error(t('notifications.markAllReadErrorLog', 'Барлық хабарламаларды белгілеу қатесі:'), err);
+      showError(t('notifications.markAllReadError', 'Барлық хабарламаларды оқылды деп белгілеу кезінде қате орын алды'));
     }
   };
 
@@ -124,10 +126,10 @@ const NotificationsPage = () => {
     try {
       setDeleting(true);
       await deleteNotification(id);
-      success('Хабарлама жойылды');
+      success(t('notifications.deleteSuccess', 'Хабарлама жойылды'));
     } catch (err) {
-      console.error('Хабарламаны жою қатесі:', err);
-      showError('Хабарламаны жою кезінде қате орын алды');
+      console.error(t('notifications.deleteErrorLog', 'Хабарламаны жою қатесі:'), err);
+      showError(t('notifications.deleteError', 'Хабарламаны жою кезінде қате орын алды'));
     } finally {
       setDeleting(false);
     }
@@ -140,10 +142,10 @@ const NotificationsPage = () => {
     try {
       setRefreshing(true);
       await fetchNotifications();
-      success('Хабарламалар жаңартылды');
+      success(t('notifications.refreshSuccess', 'Хабарламалар жаңартылды'));
     } catch (err) {
-      console.error('Хабарламаларды жаңарту қатесі:', err);
-      showError('Хабарламаларды жаңарту кезінде қате орын алды');
+      console.error(t('notifications.refreshErrorLog', 'Хабарламаларды жаңарту қатесі:'), err);
+      showError(t('notifications.refreshError', 'Хабарламаларды жаңарту кезінде қате орын алды'));
     } finally {
       setRefreshing(false);
     }
@@ -287,29 +289,24 @@ const NotificationsPage = () => {
               component="h1"
               sx={{ fontWeight: 'bold' }}
             >
-              Хабарламалар
+              {t('notifications.title', 'Хабарламалар')}
             </Typography>
             
-            {unreadCount > 0 && (
-              <Typography 
-                variant="subtitle1" 
-                color="primary"
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  fontWeight: 'medium'
-                }}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: isTablet ? 2 : 0 }}>
+              <Badge 
+                badgeContent={unreadCount} 
+                color="primary" 
+                sx={{ mr: 1 }}
               >
-                <Badge 
-                  badgeContent={unreadCount} 
-                  color="primary"
-                  sx={{ mr: 1 }}
-                >
-                  <UnreadIcon fontSize="small" />
-                </Badge>
-                {unreadCount} оқылмаған хабарлама
+                <NotificationsIcon color="action" />
+              </Badge>
+              <Typography variant="body2" color="text.secondary">
+                {unreadCount > 0 
+                  ? t('notifications.unreadCount', { count: unreadCount }, '{{count}} оқылмаған хабарлама')
+                  : t('notifications.allRead', 'Барлық хабарламалар оқылды')
+                }
               </Typography>
-            )}
+            </Box>
           </Box>
           
           {/* Функционалдық батырмалар */}
@@ -320,7 +317,7 @@ const NotificationsPage = () => {
               width: { xs: '100%', sm: 'auto' }
             }}
           >
-            <Tooltip title="Жаңарту">
+            <Tooltip title={t('notifications.refresh', 'Жаңарту')}>
               <IconButton 
                 onClick={handleRefresh}
                 disabled={refreshing}
@@ -345,7 +342,7 @@ const NotificationsPage = () => {
                 startIcon={<CheckCircleIcon />}
                 fullWidth={isMobile}
               >
-                Барлығын оқылды деп белгілеу
+                {t('notifications.markAllAsRead', 'Барлығын оқылды деп белгілеу')}
               </Button>
             )}
           </Box>
@@ -360,7 +357,7 @@ const NotificationsPage = () => {
               borderRadius: 2 
             }}
           >
-            {error}
+            {t('notifications.loadError', 'Хабарламаларды жүктеу кезінде қате орын алды')}
           </Alert>
         )}
         
@@ -383,18 +380,20 @@ const NotificationsPage = () => {
               textColor="primary"
             >
               <Tab 
-                label={`Барлығы (${notifications.length})`}
+                label={t('notifications.all', 'Барлығы')}
                 icon={<NotificationsIcon />}
                 iconPosition="start"
               />
               <Tab 
-                label={`Оқылмаған (${unreadCount})`}
-                icon={<UnreadIcon />}
-                iconPosition="start"
+                label={
+                  <Badge badgeContent={unreadCount} color="primary">
+                    {t('notifications.unread', 'Оқылмағандар')}
+                  </Badge>
+                } 
                 disabled={unreadCount === 0}
               />
               <Tab 
-                label={`Оқылған (${notifications.length - unreadCount})`}
+                label={t('notifications.read', 'Оқылғандар')}
                 icon={<ReadIcon />}
                 iconPosition="start"
                 disabled={notifications.length - unreadCount === 0}
@@ -440,7 +439,7 @@ const NotificationsPage = () => {
               variant="h5"
               sx={{ fontWeight: 'bold', mb: 1 }}
             >
-              Хабарламалар жоқ
+              {t('notifications.noNotifications', 'Хабарламалар жоқ')}
             </Typography>
             
             <Typography 
@@ -448,7 +447,7 @@ const NotificationsPage = () => {
               color="text.secondary"
               sx={{ maxWidth: 400, mx: 'auto' }}
             >
-              Сізде әзірге хабарламалар жоқ. Кітаптарды алғанда, мерзімі өткенде немесе жүйеде өзгерістер болғанда хабарламалар пайда болады.
+              {t('notifications.emptyDescription', 'Сізде әлі хабарламалар жоқ')}
             </Typography>
             
             <Button
@@ -458,7 +457,7 @@ const NotificationsPage = () => {
               sx={{ mt: 3 }}
               onClick={() => window.history.back()}
             >
-              Артқа қайту
+              {t('common.back', 'Артқа қайту')}
             </Button>
           </Card>
         ) : (
@@ -473,10 +472,15 @@ const NotificationsPage = () => {
                   }}
                 >
                   <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                    Бұл санатта хабарламалар жоқ
+                    {t('notifications.noNotifications', 'Хабарламалар жоқ')}
                   </Typography>
                   <Typography variant="body2">
-                    Басқа санатты таңдаңыз немесе хабарламаларды жаңартыңыз
+                    {activeTab === 1 
+                      ? t('notifications.noUnreadNotifications', 'Оқылмаған хабарламалар жоқ') 
+                      : activeTab === 2 
+                      ? t('notifications.noReadNotifications', 'Оқылған хабарламалар жоқ')
+                      : t('notifications.emptyDescription', 'Сізде әлі хабарламалар жоқ')
+                    }
                   </Typography>
                 </Alert>
               </Fade>
@@ -604,7 +608,7 @@ const NotificationsPage = () => {
                             {/* Әрекет түймелері */}
                             <ListItemSecondaryAction sx={{ top: 'auto', bottom: 16, right: 16 }}>
                               {!notification.read && (
-                                <Tooltip title="Оқылды деп белгілеу">
+                                <Tooltip title={t('notifications.markAsRead', 'Оқылды деп белгілеу')}>
                                   <IconButton 
                                     edge="end" 
                                     onClick={() => handleMarkAsRead(notification.id)}
@@ -623,7 +627,7 @@ const NotificationsPage = () => {
                                 </Tooltip>
                               )}
                               
-                              <Tooltip title="Жою">
+                              <Tooltip title={t('common.delete', 'Жою')}>
                                 <IconButton 
                                   edge="end" 
                                   onClick={() => handleDeleteNotification(notification.id)}
@@ -668,7 +672,7 @@ const NotificationsPage = () => {
           }}
         >
           <CircularProgress color="primary" sx={{ mb: 2 }} />
-          <Typography variant="body2">Хабарлама жойылуда...</Typography>
+          <Typography variant="body2">{t('notifications.deleteLoading', 'Хабарлама жойылуда...')}</Typography>
         </Paper>
       </Backdrop>
     </motion.div>

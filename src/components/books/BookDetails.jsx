@@ -55,6 +55,7 @@ import {
   Search as SearchIcon,
   Visibility as VisibilityIcon
 } from '@mui/icons-material';
+import { getBookCoverUrl } from '../../utils';
 
 import borrowService from '../services/borrowService';
 
@@ -73,15 +74,24 @@ const BookDetails = ({ book }) => {
   const [coverZoomed, setCoverZoomed] = useState(false);
 
   // Бетбелгіге қосу/алып тастау функциясы
-  const handleBookmarkToggle = () => {
-    setBookmarked(!bookmarked);
-    setSnackbarMessage(
-      bookmarked
-        ? 'Кітап бетбелгілерден алынып тасталды'
-        : 'Кітап бетбелгілерге қосылды'
-    );
-    setSnackbarSeverity('success');
-    setSnackbarOpen(true);
+  const handleBookmarkToggle = async () => {
+    try {
+      // This component needs to be updated to call the actual API
+      // Here we're just toggling the state locally for now
+      setBookmarked(!bookmarked);
+      setSnackbarMessage(
+        bookmarked
+          ? 'Кітап бетбелгілерден алынып тасталды'
+          : 'Кітап бетбелгілерге қосылды'
+      );
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (err) {
+      console.error('Error toggling bookmark:', err);
+      setSnackbarMessage('Бетбелгіні өзгерту кезінде қате орын алды');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
   };
 
   // Сілтемені көшіру функциясы
@@ -103,33 +113,32 @@ const BookDetails = ({ book }) => {
   };
 
   // Кітапты алуды растау
-  // Кітапты алуды растау
-const handleConfirmBorrow = async () => {
-  try {
-    // Кітапты алу API сұрауы
-    await borrowService.borrowBook({ bookId: book.id });
-    
-    setDialogOpen(false);
-    setSnackbarMessage('Кітап сәтті тапсырылды! Оны кітапханадан 3 күн ішінде алыңыз.');
-    setSnackbarSeverity('success');
-    setSnackbarOpen(true);
-  } catch (err) {
-    console.error('Кітапты алу қатесі:', err);
-    
-    // Сервер қайтарған қате хабарламасын көрсету
-    if (err.response && err.response.data && err.response.data.error) {
+  const handleConfirmBorrow = async () => {
+    try {
+      // Кітапты алу API сұрауы
+      await borrowService.borrowBook({ bookId: book.id });
+      
       setDialogOpen(false);
-      setSnackbarMessage(err.response.data.error);
-      setSnackbarSeverity('error');
+      setSnackbarMessage('Кітап сәтті тапсырылды! Оны кітапханадан 3 күн ішінде алыңыз.');
+      setSnackbarSeverity('success');
       setSnackbarOpen(true);
-    } else {
-      setDialogOpen(false);
-      setSnackbarMessage('Кітапты алу кезінде қате орын алды');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
+    } catch (err) {
+      console.error('Кітапты алу қатесі:', err);
+      
+      // Сервер қайтарған қате хабарламасын көрсету
+      if (err.response && err.response.data && err.response.data.error) {
+        setDialogOpen(false);
+        setSnackbarMessage(err.response.data.error);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      } else {
+        setDialogOpen(false);
+        setSnackbarMessage('Кітапты алу кезінде қате орын алды');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
     }
-  }
-};
+  };
 
   // Хабарламаны жабу
   const handleSnackbarClose = () => {
@@ -290,7 +299,7 @@ const handleConfirmBorrow = async () => {
                 )}
                 <CardMedia
                   component="img"
-                  image={book.cover || 'https://via.placeholder.com/400x600?text=Мұқаба+жоқ'}
+                  image={getBookCoverUrl(book.cover)}
                   alt={book.title}
                   onLoad={handleImageLoad}
                   sx={{
@@ -975,7 +984,7 @@ const handleConfirmBorrow = async () => {
                 }}
               >
                 <img 
-                  src={book.cover || 'https://via.placeholder.com/100x150?text=Мұқаба+жоқ'} 
+                  src={getBookCoverUrl(book.cover) || 'https://via.placeholder.com/100x150?text=Мұқаба+жоқ'} 
                   alt={book.title}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
@@ -1073,7 +1082,7 @@ const handleConfirmBorrow = async () => {
             </IconButton>
             <Box 
               component="img"
-              src={book.cover || 'https://via.placeholder.com/800x1200?text=Мұқаба+жоқ'}
+              src={getBookCoverUrl(book.cover) || 'https://via.placeholder.com/800x1200?text=Мұқаба+жоқ'}
               alt={book.title}
               sx={{
                 width: '100%',

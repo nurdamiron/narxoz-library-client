@@ -131,11 +131,6 @@ export const AuthProvider = ({ children }) => {
             // Если успешно получили данные, устанавливаем пользователя
             setUser(response.data);
             setIsAuthenticated(true);
-            
-            // Проверяем, является ли пользователь админом для перенаправления
-            if (response.data.role === 'admin' && !window.location.pathname.includes('/admin')) {
-              window.location.href = '/admin';
-            }
           } else {
             // Если запрос не удался, выходим из системы
             logout();

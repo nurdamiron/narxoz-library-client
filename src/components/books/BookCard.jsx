@@ -36,12 +36,14 @@ import {
   VisibilityOff as VisibilityOffIcon,
   CalendarToday as CalendarIcon,
   Language as LanguageIcon,
-  InfoOutlined as InfoIcon
+  InfoOutlined as InfoIcon,
+  BrokenImage as BrokenImageIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
 // Локальные компоненты
 import BookRating from './BookRating';
+import { getBookCoverUrl } from '../../utils';
 
 /**
  * BookCard компоненті
@@ -68,6 +70,7 @@ const BookCard = ({
   // Күйлер
   const [expanded, setExpanded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   // Кітап объектісі бос болса немесе жүктелу күйінде болса
   if (isLoading || !book) {
@@ -133,12 +136,51 @@ const BookCard = ({
     setExpanded(!expanded);
   };
   
-  // Мұқаба URL
-  const coverUrl = book.cover
-    ? book.cover.startsWith('/uploads')
-      ? `${window.location.protocol}//${window.location.host.replace(/:\d+/, ':5001')}${book.cover}`
-      : book.cover
-    : 'https://via.placeholder.com/300x450?text=Мұқаба+жоқ';
+  // Кітап мұқаба URL
+  // For debugging purposes - log the cover URL
+  // Force a direct URL for NarXoz book
+  const coverUrl = book.title === 'NarXoz' ? 
+    'http://localhost:5001/api/narxoz-cover' : 
+    getBookCoverUrl(book.cover);
+  
+  // Debug our cover URL
+  console.log(`📗 Book cover URL for "${book.title}" (ID: ${book.id}): ${coverUrl}`);
+  console.log(`📙 Original cover path: ${book.cover}`);
+  
+  // Расширенное логирование для отладки
+  console.group(`📚 Данные книги ${book.id}: ${book.title}`);
+  
+  if (book.relativeCoverPath) {
+    console.log(`🔗 Относительный путь обложки: ${book.relativeCoverPath}`);
+  }
+  
+  if (book.coverFileExists !== undefined) {
+    console.log(`✅ Файл обложки существует: ${book.coverFileExists ? 'Да' : 'Нет'}`);
+  }
+  
+  if (book.coverFileSize !== undefined) {
+    console.log(`📦 Размер файла обложки: ${book.coverFileSize} байт`);
+  }
+  
+  // Try direct access to the book-cover-debug endpoint for NarXoz
+  if (book.title === 'NarXoz' && book.cover && book.cover.includes('/uploads/covers/')) {
+    const filename = book.cover.split('/uploads/covers/')[1];
+    const debugUrl = `http://localhost:5001/api/book-cover-debug/${filename}`;
+    console.log(`🔍 Trying direct debug URL for NarXoz: ${debugUrl}`);
+  }
+  
+  // Проверка доступности файла
+  if (coverUrl.startsWith('http')) {
+    fetch(coverUrl, { method: 'HEAD' })
+      .then(response => {
+        console.log(`🌐 Проверка доступности URL: ${coverUrl} - ${response.status} ${response.ok ? 'OK' : 'FAILED'}`);
+      })
+      .catch(error => {
+        console.error(`❌ Ошибка при проверке доступности URL: ${coverUrl}`, error);
+      });
+  }
+  
+  console.groupEnd();
   
   // Кітаптың қысқаша сипаттамасы
   const shortDescription = book.description
@@ -152,7 +194,47 @@ const BookCard = ({
   
   // Мұқаба суретінің жүктелу оқиғасы
   const handleImageLoad = () => {
+    console.log(`✅ Image loaded successfully for book: ${book.title}`); 
     setImageLoaded(true);
+    setImageError(false);
+  };
+
+  // Обработка ошибки загрузки изображения
+  const handleImageError = (e) => {
+    // Здесь мы можем напрямую изменить src элемента изображения
+    // вместо установки состояния ошибки
+    if (e.target && e.target.src) {
+      console.error(`Ошибка загрузки обложки книги: ${book.title}, URL: ${e.target.src}`);
+      
+      // Special handling for NarXoz book
+      if (book.title === 'NarXoz') {
+        e.target.src = 'https://via.placeholder.com/200x300?text=NarXoz';
+        console.log('✅ Заменяем обложку NarXoz на placeholder');
+        setImageLoaded(true);
+        return;
+      }
+      
+      // Проверяем, не является ли текущий src уже запасным вариантом
+      if (!e.target.src.includes('placeholder.com')) {
+        // Try direct access to the book-cover-debug endpoint if it's a path with filename
+        if (book.cover && book.cover.includes('/uploads/covers/')) {
+          const filename = book.cover.split('/uploads/covers/')[1];
+          e.target.src = `http://localhost:5001/api/book-cover-debug/${filename}`;
+          console.log(`✅ Пробуем использовать прямой debug-URL: ${e.target.src}`);
+          return;
+        }
+        
+        // Заменяем src на запасной вариант
+        e.target.src = 'https://via.placeholder.com/200x300?text=No+Cover';
+        console.log('✅ Заменяем недоступное изображение на placeholder');
+        return;
+      }
+    }
+    
+    // Если не удалось напрямую исправить, используем state
+    setImageError(true);
+    setImageLoaded(true); // Убираем скелетон при ошибке загрузки
+    console.error(`Ошибка загрузки обложки книги: ${book.title}, Original: ${book.cover}`);
   };
 
   return (
@@ -205,22 +287,69 @@ const BookCard = ({
                 }}
               />
             )}
-            <CardMedia
-              component="img"
-              image={coverUrl}
-              alt={book.title}
-              onLoad={handleImageLoad}
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                opacity: imageLoaded ? 1 : 0,
-                transition: 'opacity 0.3s ease-in-out'
-              }}
-            />
+            
+            {imageError ? (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: alpha(theme.palette.background.paper, 0.9),
+                  color: theme.palette.text.secondary,
+                }}
+              >
+                <BrokenImageIcon sx={{ fontSize: 48, mb: 1 }} />
+                <Typography variant="caption" align="center" sx={{ px: 2 }}>
+                  Мұқаба жүктелмеді
+                </Typography>
+                {/* Детали ошибки для отладки */}
+                <Typography variant="caption" align="center" sx={{ 
+                  px: 2, 
+                  fontSize: '0.6rem', 
+                  color: 'text.disabled',
+                  display: 'block',
+                  mt: 1
+                }}>
+                  {book.title} (ID: {book.id})
+                </Typography>
+                <Typography variant="caption" align="center" sx={{ 
+                  px: 2, 
+                  fontSize: '0.6rem', 
+                  color: 'error.light',
+                  display: 'block',
+                  wordBreak: 'break-all'
+                }}>
+                  {book.cover || 'Нет данных об обложке'}
+                </Typography>
+              </Box>
+            ) : (
+              <CardMedia
+                component="img"
+                image={coverUrl}
+                alt={book.title}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  opacity: imageLoaded ? 1 : 0,
+                  transition: 'opacity 0.3s ease-in-out',
+                  // Добавляем правило для обхода CORS
+                  crossOrigin: 'anonymous',
+                  backgroundColor: 'background.paper' // Add background color to help with visibility
+                }}
+              />
+            )}
             
             {/* Категория чипі */}
             {categoryName && (

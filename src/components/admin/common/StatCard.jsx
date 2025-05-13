@@ -1,5 +1,6 @@
 import React from 'react';
 import { Paper, Box, Typography, Avatar, useTheme, alpha } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Компонент карточки статистики для админ-панели
@@ -11,9 +12,25 @@ import { Paper, Box, Typography, Avatar, useTheme, alpha } from '@mui/material';
  * @param {React.ReactNode} props.icon - Иконка
  * @param {string} props.color - Цвет (primary, secondary, success, error, warning, info)
  * @param {Function} props.onClick - Обработчик клика (опционально)
+ * @param {string} props.titleKey - Ключ для локализации заголовка (опционально)
+ * @param {string} props.subtitleKey - Ключ для локализации подзаголовка (опционально)
  */
-const StatCard = ({ title, value, subtitle, icon, color = 'primary', onClick }) => {
+const StatCard = ({ 
+  title, 
+  value, 
+  subtitle, 
+  icon, 
+  color = 'primary', 
+  onClick,
+  titleKey,
+  subtitleKey
+}) => {
   const theme = useTheme();
+  const { t } = useTranslation();
+  
+  // Определяем отображаемые тексты с учетом локализации
+  const displayTitle = titleKey ? t(titleKey) : title;
+  const displaySubtitle = subtitleKey ? t(subtitleKey) : subtitle;
   
   // Определяем цвет на основе переданного параметра
   const getColor = () => {
@@ -58,7 +75,7 @@ const StatCard = ({ title, value, subtitle, icon, color = 'primary', onClick }) 
         </Avatar>
         <Box>
           <Typography variant="h6" color="text.secondary" fontSize={'0.875rem'}>
-            {title}
+            {displayTitle}
           </Typography>
           <Typography variant="h4" fontWeight="bold" color={cardColor}>
             {value}
@@ -66,9 +83,9 @@ const StatCard = ({ title, value, subtitle, icon, color = 'primary', onClick }) 
         </Box>
       </Box>
       
-      {subtitle && (
+      {displaySubtitle && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {subtitle}
+          {displaySubtitle}
         </Typography>
       )}
     </Paper>

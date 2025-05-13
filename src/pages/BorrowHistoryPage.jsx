@@ -9,6 +9,7 @@
  */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -87,6 +88,7 @@ import borrowService from '../services/borrowService';
 import bookService from '../services/bookService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getBookCoverUrl } from '../utils';
 
 /**
  * BorrowHistoryPage компоненті - жақсартылған нұсқа
@@ -100,6 +102,7 @@ const BorrowHistoryPage = () => {
   const { success, error: showError } = useToast();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const { t } = useTranslation();
   
   // Күйлер
   const [tabValue, setTabValue] = useState(0);
@@ -169,12 +172,12 @@ const BorrowHistoryPage = () => {
       const response = await borrowService.getUserBorrows();
       setBorrows(response.data);
     } catch (err) {
-      console.error('Қарыз тарихын жүктеу қатесі:', err);
-      setError('Қарыз тарихын жүктеу кезінде қате орын алды');
+      console.error(t('borrowHistory.loadErrorLog'), err);
+      setError(t('borrowHistory.loadError'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
   
   // Бетті жүктегенде қарыздарды алу
   useEffect(() => {
@@ -208,32 +211,35 @@ const BorrowHistoryPage = () => {
   };
   
   /**
-   * Кітапты қайтару
+   * Кітапты қайтаруды өңдеу
    */
   const handleReturnBook = async () => {
-    if (!returnBorrowId) return;
-    
     try {
       setReturnLoading(true);
       
-      // API арқылы кітапты қайтару
-      await borrowService.returnBook(returnBorrowId);
+      // Бэкендке қайтару сұранысын жіберу
+      const response = await borrowService.returnBook(returnBorrowId);
       
-      // Диалогты жабу
-      setReturnDialogOpen(false);
-      
-      // Сәтті хабарламаны көрсету
-      showMessage('Кітап сәтті қайтарылды!', 'success');
-      
-      // Қарыз тізімін жаңарту
-      await fetchBorrows();
+      if (response.success) {
+        setReturnSuccess(true);
+        success(t('borrowHistory.returnSuccess'));
+        
+        // Қарыздарды қайта жүктеу
+        fetchBorrows();
+        
+        // Диалогтағы "жабу" түймесіне автоматты түрде басуды кешіктіру
+        setTimeout(() => {
+          handleCloseReturnDialog();
+          setReturnSuccess(false);
+        }, 2000);
+      } else {
+        showError(t('borrowHistory.returnError'));
+      }
     } catch (err) {
-      console.error('Кітапты қайтару қатесі:', err);
-      showMessage('Кітапты қайтару кезінде қате орын алды', 'error');
+      console.error(t('borrowHistory.returnErrorLog'), err);
+      showError(t('borrowHistory.returnErrorDetails') + err.message);
     } finally {
       setReturnLoading(false);
-      setReturnBorrowId(null);
-      setSelectedBorrow(null);
     }
   };
   
@@ -256,32 +262,35 @@ const BorrowHistoryPage = () => {
   };
   
   /**
-   * Мерзімді ұзарту
+   * Мерзімді ұзартуды өңдеу
    */
   const handleExtendBorrow = async () => {
-    if (!extendBorrowId) return;
-    
     try {
       setExtendLoading(true);
       
-      // API арқылы мерзімді ұзарту
-      await borrowService.extendBorrow(extendBorrowId);
+      // Бэкендке ұзарту сұранысын жіберу
+      const response = await borrowService.extendBorrow(extendBorrowId);
       
-      // Диалогты жабу
-      setExtendDialogOpen(false);
-      
-      // Сәтті хабарламаны көрсету
-      showMessage('Қайтару мерзімі сәтті ұзартылды!', 'success');
-      
-      // Қарыз тізімін жаңарту
-      await fetchBorrows();
+      if (response.success) {
+        setExtendSuccess(true);
+        success(t('borrowHistory.extendSuccess'));
+        
+        // Қарыздарды қайта жүктеу
+        fetchBorrows();
+        
+        // Диалогты автоматты түрде жабу
+        setTimeout(() => {
+          handleCloseExtendDialog();
+          setExtendSuccess(false);
+        }, 2000);
+      } else {
+        showError(t('borrowHistory.extendError'));
+      }
     } catch (err) {
-      console.error('Мерзімді ұзарту қатесі:', err);
-      showMessage('Мерзімді ұзарту кезінде қате орын алды', 'error');
+      console.error(t('borrowHistory.extendErrorLog'), err);
+      showError(t('borrowHistory.extendErrorDetails') + err.message);
     } finally {
       setExtendLoading(false);
-      setExtendBorrowId(null);
-      setSelectedBorrow(null);
     }
   };
   
@@ -291,10 +300,10 @@ const BorrowHistoryPage = () => {
   const handleAddToBookmarks = async (bookId) => {
     try {
       await bookService.addToBookmarks(bookId);
-      showMessage('Кітап бетбелгіге қосылды', 'success');
+      showMessage(t('books.bookmarkAdded'), 'success');
     } catch (err) {
-      console.error('Бетбелгіге қосу қатесі:', err);
-      showMessage('Кітапты бетбелгіге қосу кезінде қате орын алды', 'error');
+      console.error(`${t('books.bookmarkError')}:`, err);
+      showMessage(t('books.bookmarkError'), 'error');
     }
   };
   
@@ -330,9 +339,17 @@ const BorrowHistoryPage = () => {
    * Кітап мұқабасының URL-ін алу
    */
   const getCoverUrl = (book) => {
-    return book?.cover
-      ? `/uploads/books/${book.cover}`
-      : '/images/default-book-cover.jpg';
+    if (!book) {
+      return '/images/default-book-cover.jpg';
+    }
+    
+    // Special handling for NarXoz book
+    if (book.title === 'NarXoz') {
+      return 'http://localhost:5001/api/narxoz-cover';
+    }
+    
+    // Use the global utility function we fixed
+    return getBookCoverUrl(book.cover);
   };
   
   /**
@@ -344,21 +361,21 @@ const BorrowHistoryPage = () => {
     
     if (borrow.status === 'returned') {
       return {
-        label: 'Қайтарылды',
+        label: t('borrowHistory.returned'),
         color: 'success',
         icon: <CheckCircleOutline />,
         bg: alpha(theme.palette.success.main, 0.08)
       };
     } else if (borrow.status === 'overdue' || (borrow.status === 'active' && isPast(dueDate))) {
       return {
-        label: 'Мерзімі өтті',
+        label: t('borrowHistory.overdue'),
         color: 'error',
         icon: <EventBusy />,
         bg: alpha(theme.palette.error.main, 0.08)
       };
     } else {
       return {
-        label: 'Белсенді',
+        label: t('borrowHistory.active'),
         color: 'primary',
         icon: <EventAvailable />,
         bg: alpha(theme.palette.primary.main, 0.08)
@@ -460,20 +477,20 @@ const BorrowHistoryPage = () => {
     if (isPast(due)) {
       const days = getDaysOverdue(dueDate);
       if (days > 0) {
-        return `${days} күн бұрын мерзімі өтіп кетті`;
+        return t('borrowHistory.overdueText', {days: days});
       } else {
-        return 'Бүгін мерзімі өтіп кетті';
+        return t('borrowHistory.overdueToday');
       }
     }
     
     // Мерзімге дейін
     const days = getDaysUntilDue(dueDate);
     if (days === 0) {
-      return 'Бүгін мерзімі аяқталады';
+      return t('borrowHistory.dueToday');
     } else if (days === 1) {
-      return 'Ертең мерзімі аяқталады';
+      return t('borrowHistory.dueTomorrow');
     } else {
-      return `${days} күн қалды`;
+      return t('borrowHistory.daysRemaining', {days: days});
     }
   };
   
@@ -592,156 +609,54 @@ const BorrowHistoryPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Беттің тақырыбы */}
         <Box sx={{ 
           display: 'flex', 
-          flexDirection: { xs: 'column', md: 'row' },
-          justifyContent: 'space-between', 
-          alignItems: { xs: 'flex-start', md: 'center' },
-          mb: 3,
-          gap: 2
+          flexDirection: isTablet ? 'column' : 'row',
+          alignItems: isTablet ? 'flex-start' : 'center',
+          justifyContent: 'space-between',
+          mb: 3 
         }}>
           <Box>
-            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-              Қарыз тарихы
+            <Typography variant="h4" component="h1" gutterBottom>
+              {t('borrowHistory.title')}
             </Typography>
-            
-            {overdueBorrows > 0 && (
-              <Typography variant="subtitle1" color="error.main" sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                <Badge badgeContent={overdueBorrows} color="error" sx={{ mr: 1 }}>
-                  <EventBusy />
-                </Badge>
-                Мерзімі өткен кітаптарды қайтарыңыз
-              </Typography>
-            )}
+            <Typography variant="body1" color="text.secondary">
+              {t('borrowHistory.description')}
+            </Typography>
           </Box>
           
-          {/* Іздеу және сұрыптау */}
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 1,
-            width: { xs: '100%', md: 'auto' }
-          }}>
-            <TextField
-              placeholder="Іздеу..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              size="small"
-              sx={{ width: { xs: '100%', md: 200 } }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search fontSize="small" />
-                  </InputAdornment>
-                ),
-                endAdornment: searchTerm && (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="clear search"
-                      onClick={handleClearSearch}
-                      edge="end"
-                      size="small"
-                    >
-                      <Clear fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            
-            <FormControl size="small" sx={{ minWidth: 120, display: { xs: 'none', sm: 'flex' } }}>
-              <InputLabel id="sort-label">Сұрыптау</InputLabel>
-              <Select
-                labelId="sort-label"
-                id="sort-select"
-                value={sort}
-                label="Сұрыптау"
-                onChange={handleSortChange}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <Sort fontSize="small" />
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="dueDate">Мерзімі бойынша</MenuItem>
-                <MenuItem value="borrowDate">Алынған күн бойынша</MenuItem>
-                <MenuItem value="title">Атауы бойынша</MenuItem>
-                <MenuItem value="author">Автор бойынша</MenuItem>
-                <MenuItem value="status">Мәртебесі бойынша</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <Tooltip title="Жаңарту">
-              <IconButton 
-                onClick={fetchBorrows} 
-                disabled={loading}
-                color="primary"
-                sx={{
-                  bgcolor: alpha(theme.palette.primary.main, 0.05),
-                  '&:hover': {
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  }
-                }}
-              >
-                {loading ? <CircularProgress size={24} color="inherit" /> : <Refresh />}
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-        
-        {/* Қате хабарламасы */}
-        {error && (
-          <Alert 
-            severity="error" 
-            sx={{ 
-              mb: 3,
-              borderRadius: 2
-            }}
+          <Button 
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={fetchBorrows}
+            disabled={loading}
+            sx={{ mt: isTablet ? 2 : 0 }}
           >
+            {loading ? t('common.loading') : t('borrowHistory.refresh')}
+          </Button>
+        </Box>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
-        
-        {/* Таб панелі */}
-        <Paper sx={{ 
-          mb: 3, 
-          borderRadius: 2,
-          overflow: 'hidden'
-        }}>
-          <Tabs
-            value={tabValue}
+
+        <Paper elevation={1} sx={{ mb: 4 }}>
+          <Tabs 
+            value={tabValue} 
             onChange={handleTabChange}
-            variant={isMobile ? "scrollable" : "fullWidth"}
-            scrollButtons={isMobile ? "auto" : false}
-            allowScrollButtonsMobile
             indicatorColor="primary"
             textColor="primary"
+            variant={isMobile ? 'fullWidth' : 'standard'}
           >
-            <Tab 
-              label={`Барлығы (${borrows.length})`} 
-              icon={<BookIcon />} 
-              iconPosition="start"
-            />
-            <Tab 
-              label={`Белсенді (${activeBorrows})`} 
-              icon={<EventAvailable />} 
-              iconPosition="start"
-            />
-            <Tab 
-              label={`Мерзімі өткен (${overdueBorrows})`} 
-              icon={<EventBusy />} 
-              iconPosition="start"
-              sx={{ color: overdueBorrows > 0 ? 'error.main' : 'inherit' }}
-            />
-            <Tab 
-              label={`Қайтарылған (${returnedBorrows})`} 
-              icon={<CheckCircleOutline />} 
-              iconPosition="start"
-            />
+            <Tab label={t('borrowHistory.all')} />
+            <Tab label={t('borrowHistory.active')} />
+            <Tab label={t('borrowHistory.returned')} />
+            <Tab label={t('borrowHistory.overdue')} />
           </Tabs>
         </Paper>
-        
-        {/* Жүктелу күйі */}
+
         {loading ? (
           <Box sx={{ p: 2 }}>
             <Grid container spacing={3}>
@@ -760,7 +675,6 @@ const BorrowHistoryPage = () => {
             </Grid>
           </Box>
         ) : filteredBorrows.length === 0 ? (
-          // Нәтиже жоқ
           <Paper 
             elevation={0} 
             sx={{ 
@@ -794,24 +708,24 @@ const BorrowHistoryPage = () => {
             
             <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
               {tabValue === 0 
-                ? 'Қарыз тарихыңыз жоқ' 
+                ? t('borrowHistory.noBorrows')
                 : tabValue === 1 
-                ? 'Белсенді қарыздарыңыз жоқ' 
+                ? t('borrowHistory.noActiveBorrows')
                 : tabValue === 2 
-                ? 'Мерзімі өткен қарыздарыңыз жоқ' 
-                : 'Қайтарылған кітаптар жоқ'}
+                ? t('borrowHistory.noOverdueBorrows')
+                : t('borrowHistory.noReturnedBooks')}
             </Typography>
             
             <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 500, mx: 'auto', mb: 3 }}>
               {searchTerm 
-                ? `Іздеу бойынша "${searchTerm}" нәтижелер табылмады.`
+                ? t('books.noSearchResults', {term: searchTerm})
                 : tabValue === 0 
-                ? 'Сіз әлі кітапханадан кітап алған жоқсыз. Кітаптарды алу үшін каталогқа өтіңіз.'
+                ? t('borrowHistory.noBorrowsDesc')
                 : tabValue === 1 
-                ? 'Қазіргі уақытта сізде белсенді қарыздар жоқ. Кітап алу үшін каталогты қараңыз.'
+                ? t('borrowHistory.noActiveBorrowsDesc')
                 : tabValue === 2 
-                ? 'Жақсы жаңалық! Сізде мерзімі өткен қарыздар жоқ.'
-                : 'Сіз әлі бірде-бір кітапты қайтармадыңыз.'}
+                ? t('borrowHistory.noOverdueBorrowsDesc')
+                : t('borrowHistory.noReturnedBooksDesc')}
             </Typography>
             
             <Button
@@ -821,11 +735,10 @@ const BorrowHistoryPage = () => {
               onClick={() => navigate('/books')}
               sx={{ mb: 2 }}
             >
-              Кітап каталогына өту
+              {t('home.browseCatalog')}
             </Button>
           </Paper>
         ) : (
-          // Қарыздар тізімі
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -864,7 +777,6 @@ const BorrowHistoryPage = () => {
                             : 'background.paper'
                         }}
                       >
-                        {/* Прогресс индикаторы */}
                         <LinearProgress 
                           variant="determinate" 
                           value={progressValue} 
@@ -876,7 +788,6 @@ const BorrowHistoryPage = () => {
                           }}
                         />
                         
-                        {/* Мәртебе чипі */}
                         <Chip
                           label={status.label}
                           color={status.color}
@@ -892,12 +803,12 @@ const BorrowHistoryPage = () => {
                           }}
                         />
                         
-                        {/* Кітап мұқабасы */}
                         <Box sx={{ position: 'relative', pt: '60%' }}>
                           <CardMedia
                             component="img"
                             image={getCoverUrl(borrow.book)}
                             alt={borrow.book?.title}
+                            crossOrigin="anonymous" // Add crossOrigin prop for CORS support
                             sx={{
                               position: 'absolute',
                               top: 0,
@@ -915,7 +826,6 @@ const BorrowHistoryPage = () => {
                         </Box>
                         
                         <CardContent sx={{ flexGrow: 1, pt: 2 }}>
-                          {/* Кітап атауы және авторы */}
                           <Link
                             component={RouterLink}
                             to={`/books/${borrow.bookId}`}
@@ -934,9 +844,7 @@ const BorrowHistoryPage = () => {
                           
                           <Divider sx={{ my: 1.5 }} />
                           
-                          {/* Қарыз мерзімі туралы ақпарат */}
                           <Box sx={{ my: 1 }}>
-                            {/* Алынған күн */}
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                               <Box
                                 sx={{
@@ -953,11 +861,10 @@ const BorrowHistoryPage = () => {
                                 <CalendarToday fontSize="small" sx={{ color: theme.palette.info.main, fontSize: '0.8rem' }} />
                               </Box>
                               <Typography variant="body2">
-                                Алынған: {format(new Date(borrow.borrowDate), 'dd.MM.yyyy', { locale: kk })}
+                                {t('borrowHistory.borrowDate')}: {format(new Date(borrow.borrowDate), 'dd.MM.yyyy', { locale: kk })}
                               </Typography>
                             </Box>
                             
-                            {/* Қайтару мерзімі */}
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: borrow.returnDate ? 1 : 0 }}>
                               <Box
                                 sx={{
@@ -990,11 +897,10 @@ const BorrowHistoryPage = () => {
                                   : 'inherit'
                                 }
                               >
-                                Мерзімі: {format(new Date(borrow.dueDate), 'dd.MM.yyyy', { locale: kk })}
+                                {t('borrowHistory.dueDate')}: {format(new Date(borrow.dueDate), 'dd.MM.yyyy', { locale: kk })}
                               </Typography>
                             </Box>
                             
-                            {/* Қайтарылған күн */}
                             {borrow.returnDate && (
                               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <Box
@@ -1012,13 +918,12 @@ const BorrowHistoryPage = () => {
                                   <CheckCircleOutline fontSize="small" sx={{ color: theme.palette.success.main, fontSize: '0.8rem' }} />
                                 </Box>
                                 <Typography variant="body2" color="success.main">
-                                  Қайтарылған: {format(new Date(borrow.returnDate), 'dd.MM.yyyy', { locale: kk })}
+                                  {t('borrowHistory.returnDate')}: {format(new Date(borrow.returnDate), 'dd.MM.yyyy', { locale: kk })}
                                 </Typography>
                               </Box>
                             )}
                           </Box>
                           
-                          {/* Мерзім жағдайы */}
                           {borrow.status !== 'returned' && (
                             <Fade in={true}>
                               <Box 
@@ -1041,48 +946,46 @@ const BorrowHistoryPage = () => {
                                   </Typography>
                                 ) : (
                                   <Typography variant="body2" fontWeight="medium" color="error">
-                                    Мерзімі {daysOverdue} күнге кешіктірілді
+                                    {t('borrowHistory.overdueBy', {days: daysOverdue})}
                                   </Typography>
                                 )}
                               </Box>
                             </Fade>
                           )}
                           
-                          {/* Қосымша ақпарат - жайылған кезде көрінеді */}
                           <Collapse in={isExpanded}>
                             <Box sx={{ mt: 1.5 }}>
                               <Divider sx={{ mb: 1.5 }} />
                               
-                              {/* Кітап туралы қосымша ақпарат */}
                               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                                Кітап туралы ақпарат
+                                {t('books.bookDetails')}
                               </Typography>
                               
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1.5 }}>
                                 {borrow.book?.genre && (
                                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body2" color="text.secondary">Жанр:</Typography>
+                                    <Typography variant="body2" color="text.secondary">{t('books.genre')}:</Typography>
                                     <Typography variant="body2">{borrow.book.genre}</Typography>
                                   </Box>
                                 )}
                                 
                                 {borrow.book?.publisher && (
                                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body2" color="text.secondary">Баспа:</Typography>
+                                    <Typography variant="body2" color="text.secondary">{t('books.publisher')}:</Typography>
                                     <Typography variant="body2">{borrow.book.publisher}</Typography>
                                   </Box>
                                 )}
                                 
                                 {borrow.book?.publicationYear && (
                                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body2" color="text.secondary">Жыл:</Typography>
+                                    <Typography variant="body2" color="text.secondary">{t('books.publishYear')}:</Typography>
                                     <Typography variant="body2">{borrow.book.publicationYear}</Typography>
                                   </Box>
                                 )}
                                 
                                 {borrow.book?.ISBN && (
                                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body2" color="text.secondary">ISBN:</Typography>
+                                    <Typography variant="body2" color="text.secondary">{t('books.details.isbn')}:</Typography>
                                     <Typography variant="body2">{borrow.book.ISBN}</Typography>
                                   </Box>
                                 )}
@@ -1091,7 +994,7 @@ const BorrowHistoryPage = () => {
                               {borrow.book?.description && (
                                 <>
                                   <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                                    Сипаттама
+                                    {t('books.description')}
                                   </Typography>
                                   
                                   <Typography variant="body2" color="text.secondary" paragraph>
@@ -1102,7 +1005,6 @@ const BorrowHistoryPage = () => {
                                 </>
                               )}
                               
-                              {/* Кітапты бетбелгіге қосу */}
                               <Button
                                 startIcon={<BookmarkBorder />}
                                 variant="outlined"
@@ -1111,24 +1013,22 @@ const BorrowHistoryPage = () => {
                                 onClick={() => handleAddToBookmarks(borrow.bookId)}
                                 sx={{ mt: 1 }}
                               >
-                                Бетбелгіге қосу
+                                {t('books.addToBookmarks')}
                               </Button>
                             </Box>
                           </Collapse>
                         </CardContent>
                         
                         <CardActions sx={{ p: 2, pt: 0 }}>
-                          {/* Кеңейту түймесі */}
                           <Button
                             size="small"
                             onClick={() => toggleCardExpansion(borrow.id)}
                             endIcon={isExpanded ? <ExpandLess /> : <ExpandMore />}
                             sx={{ mr: 'auto' }}
                           >
-                            {isExpanded ? 'Жию' : 'Толығырақ'}
+                            {isExpanded ? t('books.details.showLess') : t('books.details.showMore')}
                           </Button>
                           
-                          {/* Қайтару және ұзарту түймелері */}
                           {canReturn && (
                             <Button 
                               variant="contained"
@@ -1137,7 +1037,7 @@ const BorrowHistoryPage = () => {
                               onClick={() => handleOpenReturnDialog(borrow)}
                               startIcon={<CheckCircleOutline />}
                             >
-                              Қайтару
+                              {t('borrowHistory.return')}
                             </Button>
                           )}
                           
@@ -1150,7 +1050,7 @@ const BorrowHistoryPage = () => {
                               onClick={() => handleOpenExtendDialog(borrow)}
                               sx={{ ml: canReturn ? 1 : 0 }}
                             >
-                              Ұзарту
+                              {t('borrowHistory.extend')}
                             </Button>
                           )}
                          </CardActions>
@@ -1164,140 +1064,80 @@ const BorrowHistoryPage = () => {
             
       )}
       
-      {/* Кітапты қайтару диалогы */}
       <Dialog
         open={returnDialogOpen}
         onClose={handleCloseReturnDialog}
-        fullWidth
-        maxWidth="xs"
-        PaperProps={{
-          sx: { borderRadius: 3 }
-        }}
+        aria-labelledby="return-dialog-title"
       >
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">Кітапты қайтару</Typography>
+        <DialogTitle id="return-dialog-title">
+          {t('borrowHistory.returnBookTitle')}
         </DialogTitle>
-        
         <DialogContent>
           {selectedBorrow && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Avatar
-                src={getCoverUrl(selectedBorrow.book)}
-                alt={selectedBorrow.book?.title}
-                variant="rounded"
-                sx={{ width: 60, height: 80, mr: 2 }}
-              />
-              <Box>
-                <Typography variant="subtitle1" fontWeight="medium">
-                  {selectedBorrow.book?.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedBorrow.book?.author}
-                </Typography>
-              </Box>
-            </Box>
-          )}
-          
-          <DialogContentText>
-            Бұл кітапты қайтаруды растаңыз. Бұл әрекетті кейін өзгерту мүмкін емес.
-          </DialogContentText>
-        </DialogContent>
-        
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button 
-            onClick={handleCloseReturnDialog}
-            variant="outlined"
-          >
-            Болдырмау
-          </Button>
-          <Button 
-            onClick={handleReturnBook} 
-            color="primary" 
-            variant="contained"
-            disabled={returnLoading}
-            startIcon={returnLoading ? <CircularProgress size={20} /> : <CheckCircleOutline />}
-          >
-            {returnLoading ? 'Жүктелуде...' : 'Иә, қайтару'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-      
-      {/* Мерзімді ұзарту диалогы */}
-      <Dialog
-        open={extendDialogOpen}
-        onClose={handleCloseExtendDialog}
-        fullWidth
-        maxWidth="xs"
-        PaperProps={{
-          sx: { borderRadius: 3 }
-        }}
-      >
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">Қайтару мерзімін ұзарту</Typography>
-        </DialogTitle>
-        
-        <DialogContent>
-          {selectedBorrow && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Avatar
-                src={getCoverUrl(selectedBorrow.book)}
-                alt={selectedBorrow.book?.title}
-                variant="rounded"
-                sx={{ width: 60, height: 80, mr: 2 }}
-              />
-              <Box>
-                <Typography variant="subtitle1" fontWeight="medium">
-                  {selectedBorrow.book?.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedBorrow.book?.author}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                  <CalendarToday fontSize="small" sx={{ mr: 1, fontSize: '0.8rem', color: 'text.secondary' }} />
-                  <Typography variant="caption" color="text.secondary">
-                    Ағымдағы мерзім: {format(new Date(selectedBorrow.dueDate), 'dd.MM.yyyy', { locale: kk })}
+            <Box sx={{ mb: 2 }}>
+              <DialogContentText>
+                {t('borrowHistory.returnBookQuestion')}
+              </DialogContentText>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mt: 2,
+                p: 2,
+                bgcolor: 'background.paper',
+                borderRadius: 1,
+                boxShadow: 1
+              }}>
+                <Avatar 
+                  variant="rounded" 
+                  src={getCoverUrl(selectedBorrow.book)}
+                  sx={{ width: 60, height: 80, mr: 2 }}
+                  imgProps={{ crossOrigin: "anonymous" }} // Add crossOrigin prop for CORS support
+                >
+                  <BookIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {selectedBorrow.book?.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedBorrow.book?.author}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {t('borrowHistory.borrowedOn')}: {format(new Date(selectedBorrow.borrowDate), 'dd.MM.yyyy')}
                   </Typography>
                 </Box>
               </Box>
             </Box>
           )}
           
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="body2">
-              Қайтару мерзімі <strong>7 күнге</strong> ұзартылады. 
-              {selectedBorrow && (
-                <span> Жаңа мерзім: <strong>{
-                  format(addDays(new Date(selectedBorrow.dueDate), 7), 'dd.MM.yyyy', { locale: kk })
-                }</strong> болады.</span>
-              )}
-            </Typography>
-          </Alert>
-          
-          <DialogContentText>
-            Бұл кітаптың қайтару мерзімін ұзартуды растаңыз.
-          </DialogContentText>
+          {returnSuccess && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              {t('borrowHistory.returnSuccess')}
+            </Alert>
+          )}
         </DialogContent>
-        
-        <DialogActions sx={{ px: 3, pb: 3 }}>
+        <DialogActions>
           <Button 
-            onClick={handleCloseExtendDialog}
-            variant="outlined"
+            onClick={handleCloseReturnDialog} 
+            color="primary"
+            disabled={returnLoading}
           >
-            Болдырмау
+            {returnSuccess ? t('common.close') : t('common.cancel')}
           </Button>
-          <Button 
-            onClick={handleExtendBorrow} 
-            color="primary" 
-            variant="contained"
-            disabled={extendLoading}
-            startIcon={extendLoading ? <CircularProgress size={20} /> : <ExtensionOutlined />}
-          >
-            {extendLoading ? 'Жүктелуде...' : 'Иә, ұзарту'}
-          </Button>
+          {!returnSuccess && (
+            <Button 
+              onClick={handleReturnBook} 
+              color="primary" 
+              variant="contained"
+              disabled={returnLoading}
+              startIcon={returnLoading ? <CircularProgress size={20} /> : null}
+            >
+              {returnLoading ? t('borrowHistory.returning') : t('borrowHistory.return')}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
       
-      {/* Хабарламалар */}
       <Snackbar
         open={message.open}
         autoHideDuration={6000}
@@ -1318,7 +1158,6 @@ const BorrowHistoryPage = () => {
         </Alert>
       </Snackbar>
       
-      {/* Жою кезіндегі жүктелу индикаторы */}
       <Backdrop
         sx={{ 
           color: '#fff', 
@@ -1339,7 +1178,7 @@ const BorrowHistoryPage = () => {
         >
           <CircularProgress color="primary" sx={{ mb: 2 }} />
           <Typography variant="body2">
-            {returnLoading ? 'Кітап қайтарылуда...' : 'Мерзім ұзартылуда...'}
+            {returnLoading ? t('borrowHistory.returning') : t('borrowHistory.extending')}
           </Typography>
         </Paper>
       </Backdrop>

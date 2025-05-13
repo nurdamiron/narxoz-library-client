@@ -12,6 +12,7 @@ import {
   alpha
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Компонент карточки для админ-панели
@@ -24,6 +25,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
  * @param {boolean} props.noPadding - Флаг отключения внутренних отступов (опционально)
  * @param {function} props.onMoreClick - Обработчик клика по кнопке "Ещё" (опционально)
  * @param {string} props.subtitle - Подзаголовок (опционально)
+ * @param {string} props.titleKey - Ключ для локализации заголовка (опционально)
+ * @param {string} props.subtitleKey - Ключ для локализации подзаголовка (опционально)
  */
 const AdminCard = ({ 
   title, 
@@ -33,9 +36,16 @@ const AdminCard = ({
   noPadding = false,
   onMoreClick,
   subtitle,
+  titleKey,
+  subtitleKey,
   ...rest
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
+  
+  // Определяем отображаемые тексты с учетом локализации
+  const displayTitle = titleKey ? t(titleKey) : title;
+  const displaySubtitle = subtitleKey ? t(subtitleKey) : subtitle;
   
   return (
     <Card 
@@ -54,15 +64,15 @@ const AdminCard = ({
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {icon && <Box sx={{ mr: 1, color: theme.palette.primary.main }}>{icon}</Box>}
             <Typography variant="h6" component="div">
-              {title}
+              {displayTitle}
             </Typography>
           </Box>
         }
-        subheader={subtitle ? <Typography variant="body2" color="text.secondary">{subtitle}</Typography> : null}
+        subheader={displaySubtitle ? <Typography variant="body2" color="text.secondary">{displaySubtitle}</Typography> : null}
         action={
           onMoreClick && (
             <IconButton 
-              aria-label="settings" 
+              aria-label={t('common.more', 'Дополнительно')} 
               onClick={onMoreClick}
               sx={{ '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1) } }}
             >

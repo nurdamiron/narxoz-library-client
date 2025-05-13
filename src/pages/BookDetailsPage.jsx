@@ -8,6 +8,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -55,6 +56,7 @@ import borrowService from '../services/borrowService';
 import apiClient from '../services/api';
 import ReviewForm from '../components/books/ReviewForm';
 import ReviewList from '../components/books/ReviewList';
+import { getBookCoverUrl, truncateString } from '../utils';
 
 /**
  * BookDetailsPage компоненті
@@ -67,6 +69,7 @@ const BookDetailsPage = () => {
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const { t } = useTranslation();
   
   // AuthContext мәліметтері
   const { isAuthenticated, user } = useAuth();
@@ -128,7 +131,7 @@ const BookDetailsPage = () => {
             ...bookDetails,
             category: bookDetails.category || {
               id: bookDetails.categoryId,
-              name: 'Көрсетілмеген'
+              name: t('books.details.notSpecified')
             }
           };
           
@@ -146,7 +149,7 @@ const BookDetailsPage = () => {
     } catch (err) {
       console.error('DEBUG: Error fetching book:', err);
       console.error('DEBUG: Error details:', err.response || err.message);
-      setError(`Кітап туралы ақпаратты жүктеу кезінде қате орын алды: ${err.message}`);
+      setError(t('books.errorLoading') + `: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -166,9 +169,17 @@ const BookDetailsPage = () => {
       
       // API арқылы бетбелгіні ауыстыру
       const response = await bookmarkService.toggleBookmark(id);
-      setIsBookmarked(response.bookmarked);
+      
+      // Извлекаем состояние закладки из ответа API
+      // baseService.js уже извлекает response.data, поэтому нам нужно обращаться к data.bookmarked
+      const bookmarked = response.data?.bookmarked;
+      
+      console.log('🔖 BookDetailsPage - Bookmark toggle response:', response);
+      console.log('🔖 BookDetailsPage - New bookmark status:', bookmarked);
+      
+      setIsBookmarked(bookmarked);
     } catch (error) {
-      console.error('Бетбелгі ауыстыру қатесі:', error);
+      console.error(`${t('books.bookmarkError')}:`, error);
     } finally {
       setBookmarkLoading(false);
     }
@@ -196,7 +207,7 @@ const BookDetailsPage = () => {
       // Сәтті хабарламаны көрсету
       setBorrowSuccess(true);
     } catch (error) {
-      console.error('Кітапты қарызға алу қатесі:', error);
+      console.error(`${t('books.borrowError')}:`, error);
       
       // Сервер қайтарған қате хабарламасын тексеру
       if (error.response && error.response.data && error.response.data.error) {
@@ -208,7 +219,7 @@ const BookDetailsPage = () => {
           setHasAlreadyBorrowed(true);
         }
       } else {
-        setBorrowError('Кітапты қарызға алу кезінде қате орын алды');
+        setBorrowError(t('books.borrowError'));
       }
     } finally {
       setBorrowLoading(false);
@@ -258,9 +269,7 @@ const BookDetailsPage = () => {
   };
   
   // Мұқаба URL-ін дайындау
-  const coverUrl = book && book.cover
-  ? (book.cover.startsWith('http') ? book.cover : `/uploads/books/${book.cover}`)
-  : '/images/default-book-cover.jpg';
+  const coverUrl = book && book.cover ? getBookCoverUrl(book.cover) : '/images/default-book-cover.jpg';
   
   // Мұқаба суретінің жүктелу оқиғасын өңдеу
   const handleImageLoad = () => {
@@ -273,10 +282,10 @@ const BookDetailsPage = () => {
       <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3 }}>
         <Link component={RouterLink} to="/" color="inherit" sx={{ display: 'flex', alignItems: 'center' }}>
           <Home sx={{ mr: 0.5, fontSize: 20 }} />
-          Басты бет
+          {t('common.home')}
         </Link>
         <Link component={RouterLink} to="/books" color="inherit">
-          Кітаптар
+          {t('books.catalog')}
         </Link>
         <Typography color="text.primary" noWrap>
           {loading ? <Skeleton width={100} /> : book?.title}
@@ -289,7 +298,7 @@ const BookDetailsPage = () => {
         onClick={() => navigate(-1)}
         sx={{ mb: 3 }}
       >
-        Артқа қайту
+        {t('books.details.backButton')}
       </Button>
       
       {/* Қате хабарламасы */}
@@ -384,7 +393,7 @@ const BookDetailsPage = () => {
           borderColor: 'warning.main',
         }}
       >
-        Сіз кітапты әлдеқашан алдыңыз
+        {t('books.details.alreadyBorrowed')}
       </Button>
     ) : (
       <Button
@@ -400,7 +409,7 @@ const BookDetailsPage = () => {
         }
         sx={{ mb: 1 }}
       >
-        {borrowLoading ? 'Жүктелуде...' : 'Кітапты алу'}
+        {borrowLoading ? t('books.details.loading') : t('books.details.borrowButton')}
       </Button>
     )}
     
@@ -411,7 +420,7 @@ const BookDetailsPage = () => {
         align="center"
         sx={{ mt: 1 }}
       >
-        Қазіргі уақытта қолжетімсіз
+        {t('books.details.currentlyUnavailable')}
       </Typography>
     )}
     
@@ -451,7 +460,7 @@ const BookDetailsPage = () => {
                   </Typography>
                   
                   {/* Бетбелгі түймесі */}
-                                      <Tooltip title={isBookmarked ? "Бетбелгіден алып тастау" : "Бетбелгіге қосу"}>
+                                      <Tooltip title={isBookmarked ? t('books.removeFromBookmarks') : t('books.addToBookmarks')}>
                     <IconButton
                       onClick={handleToggleBookmark}
                       disabled={bookmarkLoading}
@@ -489,7 +498,7 @@ const BookDetailsPage = () => {
                     color="text.secondary"
                     sx={{ ml: 1 }}
                   >
-                    ({book.reviewCount || 0} пікір)
+                    ({t('books.details.rating', { count: book.reviewCount || 0 })})
                   </Typography>
                 </Box>
                 
@@ -501,10 +510,10 @@ const BookDetailsPage = () => {
                       <Category sx={{ color: 'primary.main', mr: 1 }} />
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          Категория
+                          {t('books.details.categoryLabel')}
                         </Typography>
                         <Typography variant="body1">
-                        {book.category && book.category.name ? book.category.name : 'Көрсетілмеген'}
+                        {book.category && book.category.name ? book.category.name : t('books.details.notSpecified')}
                         </Typography>
                       </Box>
                     </Box>
@@ -516,10 +525,10 @@ const BookDetailsPage = () => {
                       <CalendarToday sx={{ color: 'primary.main', mr: 1 }} />
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          Жарияланған жыл
+                          {t('books.details.publishedYear')}
                         </Typography>
                         <Typography variant="body1">
-                        {book.publicationYear || 'Көрсетілмеген'}
+                        {book.publicationYear || t('books.details.notSpecified')}
                         </Typography>
                       </Box>
                     </Box>
@@ -531,10 +540,10 @@ const BookDetailsPage = () => {
                       <Language sx={{ color: 'primary.main', mr: 1 }} />
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          Тіл
+                          {t('books.details.languageLabel')}
                         </Typography>
                         <Typography variant="body1">
-                          {book.language || 'Көрсетілмеген'}
+                          {book.language || t('books.details.notSpecified')}
                         </Typography>
                       </Box>
                     </Box>
@@ -546,7 +555,7 @@ const BookDetailsPage = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Box>
                           <Typography variant="body2" color="text.secondary">
-                            ISBN
+                            {t('books.details.isbn')}
                           </Typography>
                           <Typography variant="body1">
                             {book.isbn}
@@ -565,7 +574,7 @@ const BookDetailsPage = () => {
                       }} />
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          Қолжетімді даналар
+                          {t('books.details.availableCopiesLabel')}
                         </Typography>
                         <Typography 
                           variant="body1"
@@ -588,7 +597,7 @@ const BookDetailsPage = () => {
                       mb: 1
                     }}
                   >
-                    Сипаттама
+                    {t('books.details.descriptionTitle')}
                   </Typography>
                   
                   <Typography 
@@ -609,7 +618,7 @@ const BookDetailsPage = () => {
                       onClick={handleExpandDescription}
                       sx={{ mt: 1 }}
                     >
-                      {expanded ? 'Жию' : 'Толығырақ'}
+                      {expanded ? t('books.details.showLess') : t('books.details.showMore')}
                     </Button>
                   )}
                 </Box>
@@ -630,7 +639,7 @@ const BookDetailsPage = () => {
           borderColor: 'warning.main',
         }}
       >
-        Сіз кітапты әлдеқашан алдыңыз
+        {t('books.details.alreadyBorrowed')}
       </Button>
     ) : (
       <Button
@@ -648,7 +657,7 @@ const BookDetailsPage = () => {
           py: 1.5
         }}
       >
-        {borrowLoading ? 'Жүктелуде...' : 'Кітапты алу'}
+        {borrowLoading ? t('books.details.loading') : t('books.details.borrowButton')}
       </Button>
     )}
     
@@ -658,7 +667,7 @@ const BookDetailsPage = () => {
         color="error"
         sx={{ mt: 1 }}
       >
-        Қазіргі уақытта қолжетімсіз
+        {t('books.details.currentlyUnavailable')}
       </Typography>
     )}
     
@@ -678,7 +687,7 @@ const BookDetailsPage = () => {
         </motion.div>
       ) : (
         <Alert severity="info">
-          Кітап табылмады.
+          {t('books.details.bookNotFound')}
         </Alert>
       )}
       
@@ -695,7 +704,7 @@ const BookDetailsPage = () => {
           variant="filled"
           sx={{ width: '100%' }}
         >
-          Кітап сәтті қарызға алынды!
+          {t('books.details.borrowSuccessMsg')}
         </Alert>
       </Snackbar>
       
@@ -704,16 +713,16 @@ const BookDetailsPage = () => {
         open={loginDialogOpen}
         onClose={handleCloseLoginDialog}
       >
-        <DialogTitle>Жүйеге кіру қажет</DialogTitle>
+        <DialogTitle>{t('books.details.loginRequired')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Бұл әрекетті орындау үшін жүйеге кіру керек. Жүйеге кіру бетіне өткіңіз келе ме?
+            {t('books.details.loginDialogMsg')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseLoginDialog}>Жоқ</Button>
+          <Button onClick={handleCloseLoginDialog}>{t('books.details.loginDialogNo')}</Button>
           <Button onClick={handleNavigateToLogin} color="primary" variant="contained">
-            Жүйеге кіру
+            {t('books.details.loginDialogYes')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -729,7 +738,7 @@ const BookDetailsPage = () => {
               mb: 3
             }}
           >
-            Пікірлер мен рейтингтер
+            {t('books.details.reviewsTitle')}
           </Typography>
           
           {/* Пікір қалдыру формасы */}

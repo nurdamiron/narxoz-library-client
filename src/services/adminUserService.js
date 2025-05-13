@@ -19,8 +19,10 @@ const adminUserService = {
     try {
       const queryString = new URLSearchParams(params).toString();
       const response = await apiClient.get(`/users?${queryString}`);
+      console.log('Users data received:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Error fetching users:', error);
       throw error.response?.data || error;
     }
   },

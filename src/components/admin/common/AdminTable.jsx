@@ -22,6 +22,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Компонент таблицы для админ-панели с поддержкой сортировки, пагинации и поиска
@@ -38,18 +39,22 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 const AdminTable = ({
   columns = [],
   data = [],
-  title = 'Таблица',
+  title,
   onRowClick,
   actions,
   onSearch,
   loading = false
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [orderBy, setOrderBy] = useState('');
   const [order, setOrder] = useState('asc');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Установка заголовка таблицы с учетом локализации
+  const tableTitle = title || t('admin.table', 'Таблица');
 
   // Обработчик изменения страницы
   const handleChangePage = (event, newPage) => {
@@ -110,7 +115,7 @@ const AdminTable = ({
   if (loading) {
     return (
       <Paper sx={{ p: 4, textAlign: 'center' }}>
-        <Typography variant="body1">Загрузка...</Typography>
+        <Typography variant="body1">{t('common.loading', 'Загрузка...')}</Typography>
       </Paper>
     );
   }
@@ -119,7 +124,7 @@ const AdminTable = ({
   if (data.length === 0) {
     return (
       <Paper sx={{ p: 4, textAlign: 'center' }}>
-        <Typography variant="body1">Нет данных для отображения</Typography>
+        <Typography variant="body1">{t('admin.noDataToDisplay', 'Нет данных для отображения')}</Typography>
       </Paper>
     );
   }
@@ -152,14 +157,14 @@ const AdminTable = ({
           id="tableTitle"
           component="div"
         >
-          {title}
+          {tableTitle}
         </Typography>
         
         {onSearch && (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <TextField
               size="small"
-              placeholder="Поиск..."
+              placeholder={t('common.search', 'Поиск...')}
               value={searchQuery}
               onChange={handleSearch}
               sx={{ mr: 1 }}
@@ -173,13 +178,13 @@ const AdminTable = ({
             />
             
             {actions?.filter && (
-              <IconButton size="small">
+              <IconButton size="small" aria-label={t('admin.filters', 'Фильтры')}>
                 <FilterListIcon />
               </IconButton>
             )}
             
             {actions?.more && (
-              <IconButton size="small">
+              <IconButton size="small" aria-label={t('common.more', 'Дополнительно')}>
                 <MoreVertIcon />
               </IconButton>
             )}
@@ -189,7 +194,7 @@ const AdminTable = ({
 
       {/* Таблица данных */}
       <TableContainer>
-        <Table sx={{ minWidth: 650 }} aria-label={title}>
+        <Table sx={{ minWidth: 650 }} aria-label={tableTitle}>
           <TableHead>
             <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.03) }}>
               {columns.map((column) => (
@@ -251,7 +256,7 @@ const AdminTable = ({
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        labelRowsPerPage="Строк на странице:"
+        labelRowsPerPage={t('pagination.rowsPerPage', 'Строк на странице:')}
       />
     </Paper>
   );

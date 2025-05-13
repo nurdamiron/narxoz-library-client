@@ -5,10 +5,12 @@
  * 
  * Бұл компонент кітапхананың басты бетін көрсетеді.
  * Танымал кітаптар мен жаңа түскен кітаптарды көрсетеді және кітапхана туралы ақпарат береді.
+ * Сонымен қатар, келе жатқан іс-шаралар тізімін көрсетеді.
  */
 import React, { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Typography,
@@ -31,19 +33,22 @@ import {
   LocalLibrary as LocalLibraryIcon,
   School as SchoolIcon,
   Person as PersonIcon,
-  ArrowForward as ArrowForwardIcon
+  ArrowForward as ArrowForwardIcon,
+  Event as EventIcon
 } from '@mui/icons-material';
 
 // Импорт компонентов
 import BookCard from '../components/books/BookCard';
 import EmptyState from '../components/common/EmptyState';
 import AlertDialog from '../components/common/AlertDialog';
+import EventCard from '../components/events/EventCard';
 
 // Импорт хуков и сервисов
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import bookService from '../services/bookService';
 import bookmarkService from '../services/bookmarkService';
+import eventService from '../services/eventService';
 
 /**
  * HomePage компоненті
@@ -57,11 +62,14 @@ const HomePage = () => {
   
   const { isAuthenticated } = useAuth();
   const { success, error: showError } = useToast();
+  const { t } = useTranslation();
   
   // Күйлер
   const [popularBooks, setPopularBooks] = useState([]);
   const [newBooks, setNewBooks] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [eventsLoading, setEventsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [loginDialog, setLoginDialog] = useState({
     open: false,
@@ -93,14 +101,46 @@ const HomePage = () => {
           setNewBooks(newResponse.data);
         }
       } catch (err) {
-        console.error('Басты бет деректерін жүктеу қатесі:', err);
-        setError('Деректерді жүктеу кезінде қате орын алды');
+        console.error(`${t('home.loadingError')}:`, err);
+        setError(t('home.loadingError', 'Деректерді жүктеу кезінде қате орын алды'));
       } finally {
         setLoading(false);
       }
     };
     
     fetchHomeData();
+  }, []);
+  
+  /**
+   * Іс-шаралар деректерін жүктеу
+   */
+  useEffect(() => {
+    const fetchUpcomingEvents = async () => {
+      try {
+        setEventsLoading(true);
+        
+        // Get only active upcoming events
+        const now = new Date().toISOString();
+        const filters = {
+          isActive: true,
+          startDate: now,
+          limit: 4,
+          sort: 'startDate'
+        };
+        
+        const response = await eventService.getEvents(filters);
+        
+        if (response.success) {
+          setUpcomingEvents(response.data);
+        }
+      } catch (err) {
+        console.error(`${t('events.loadingError')}:`, err);
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+    
+    fetchUpcomingEvents();
   }, []);
   
   /**
@@ -119,7 +159,13 @@ const HomePage = () => {
     }
     
     try {
-      const isBookmarked = await bookmarkService.toggleBookmark(book.id);
+      const response = await bookmarkService.toggleBookmark(book.id);
+      
+      // Extract bookmarked status from the API response
+      const isBookmarked = response.data?.data?.bookmarked;
+      
+      console.log('🔖 Bookmark toggle response:', response);
+      console.log('🔖 New bookmark status:', isBookmarked);
       
       // Жергілікті күйді жаңарту
       const updateBooks = (books) => 
@@ -134,12 +180,12 @@ const HomePage = () => {
       
       // Сәтті хабарламаны көрсету
       success(isBookmarked
-        ? 'Кітап бетбелгілерге қосылды'
-        : 'Кітап бетбелгілерден алып тасталды'
+        ? t('books.bookmarkAdded')
+        : t('books.bookmarkRemoved')
       );
     } catch (err) {
-      console.error('Бетбелгі ауыстыру қатесі:', err);
-      showError('Бетбелгіні өзгерту кезінде қате орын алды');
+      console.error(`${t('books.bookmarkError')}:`, err);
+      showError(t('books.bookmarkError', 'Бетбелгіні өзгерту кезінде қате орын алды'));
     }
   };
   
@@ -218,9 +264,9 @@ const HomePage = () => {
   };
   
   const statsItems = [
-    { icon: <BookIcon fontSize="large" />, count: '100,000+', label: 'Кітаптар' },
-    { icon: <PersonIcon fontSize="large" />, count: '10,000+', label: 'Оқырмандар' },
-    { icon: <SchoolIcon fontSize="large" />, count: '50+', label: 'Мамандықтар' }
+    { icon: <BookIcon fontSize="large" />, count: '100,000+', label: t('home.books', 'Кітаптар') },
+    { icon: <PersonIcon fontSize="large" />, count: '10,000+', label: t('home.readers', 'Оқырмандар') },
+    { icon: <SchoolIcon fontSize="large" />, count: '50+', label: t('home.specializations', 'Мамандықтар') }
   ];
 
   return (
@@ -262,7 +308,7 @@ const HomePage = () => {
                   textShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)'
                 }}
               >
-                Нархоз университеті кітапханасы
+                {t('common.libraryName', 'Нархоз университеті кітапханасы')}
               </Typography>
               
               <Typography
@@ -274,7 +320,7 @@ const HomePage = () => {
                   textShadow: '0px 1px 2px rgba(0, 0, 0, 0.2)'
                 }}
               >
-                Білім мен ғылым әлеміне жол ашатын ресурстар орталығы
+                {t('home.libraryDescription', 'Білім мен ғылым әлеміне жол ашатын ресурстар орталығы')}
               </Typography>
               
               <Box
@@ -307,7 +353,7 @@ const HomePage = () => {
                     boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)'
                   }}
                 >
-                  Кітаптар каталогы
+                  {t('books.catalog', 'Кітаптар каталогы')}
                 </Button>
                 
                 {!isAuthenticated && (
@@ -331,7 +377,7 @@ const HomePage = () => {
                       transition: 'transform 0.3s'
                     }}
                   >
-                    Кіру
+                    {t('common.login', 'Кіру')}
                   </Button>
                 )}
               </Box>
@@ -485,7 +531,7 @@ const HomePage = () => {
                 component="h2" 
                 sx={{ fontWeight: 'bold' }}
               >
-                Танымал кітаптар
+                {t('home.popularBooks', 'Танымал кітаптар')}
               </Typography>
               
               <Button
@@ -496,7 +542,7 @@ const HomePage = () => {
                   fontWeight: 'medium'
                 }}
               >
-                Барлығын көру
+                {t('common.viewAll', 'Барлығын көру')}
               </Button>
             </Box>
             
@@ -531,8 +577,8 @@ const HomePage = () => {
                   <Grid item xs={12}>
                     <EmptyState
                       icon={<BookIcon sx={{ fontSize: 40 }} />}
-                      title="Танымал кітаптар табылмады"
-                      description="Кітаптарды каталогтан қараңыз"
+                      title={t('home.noPopularBooks', 'Танымал кітаптар табылмады')}
+                      description={t('home.browseCatalog', 'Кітаптарды каталогтан қараңыз')}
                     />
                   </Grid>
                 )}
@@ -555,7 +601,7 @@ const HomePage = () => {
                 component="h2" 
                 sx={{ fontWeight: 'bold' }}
               >
-                Жаңа түскен кітаптар
+                {t('home.newBooks', 'Жаңа түскен кітаптар')}
               </Typography>
               
               <Button
@@ -566,7 +612,7 @@ const HomePage = () => {
                   fontWeight: 'medium'
                 }}
               >
-                Барлығын көру
+                {t('common.viewAll', 'Барлығын көру')}
               </Button>
             </Box>
             
@@ -601,13 +647,129 @@ const HomePage = () => {
                   <Grid item xs={12}>
                     <EmptyState
                       icon={<BookIcon sx={{ fontSize: 40 }} />}
-                      title="Жаңа кітаптар табылмады"
-                      description="Кітаптарды каталогтан қараңыз"
+                      title={t('home.noNewBooks', 'Жаңа кітаптар табылмады')}
+                      description={t('home.browseCatalog', 'Кітаптарды каталогтан қараңыз')}
                     />
                   </Grid>
                 )}
               </Grid>
             </AnimatePresence>
+          </Box>
+        </motion.div>
+        
+        {/* Келе жатқан іс-шаралар секциясы */}
+        <motion.div variants={itemVariants}>
+          <Box sx={{ mb: 8 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              mb: 3
+            }}>
+              <Typography 
+                variant="h4" 
+                component="h2" 
+                sx={{ fontWeight: 'bold' }}
+              >
+                {t('events.upcoming', 'Келе жатқан іс-шаралар')}
+              </Typography>
+              
+              <Button
+                component={RouterLink}
+                to="/events"
+                endIcon={<ArrowForwardIcon />}
+                sx={{
+                  fontWeight: 'medium'
+                }}
+              >
+                {t('common.viewAll', 'Барлығын көру')}
+              </Button>
+            </Box>
+            
+            <Divider sx={{ mb: 4 }} />
+            
+            <AnimatePresence>
+              <Grid container spacing={3}>
+                {upcomingEvents.length > 0 ? (
+                  upcomingEvents.map((event) => (
+                    <Grid item key={event.id} xs={12} sm={6} md={isTablet ? 6 : 3}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <EventCard event={event} />
+                      </motion.div>
+                    </Grid>
+                  ))
+                ) : eventsLoading ? (
+                  // Жүктелу кезінде заглушка
+                  [...Array(4)].map((_, index) => (
+                    <Grid item key={index} xs={12} sm={6} md={isTablet ? 6 : 3}>
+                      <Card 
+                        elevation={2}
+                        sx={{ 
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          borderRadius: 1
+                        }}
+                      >
+                        <Box sx={{ height: 160, bgcolor: 'grey.200' }} />
+                        <CardContent>
+                          <Box sx={{ height: 24, width: '40%', bgcolor: 'grey.300', borderRadius: 1, mb: 2 }} />
+                          <Box sx={{ height: 32, bgcolor: 'grey.300', borderRadius: 1, mb: 3 }} />
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                            <Box sx={{ height: 24, width: 24, bgcolor: 'grey.300', borderRadius: '50%', mr: 1.5 }} />
+                            <Box sx={{ height: 16, width: '70%', bgcolor: 'grey.300', borderRadius: 1 }} />
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                            <Box sx={{ height: 24, width: 24, bgcolor: 'grey.300', borderRadius: '50%', mr: 1.5 }} />
+                            <Box sx={{ height: 16, width: '50%', bgcolor: 'grey.300', borderRadius: 1 }} />
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))
+                ) : (
+                  <Grid item xs={12}>
+                    <EmptyState
+                      icon={<EventIcon sx={{ fontSize: 40 }} />}
+                      title={t('events.noUpcoming', 'Келе жатқан іс-шаралар табылмады')}
+                      description={t('events.checkLater', 'Кейінірек тексеріңіз немесе іс-шаралар бетіне өтіңіз')}
+                    />
+                  </Grid>
+                )}
+              </Grid>
+            </AnimatePresence>
+            
+            {/* Тіркелу туралы хабарлама (іс-шаралар бар кезде) */}
+            {upcomingEvents.length > 0 && !isAuthenticated && (
+              <Box
+                sx={{
+                  mt: 3,
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <Typography sx={{ mr: 2, mb: { xs: 2, md: 0 } }}>
+                  {t('events.loginToRegister', 'Іс-шараларға тіркелу үшін жүйеге кіріңіз')}
+                </Typography>
+                <Button
+                  component={RouterLink}
+                  to="/login"
+                  variant="contained"
+                  size="small"
+                >
+                  {t('common.login', 'Кіру')}
+                </Button>
+              </Box>
+            )}
           </Box>
         </motion.div>
         
@@ -639,21 +801,21 @@ const HomePage = () => {
                       fontWeight: 'bold'
                     }}
                   >
-                    Кітапхана қызметтері
+                    {t('home.libraryServices', 'Кітапхана қызметтері')}
                   </Typography>
                   
                   <Typography
                     variant="body1"
                     sx={{ mb: 3, fontSize: '1.1rem' }}
                   >
-                    Біздің кітапхана студенттерге, оқытушыларға және ғылыми қызметкерлерге арналған кең ауқымды қызметтерді ұсынады.
+                    {t('home.libraryServicesDescription', 'Біздің кітапхана студенттерге, оқытушыларға және ғылыми қызметкерлерге арналған кең ауқымды қызметтерді ұсынады.')}
                   </Typography>
                   
                   <Grid container spacing={2} sx={{ mb: 3 }}>
                     {[
-                      { label: 'Кітап қарызға алу', icon: <LocalLibraryIcon /> },
-                      { label: 'Оқу залдары', icon: <SchoolIcon /> },
-                      { label: 'Электронды ресурстар', icon: <BookIcon /> }
+                      { label: t('home.services.borrowing', 'Кітап қарызға алу'), icon: <LocalLibraryIcon /> },
+                      { label: t('home.services.readingRooms', 'Оқу залдары'), icon: <SchoolIcon /> },
+                      { label: t('home.services.electronicResources', 'Электронды ресурстар'), icon: <BookIcon /> }
                     ].map((service, index) => (
                       <Grid item xs={12} sm={6} key={index}>
                         <Box
@@ -697,7 +859,7 @@ const HomePage = () => {
                       borderRadius: 2
                     }}
                   >
-                    Толығырақ білу
+                    {t('home.learnMore', 'Толығырақ білу')}
                   </Button>
                 </Box>
               </Grid>
@@ -753,16 +915,16 @@ const HomePage = () => {
       <AlertDialog
         open={loginDialog.open}
         onClose={handleCloseLoginDialog}
-        title="Жүйеге кіру қажет"
+        title={t('auth.loginRequired', 'Жүйеге кіру қажет')}
         content={
           <Typography variant="body1">
             {loginDialog.action === 'bookmark'
-              ? 'Кітапты бетбелгіге қосу үшін жүйеге кіру қажет'
-              : 'Кітапты қарап шығу үшін жүйеге кіру қажет'}
+              ? t('auth.loginToBookmark', 'Кітапты бетбелгіге қосу үшін жүйеге кіру қажет')
+              : t('auth.loginToBorrow', 'Кітапты қарап шығу үшін жүйеге кіру қажет')}
           </Typography>
         }
-        confirmText="Кіру"
-        cancelText="Болдырмау"
+        confirmText={t('common.login')}
+        cancelText={t('common.cancel')}
         onConfirm={handleLogin}
       />
     </motion.div>

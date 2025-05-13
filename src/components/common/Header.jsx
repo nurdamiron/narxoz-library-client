@@ -8,6 +8,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   AppBar,
   Box,
@@ -37,6 +38,7 @@ import {
   Book,
   History,
   BookmarkBorder,
+  Event as EventIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import getNotifications from '../../services/notificationService';
@@ -112,6 +114,7 @@ const Header = ({ toggleSidebar }) => {
   const isVerySmall = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   
   // AuthContext-тен пайдаланушы мәліметтерін алу
   const { user, isAuthenticated, logout } = useAuth();
@@ -172,7 +175,7 @@ const Header = ({ toggleSidebar }) => {
         const unreadCount = notificationsData.filter(notification => !notification.read).length;
         setUnreadNotifications(unreadCount);
       } catch (error) {
-        console.error('Хабарландыруларды жүктеу кезінде қате орын алды:', error);
+        console.error(t('notifications.loadError'), error);
       } finally {
         setLoading(false);
       }
@@ -189,14 +192,17 @@ const Header = ({ toggleSidebar }) => {
   // Ағымдағы беттің атауын алу (мобильді көрініс үшін)
   const getCurrentPageName = () => {
     const path = location.pathname;
-    if (path === '/') return 'Басты бет';
-    if (path === '/books') return 'Каталог';
-    if (path.startsWith('/books/')) return 'Кітап';
-    if (path === '/profile') return 'Профиль';
-    if (path === '/bookmarks') return 'Бетбелгілер';
-    if (path === '/borrows') return 'Қарыздар';
-    if (path === '/notifications') return 'Хабарландырулар';
-    return 'НАРХОЗ';
+    if (path === '/') return t('common.home');
+    if (path === '/books') return t('books.catalog');
+    if (path.startsWith('/books/')) return t('books.bookDetails');
+    if (path === '/profile') return t('profile.title');
+    if (path === '/bookmarks') return t('bookmarks.title');
+    if (path === '/borrows') return t('borrowHistory.title');
+    if (path === '/notifications') return t('notifications.title');
+    if (path === '/events') return t('events.title');
+    if (path.startsWith('/events/')) return t('events.eventDetails');
+    if (path === '/my-events') return t('events.myEvents.title');
+    return t('common.libraryName');
   };
 
   return (
@@ -221,21 +227,30 @@ const Header = ({ toggleSidebar }) => {
         
         {/* Сайт логотипі мен атауы */}
         {!isVerySmall ? (
-          <Typography
-            variant="h6"
-            noWrap
+          <Box
             component={RouterLink}
             to="/"
             sx={{
               textDecoration: 'none',
               color: 'inherit',
-              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
               mr: 1,
               flexShrink: 0,
             }}
           >
-            НАРХОЗ
-          </Typography>
+            <Box
+              component="img"
+              src="/images/narxoz-logo-white.png"
+              alt="Narxoz University"
+              sx={{
+                height: 35,
+                mr: 1,
+                filter: 'brightness(1)',
+                display: 'block'
+              }}
+            />
+          </Box>
         ) : (
           <Typography
             variant="h6"
@@ -258,7 +273,7 @@ const Header = ({ toggleSidebar }) => {
             <SearchIcon />
           </SearchIconWrapper>
           <StyledInputBase
-            placeholder="Кітаптарды іздеу..."
+            placeholder={t('books.searchPlaceholder')}
             inputProps={{ 'aria-label': 'search' }}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -271,18 +286,40 @@ const Header = ({ toggleSidebar }) => {
 
         {/* Оң жақ элементтер тобы */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {/* Каталог түймесі - тек үлкен экрандарда */}
-          {!isMobile && (
+          {/* Global Navigation buttons - visible to all users */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Button
               color="inherit"
               component={RouterLink}
               to="/books"
               startIcon={<Book />}
-              sx={{ mr: 1 }}
+              sx={{ mr: 1, display: { xs: 'none', md: 'flex' } }}
             >
-              Каталог
+              {t('books.catalog')}
             </Button>
-          )}
+            
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/events"
+              startIcon={<EventIcon />}
+              sx={{ 
+                mr: 1,
+                minWidth: { xs: 'auto', sm: 'auto' },
+                px: { xs: 1, sm: 2 },
+                '& .MuiButton-startIcon': {
+                  mr: { xs: 0, sm: 1 }
+                },
+                '& .MuiButton-endIcon': {
+                  ml: { xs: 0, sm: 1 }
+                }
+              }}
+            >
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                {t('events.title')}
+              </Box>
+            </Button>
+          </Box>
 
           {/* Аутентификацияланған пайдаланушы элементтері */}
           {isAuthenticated ? (
@@ -302,7 +339,7 @@ const Header = ({ toggleSidebar }) => {
               </IconButton>
 
               {/* Пайдаланушы профилі түймесі */}
-              <Tooltip title="Аккаунт">
+              <Tooltip title={t('user.fullName')}>
                 <IconButton
                   size="medium"
                   edge="end"
@@ -348,7 +385,7 @@ const Header = ({ toggleSidebar }) => {
                   <ListItemIcon>
                     <Person sx={{ color: '#d50032' }} />
                   </ListItemIcon>
-                  <ListItemText primary="Профиль" />
+                  <ListItemText primary={t('profile.title')} />
                 </MenuItem>
                 
                 {/* Бетбелгілер */}
@@ -360,7 +397,7 @@ const Header = ({ toggleSidebar }) => {
                   <ListItemIcon>
                     <BookmarkBorder sx={{ color: '#d50032' }} />
                   </ListItemIcon>
-                  <ListItemText primary="Бетбелгілер" />
+                  <ListItemText primary={t('bookmarks.title')} />
                 </MenuItem>
                 
                 {/* Қарыздар тарихы */}
@@ -372,7 +409,19 @@ const Header = ({ toggleSidebar }) => {
                   <ListItemIcon>
                     <History sx={{ color: '#d50032' }} />
                   </ListItemIcon>
-                  <ListItemText primary="Қарыздар" />
+                  <ListItemText primary={t('borrowHistory.title')} />
+                </MenuItem>
+                
+                {/* My Events */}
+                <MenuItem
+                  component={RouterLink}
+                  to="/my-events"
+                  onClick={handleMenuClose}
+                >
+                  <ListItemIcon>
+                    <EventIcon sx={{ color: '#d50032' }} />
+                  </ListItemIcon>
+                  <ListItemText primary={t('sidebar.mainMenu.myEvents')} />
                 </MenuItem>
                 
                 <MenuItem sx={{ borderTop: '1px solid rgba(0,0,0,0.1)', mt: 1 }} />
@@ -382,14 +431,14 @@ const Header = ({ toggleSidebar }) => {
                   <ListItemIcon>
                     <Logout sx={{ color: '#d50032' }} />
                   </ListItemIcon>
-                  <ListItemText primary="Шығу" />
+                  <ListItemText primary={t('common.logout')} />
                 </MenuItem>
               </Menu>
             </>
           ) : (
             // Аутентификацияланбаған пайдаланушы үшін кіру түймесі
             <Button color="inherit" component={RouterLink} to="/login">
-              Кіру
+              {t('common.login')}
             </Button>
           )}
         </Box>

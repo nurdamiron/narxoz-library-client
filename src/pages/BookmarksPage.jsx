@@ -33,6 +33,7 @@ import {
   LocalLibrary as LibraryIcon,
   ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 // Импорт хуков и утилит
 import useBookmarks from '../hooks/useBookmarks';
@@ -40,6 +41,7 @@ import { useToast } from '../context/ToastContext';
 import { getBookCoverUrl, truncateString } from '../utils';
 
 const BookmarksPage = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { bookmarks, loading, error, removeBookmark } = useBookmarks();
@@ -69,11 +71,11 @@ const BookmarksPage = () => {
     try {
       setDeleting(true);
       await removeBookmark(bookmarkToDelete.id);
-      success('Бетбелгі сәтті жойылды');
+      success(t('bookmarks.deleteSuccess'));
       handleCloseDeleteDialog();
     } catch (err) {
       console.error('Ошибка при удалении закладки:', err);
-      showError('Бетбелгіні жою кезінде қате орын алды');
+      showError(t('bookmarks.deleteError'));
     } finally {
       setDeleting(false);
     }
@@ -98,7 +100,7 @@ const BookmarksPage = () => {
     return (
       <Container sx={{ py: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Менің бетбелгілерім
+          {t('bookmarks.title')}
         </Typography>
         
         <Grid container spacing={3} sx={{ mt: 2 }}>
@@ -132,12 +134,12 @@ const BookmarksPage = () => {
       <Container sx={{ py: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1">
-            Менің бетбелгілерім
+            {t('bookmarks.title')}
           </Typography>
           
           <Chip
             icon={<BookmarkIcon />}
-            label={`${bookmarks.length} кітап`}
+            label={t('books.booksCount', { count: bookmarks.length })}
             color="primary"
             variant="outlined"
           />
@@ -153,10 +155,10 @@ const BookmarksPage = () => {
           <Paper elevation={2} sx={{ p: 4, textAlign: 'center' }}>
             <BookmarkIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6">
-              Бетбелгілер жоқ
+              {t('bookmarks.noBookmarks')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Сіз әлі бірде-бір кітапты бетбелгіге қоспадыңыз
+              {t('bookmarks.noBookmarksDescription', {defaultValue: 'Вы еще не добавили ни одну книгу в закладки'})}
             </Typography>
             <Button 
               variant="contained" 
@@ -164,7 +166,7 @@ const BookmarksPage = () => {
               to="/books"
               startIcon={<LibraryIcon />}
             >
-              Каталогқа өту
+              {t('books.browseCatalog')}
             </Button>
           </Paper>
         ) : (
@@ -229,13 +231,14 @@ const BookmarksPage = () => {
                           to={`/books/${bookmark.book?.id}`}
                           endIcon={<ArrowForwardIcon />}
                         >
-                          {isMobile ? 'Көру' : 'Толығырақ'}
+                          {isMobile ? t('common.view') : t('books.details.showMore')}
                         </Button>
                         
                         <IconButton 
                           color="error"
                           size="small"
                           onClick={() => handleOpenDeleteDialog(bookmark)}
+                          aria-label={t('common.delete')}
                         >
                           <DeleteIcon />
                         </IconButton>
@@ -256,18 +259,21 @@ const BookmarksPage = () => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Бетбелгіні жою</DialogTitle>
+        <DialogTitle>{t('bookmarks.deleteDialog.title', {defaultValue: 'Удаление закладки'})}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
             <InfoIcon color="warning" />
             <Typography>
-              {bookmarkToDelete?.book?.title} кітабын бетбелгілерден шығарғыңыз келе ме?
+              {t('bookmarks.deleteDialog.confirmation', {
+                title: bookmarkToDelete?.book?.title,
+                defaultValue: 'Вы уверены, что хотите удалить книгу "{{title}}" из закладок?'
+              })}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDeleteDialog} disabled={deleting}>
-            Болдырмау
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleDeleteBookmark}
@@ -276,7 +282,7 @@ const BookmarksPage = () => {
             disabled={deleting}
             startIcon={deleting && <CircularProgress size={24} />}
           >
-            Жою
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

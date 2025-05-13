@@ -9,6 +9,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Drawer,
@@ -40,7 +41,8 @@ import {
   Person as PersonIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
-  Dashboard as DashboardIcon
+  Dashboard as DashboardIcon,
+  Event as EventIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
@@ -61,6 +63,7 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
   const theme = useTheme();
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
+  const { t } = useTranslation();
   
   // Категориялар құлау күйі
   const [categoriesOpen, setCategoriesOpen] = useState(true);
@@ -83,17 +86,18 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
   
   // Негізгі меню элементтері
   const mainMenuItems = [
-    { text: 'Басты бет', icon: <HomeIcon />, path: '/' },
-    { text: 'Кітаптар', icon: <LibraryBooksIcon />, path: '/books' },
+    { text: t('sidebar.mainMenu.home'), icon: <HomeIcon />, path: '/' },
+    { text: t('sidebar.mainMenu.books'), icon: <LibraryBooksIcon />, path: '/books' },
+    { text: t('sidebar.mainMenu.events'), icon: <EventIcon />, path: '/events' },
     { 
-      text: 'Бетбелгілер', 
+      text: t('sidebar.mainMenu.bookmarks'), 
       icon: <BookmarkIcon />, 
       path: '/bookmarks',
       requireAuth: true,
       badge: stats.bookmarks || 0
     },
     { 
-      text: 'Қарыз тарихы', 
+      text: t('sidebar.mainMenu.borrowHistory'), 
       icon: <HistoryIcon />, 
       path: '/borrows',
       requireAuth: true,
@@ -101,17 +105,23 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
       alert: stats.overdueborrows > 0
     },
     { 
-      text: 'Админ панелі', 
+      text: t('sidebar.mainMenu.myEvents'), 
+      icon: <EventIcon />, 
+      path: '/my-events',
+      requireAuth: true
+    },
+    { 
+      text: t('sidebar.mainMenu.adminPanel'), 
       icon: <DashboardIcon />, 
       path: '/admin',
       requireAuth: true,
-      requireRole: 'admin'
+      requireRole: ['admin', 'moderator']
     },
   ];
   
   // Қосымша меню элементтері
   const secondaryMenuItems = [
-    { text: 'Кітапхана туралы', icon: <InfoIcon />, path: '/about' },
+    { text: t('sidebar.secondaryMenu.about'), icon: <InfoIcon />, path: '/about' },
   ];
   
   // Анимация конфигурациясы
@@ -162,19 +172,17 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Avatar
-            alt="Нархоз"
-            src="/images/narxoz-logo.png"
-            variant="rounded"
+          <Box
+            component="img"
+            src="/Narxoz_logo.png"
+            alt="Narxoz University"
             sx={{ 
               width: 36, 
               height: 36, 
               mr: 1.5,
-              bgcolor: theme.palette.primary.main
+              objectFit: 'contain'
             }}
-          >
-            Н
-          </Avatar>
+          />
           <Typography
             variant="h6"
             sx={{
@@ -184,7 +192,7 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Нархоз кітапханасы
+            {t('sidebar.libraryName')}
           </Typography>
         </Box>
         
@@ -228,12 +236,12 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
                 {user.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {user.role === 'admin' ? 'Әкімші' : (user.role === 'librarian' ? 'Кітапханашы' : 'Оқырман')}
+                {t(`roles.${user.role ? user.role.toLowerCase() : 'reader'}`)}
               </Typography>
             </Box>
             
             <Box sx={{ ml: 'auto' }}>
-              <Tooltip title="Профиль">
+              <Tooltip title={t('profile.title')}>
                 <IconButton
                   component={RouterLink}
                   to="/profile"
@@ -263,7 +271,10 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
           }
           
           // Белгілі бір рөл қажет болса, тексеру
-          if (item.requireRole && (!user || user.role !== item.requireRole)) {
+          if (item.requireRole && (!user || 
+             (Array.isArray(item.requireRole) 
+                ? !item.requireRole.includes(user.role) 
+                : user.role !== item.requireRole))) {
             return null;
           }
           
@@ -500,7 +511,7 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
                   <LogoutIcon />
                 </ListItemIcon>
                 <ListItemText 
-                  primary="Шығу"
+                  primary={t('sidebar.logout')}
                   primaryTypographyProps={{
                     color: theme.palette.error.main,
                   }}
@@ -520,7 +531,7 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
         }}
       >
         <Typography variant="caption" color="text.secondary">
-          © 2025 Нархоз Университеті Кітапханасы
+          {t('sidebar.copyright', { year: new Date().getFullYear() })}
         </Typography>
       </Box>
     </Drawer>

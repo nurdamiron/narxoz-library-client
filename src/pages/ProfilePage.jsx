@@ -1,6 +1,7 @@
 // src/pages/ProfilePage.jsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Grid,
@@ -66,6 +67,7 @@ function TabPanel(props) {
 const ProfilePage = () => {
   const { profile, stats, loading, updateProfile, uploadAvatar, changePassword } = useProfile();
   const { success, error: showError } = useToast();
+  const { t } = useTranslation();
   
   // Состояние UI
   const [activeTab, setActiveTab] = useState(0);
@@ -186,25 +188,25 @@ const ProfilePage = () => {
     const errors = {};
     
     if (!profileData.name) {
-      errors.name = 'Аты-жөні міндетті';
+      errors.name = t('validation.required', 'Аты-жөні міндетті');
     }
     
     if (!profileData.email) {
-      errors.email = 'Электрондық пошта міндетті';
+      errors.email = t('validation.required', 'Электрондық пошта міндетті');
     } else if (!/\S+@\S+\.\S+/.test(profileData.email)) {
-      errors.email = 'Жарамды электрондық пошта енгізіңіз';
+      errors.email = t('validation.email', 'Жарамды электрондық пошта енгізіңіз');
     }
     
     if (!profileData.faculty) {
-      errors.faculty = 'Факультет міндетті';
+      errors.faculty = t('validation.required', 'Факультет міндетті');
     }
     
     if (!profileData.specialization) {
-      errors.specialization = 'Мамандық міндетті';
+      errors.specialization = t('validation.required');
     }
     
     if (!profileData.year) {
-      errors.year = 'Оқу жылы міндетті';
+      errors.year = t('validation.required');
     }
     
     setFormErrors(errors);
@@ -216,19 +218,19 @@ const ProfilePage = () => {
     const errors = {};
     
     if (!passwordData.currentPassword) {
-      errors.currentPassword = 'Ағымдағы құпия сөз міндетті';
+      errors.currentPassword = t('validation.required');
     }
     
     if (!passwordData.newPassword) {
-      errors.newPassword = 'Жаңа құпия сөз міндетті';
+      errors.newPassword = t('validation.required');
     } else if (passwordData.newPassword.length < 6) {
-      errors.newPassword = 'Құпия сөз кем дегенде 8 таңбадан тұруы керек';
+      errors.newPassword = t('validation.minLength', { min: 6 });
     }
     
     if (!passwordData.confirmPassword) {
-      errors.confirmPassword = 'Құпия сөзді растау міндетті';
+      errors.confirmPassword = t('validation.required');
     } else if (passwordData.newPassword !== passwordData.confirmPassword) {
-      errors.confirmPassword = 'Құпия сөздер сәйкес келмейді';
+      errors.confirmPassword = t('validation.passwordMatch');
     }
     
     setFormErrors(errors);
@@ -245,15 +247,15 @@ const ProfilePage = () => {
       setSavingProfile(true);
       await updateProfile(profileData);
       setEditMode(false);
-      success('Профиль сәтті жаңартылды');
+      success(t('profile.updateSuccess'));
     } catch (err) {
-      console.error('Ошибка при обновлении профиля:', err);
+      console.error(`${t('profile.updateError')}:`, err);
       
       // Обработка ошибок валидации с API
       if (err.response?.data?.errors) {
         setFormErrors(formatApiError(err));
       } else {
-        showError('Профильді жаңарту кезінде қате орын алды');
+        showError(t('profile.updateError'));
       }
     } finally {
       setSavingProfile(false);
@@ -280,14 +282,14 @@ const ProfilePage = () => {
         confirmPassword: ''
       });
       setPasswordDialogOpen(false);
-      success('Құпия сөз сәтті өзгертілді');
+      success(t('profile.passwordChanged'));
     } catch (err) {
-      console.error('Ошибка при смене пароля:', err);
+      console.error(`${t('profile.passwordError')}:`, err);
       
       if (err.response?.data?.error) {
         setFormErrors({ currentPassword: err.response.data.error });
       } else {
-        showError('Құпия сөзді өзгерту кезінде қате орын алды');
+        showError(t('profile.passwordError'));
       }
     } finally {
       setSavingPassword(false);
@@ -302,23 +304,23 @@ const ProfilePage = () => {
     // Проверяем тип файла
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-      showError('Тек JPEG, PNG немесе GIF форматындағы суреттерге рұқсат етіледі');
+      showError(t('admin.fileTypeError'));
       return;
     }
     
     // Проверяем размер файла (макс. 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      showError('Сурет өлшемі 5MB-дан аспауы керек');
+      showError(t('admin.fileSizeError'));
       return;
     }
     
     try {
       setUploading(true);
       await uploadAvatar(file);
-      success('Аватар сәтті жаңартылды');
+      success(t('profile.avatarSuccess'));
     } catch (err) {
-      console.error('Ошибка при загрузке аватара:', err);
-      showError('Аватарды жүктеу кезінде қате орын алды');
+      console.error(`${t('profile.avatarError')}:`, err);
+      showError(t('profile.avatarError'));
     } finally {
       setUploading(false);
     }
@@ -399,7 +401,7 @@ const ProfilePage = () => {
               </Typography>
               
               <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center' }}>
-                {profile?.role === 'admin' ? 'Әкімші' : (profile?.role === 'librarian' ? 'Кітапханашы' : 'Оқырман')}
+                {profile?.role === 'admin' ? t('roles.admin') : (profile?.role === 'librarian' ? t('roles.librarian') : t('roles.reader'))}
               </Typography>
               
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
@@ -410,28 +412,28 @@ const ProfilePage = () => {
                 <Box sx={{ mt: 3, width: '100%' }}>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="subtitle2" gutterBottom>
-                    Статистика
+                    {t('admin.statistics')}
                   </Typography>
                   
                   <Grid container spacing={2} sx={{ mt: 1 }}>
                     <Grid item xs={6}>
                       <Paper elevation={1} sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h6">{stats.bookmarks || 0}</Typography>
-                        <Typography variant="caption">Бетбелгілер</Typography>
+                        <Typography variant="caption">{t('bookmarks.title')}</Typography>
                       </Paper>
                     </Grid>
                     
                     <Grid item xs={6}>
                       <Paper elevation={1} sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h6">{stats.activeborrows || 0}</Typography>
-                        <Typography variant="caption">Белсенді қарыздар</Typography>
+                        <Typography variant="caption">{t('borrowHistory.active')}</Typography>
                       </Paper>
                     </Grid>
                     
                     <Grid item xs={6}>
                       <Paper elevation={1} sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h6">{stats.totalBorrows || 0}</Typography>
-                        <Typography variant="caption">Барлық қарыздар</Typography>
+                        <Typography variant="caption">{t('borrowHistory.title')}</Typography>
                       </Paper>
                     </Grid>
                     
@@ -454,7 +456,7 @@ const ProfilePage = () => {
                           variant="caption"
                           color={stats.overdueborrows > 0 ? 'error.main' : 'inherit'}
                         >
-                          Мерзімі өткен
+                          {t('borrowHistory.overdue')}
                         </Typography>
                       </Paper>
                     </Grid>
@@ -470,7 +472,7 @@ const ProfilePage = () => {
                 onClick={() => setPasswordDialogOpen(true)}
                 sx={{ mt: 3 }}
               >
-                Құпия сөзді өзгерту
+                {t('profile.changePassword')}
               </Button>
             </Paper>
           </Grid>
@@ -480,7 +482,7 @@ const ProfilePage = () => {
             <Paper elevation={3} sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5" component="h1">
-                  Менің профилім
+                  {t('profile.title')}
                 </Typography>
                 
                 {!editMode ? (
@@ -489,7 +491,7 @@ const ProfilePage = () => {
                     startIcon={<EditIcon />}
                     onClick={handleEditProfile}
                   >
-                    Өңдеу
+                    {t('profile.editProfile')}
                   </Button>
                 ) : (
                   <Box sx={{ display: 'flex', gap: 1 }}>
@@ -499,7 +501,7 @@ const ProfilePage = () => {
                       startIcon={<CancelIcon />}
                       onClick={handleCancelEdit}
                     >
-                      Болдырмау
+                      {t('common.cancel')}
                     </Button>
                     
                     <Button
@@ -509,7 +511,7 @@ const ProfilePage = () => {
                       onClick={handleSaveProfile}
                       disabled={savingProfile}
                     >
-                      Сақтау
+                      {t('common.save')}
                     </Button>
                   </Box>
                 )}
@@ -522,9 +524,9 @@ const ProfilePage = () => {
                     onChange={handleTabChange}
                     variant="fullWidth"
                   >
-                    <Tab label="Жеке ақпарат" />
-                    <Tab label="Оқу ақпараты" />
-                    <Tab label="Байланыс" />
+                    <Tab label={t('profile.personalInfo')} />
+                    <Tab label={t('auth.educationInfo', 'Оқу ақпараты')} />
+                    <Tab label={t('auth.contactInfo', 'Байланыс')} />
                   </Tabs>
                 </Box>
                 
@@ -534,7 +536,7 @@ const ProfilePage = () => {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Аты-жөні"
+                        label={t('profile.fullName')}
                         name="name"
                         value={profileData.name}
                         onChange={handleProfileChange}
@@ -554,7 +556,7 @@ const ProfilePage = () => {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Студенттік ID"
+                        label={t('user.studentId')}
                         value={profile?.studentId}
                         disabled={true}
                       />
@@ -568,7 +570,7 @@ const ProfilePage = () => {
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
-                        label="Оқу жылы"
+                        label={t('profile.year')}
                         name="year"
                         value={profileData.year}
                         onChange={handleProfileChange}
@@ -581,7 +583,7 @@ const ProfilePage = () => {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Мамандық"
+                        label={t('profile.specialization')}
                         name="specialization"
                         value={profileData.specialization}
                         onChange={handleProfileChange}
@@ -599,7 +601,7 @@ const ProfilePage = () => {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Электрондық пошта"
+                        label={t('common.email')}
                         name="email"
                         type="email"
                         value={profileData.email}
@@ -620,7 +622,7 @@ const ProfilePage = () => {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Телефон"
+                        label={t('profile.phone')}
                         name="phone"
                         value={profileData.phone}
                         onChange={handleProfileChange}
@@ -646,7 +648,7 @@ const ProfilePage = () => {
       
       {/* Диалог смены пароля */}
       <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Құпия сөзді өзгерту</DialogTitle>
+        <DialogTitle>{t('profile.changePassword')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             {formErrors.general && (
@@ -658,7 +660,7 @@ const ProfilePage = () => {
             <TextField
               margin="normal"
               fullWidth
-              label="Ағымдағы құпия сөз"
+              label={t('profile.oldPassword')}
               name="currentPassword"
               type={showPassword.current ? 'text' : 'password'}
               value={passwordData.currentPassword}
@@ -682,7 +684,7 @@ const ProfilePage = () => {
             <TextField
               margin="normal"
               fullWidth
-              label="Жаңа құпия сөз"
+              label={t('profile.newPassword')}
               name="newPassword"
               type={showPassword.new ? 'text' : 'password'}
               value={passwordData.newPassword}
@@ -706,7 +708,7 @@ const ProfilePage = () => {
             <TextField
               margin="normal"
               fullWidth
-              label="Жаңа құпия сөзді растау"
+              label={t('profile.confirmPassword')}
               name="confirmPassword"
               type={showPassword.confirm ? 'text' : 'password'}
               value={passwordData.confirmPassword}
@@ -730,7 +732,7 @@ const ProfilePage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPasswordDialogOpen(false)}>
-            Болдырмау
+            {t('common.cancel')}
           </Button>
           <Button 
             onClick={handleSavePassword}
@@ -739,7 +741,7 @@ const ProfilePage = () => {
             disabled={savingPassword}
             startIcon={savingPassword && <CircularProgress size={24} />}
           >
-            Сақтау
+            {t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>

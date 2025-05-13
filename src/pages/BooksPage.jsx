@@ -29,6 +29,7 @@ import {
   Clear as ClearIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 // Локальные компоненты
 import BookGrid from '../components/books/BookGrid';
@@ -57,6 +58,7 @@ const BooksPage = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
   const { success, error: showError } = useToast();
+  const { t } = useTranslation();
   
   // URL параметрлерін алу
   const queryParams = new URLSearchParams(location.search);
@@ -101,13 +103,13 @@ const BooksPage = () => {
         // Extract just the data array from the response
         setCategories(categoriesData.data || []);
       } catch (err) {
-        console.error('Категорияларды жүктеу қатесі:', err);
-        showError('Категорияларды жүктеу кезінде қате орын алды');
+        console.error(`${t('admin.errorLoadingCategories')}:`, err);
+        showError(t('admin.errorLoadingCategories'));
       }
     };
     
     fetchCategories();
-  }, [showError]);
+  }, [showError, t]);
   
   /**
    * URL параметрлерін жаңарту
@@ -146,8 +148,8 @@ const BooksPage = () => {
         setTotalPages(result.totalPages);
         setTotalItems(result.totalItems);
       } catch (err) {
-        console.error('Кітаптарды жүктеу қатесі:', err);
-        setError('Кітаптарды жүктеу кезінде қате орын алды');
+        console.error(`${t('books.errorLoading')}:`, err);
+        setError(t('books.errorLoading', 'Кітаптарды жүктеу кезінде қате орын алды'));
       } finally {
         setLoading(false);
       }
@@ -190,7 +192,7 @@ const BooksPage = () => {
    * Бет өзгерісін өңдеу
    * 
    * @param {Event} event - Оқиға объектісі
-   * @param {number} value - Жаңа бет нөмірі
+   * @param {number} value - Жаңа бет нөірі
    */
   const handlePageChange = (event, value) => {
     setFilters({
@@ -212,25 +214,32 @@ const BooksPage = () => {
    */
   const handleToggleBookmark = async (book) => {
     try {
-      const isBookmarked = await bookmarkService.toggleBookmark(book.id);
+      const response = await bookmarkService.toggleBookmark(book.id);
+      
+      // Извлекаем состояние закладки из ответа API
+      // baseService.js уже извлекает response.data, поэтому нам нужно обращаться к data.bookmarked
+      const bookmarked = response.data?.bookmarked;
+      
+      console.log('🔖 Bookmark toggle response:', response);
+      console.log('🔖 New bookmark status:', bookmarked);
       
       // Кітаптар тізімінде бетбелгі күйін жаңарту
       setBooks(prevBooks => 
         prevBooks.map(b => 
           b.id === book.id 
-            ? { ...b, isBookmarked } 
+            ? { ...b, isBookmarked: bookmarked } 
             : b
         )
       );
       
       // Сәтті хабарламаны көрсету
-      success(isBookmarked
-        ? 'Кітап бетбелгілерге қосылды'
-        : 'Кітап бетбелгілерден алып тасталды'
+      success(bookmarked
+        ? t('books.bookmarkAdded')
+        : t('books.bookmarkRemoved')
       );
     } catch (err) {
-      console.error('Бетбелгі ауыстыру қатесі:', err);
-      showError('Бетбелгіні өзгерту кезінде қате орын алды');
+      console.error(`${t('books.bookmarkError')}:`, err);
+      showError(t('books.bookmarkError'));
     }
   };
   
@@ -281,17 +290,17 @@ const BooksPage = () => {
       );
       
       // Сәтті хабарламаны көрсету
-      success('Кітап сәтті алынды! Кітапханадан алуыңызға болады.');
+      success(t('books.borrowSuccess'));
       
       // Диалогты жабу
       handleCloseBorrowDialog();
     } catch (err) {
-      console.error('Кітапты алу қатесі:', err);
+      console.error(`${t('books.borrowError')}:`, err);
       // Сервер қайтарған қате хабарламасын көрсету
       if (err.response && err.response.data && err.response.data.error) {
         showError(err.response.data.error);
       } else {
-        showError('Кітапты алу кезінде қате орын алды');
+        showError(t('books.borrowError', 'Кітапты алу кезінде қате орын алды'));
       }
     } finally {
       setBorrowing(false);
@@ -340,10 +349,10 @@ const BooksPage = () => {
             gutterBottom
             sx={{ fontWeight: 'bold' }}
           >
-            Кітаптар каталогы
+            {t('books.catalog')}
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Нархоз университеті кітапханасының кітаптар жинағын қараңыз
+            {t('books.catalogDescription', 'Нархоз университеті кітапханасының кітаптар жинағын қараңыз')}
           </Typography>
         </Box>
         
@@ -387,7 +396,7 @@ const BooksPage = () => {
               <TextField
                 fullWidth
                 variant="outlined"
-                placeholder="Кітаптарды атауы, авторы немесе сипаттамасы бойынша іздеу"
+                placeholder={t('books.searchPlaceholder', 'Кітаптарды атауы, авторы немесе сипаттамасы бойынша іздеу')}
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 size="small"
@@ -442,22 +451,22 @@ const BooksPage = () => {
         <AlertDialog
           open={borrowDialog.open}
           onClose={handleCloseBorrowDialog}
-          title="Кітапты алуды растау"
+          title={t('books.borrowConfirmTitle', 'Кітапты алуды растау')}
           content={
             borrowDialog.book && (
               <Box>
                 <Typography variant="body1" paragraph>
-                  Сіз "{borrowDialog.book.title}" кітабын алғыңыз келе ме?
+                  {t('books.borrowConfirmQuestion', { title: borrowDialog.book.title }, 'Сіз "{{title}}" кітабын алғыңыз келе ме?')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Кітап сіздің атыңызға 3 күнге (72 сағат) сақталады. Осы мерзім ішінде кітапханаға келіп, кітапты алуыңыз керек.
+                  {t('books.borrowConfirmDescription', 'Кітап сіздің атыңызға 3 күнге (72 сағат) сақталады. Осы мерзім ішінде кітапханаға келіп, кітапты алуыңыз керек.')}
                 </Typography>
               </Box>
             )
           }
           type="info"
-          confirmText="Растау"
-          cancelText="Болдырмау"
+          confirmText={t('common.confirm', 'Растау')}
+          cancelText={t('common.cancel', 'Болдырмау')}
           onConfirm={handleConfirmBorrow}
           loading={borrowing}
         />

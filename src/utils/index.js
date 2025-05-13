@@ -211,21 +211,9 @@ export const formatDate = (date, options = {}) => {
    * @returns {string} Full URL for the image
    */
   export const getImageUrl = (path) => {
-    if (!path) return '';
-    
-    // If path is already a full URL
-    if (path.startsWith('http')) {
-      return path;
-    }
-    
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
-    
-    // Handle different path formats
-    if (path.startsWith('/')) {
-      return `${baseUrl}${path}`;
-    }
-    
-    return `${baseUrl}/${path}`;
+    // Используем нашу функцию для получения URL обложки, 
+    // так как логика одинаковая для всех изображений
+    return getBookCoverUrl(path);
   };
   
   /**
@@ -234,11 +222,50 @@ export const formatDate = (date, options = {}) => {
    * @returns {string} Cover image URL
    */
   export const getBookCoverUrl = (cover) => {
+    // Константа для адреса местного сервера - всегда используем явно указанный URL
+    const LOCAL_BACKEND_URL = 'http://localhost:5001';
+    
+    // Если путь не указан или пустой, возвращаем изображение по умолчанию
     if (!cover) {
-      return '/images/default-book-cover.jpg';
+      return 'https://via.placeholder.com/200x300?text=No+Cover';
     }
     
-    return getImageUrl(cover);
+    // Если это явно указанный placeholder, используем его
+    if (cover === 'NarXoz') {
+      return 'http://localhost:5001/api/narxoz-cover';
+    }
+    
+    // Если путь уже полный URL, проверяем, не нужно ли его преобразовать для обхода CORS
+    if (cover.startsWith('http')) {
+      // Если URL содержит /uploads/covers/, извлекаем имя файла для использования с debug-маршрутом
+      if (cover.includes('/uploads/covers/')) {
+        const filename = cover.split('/uploads/covers/')[1];
+        // Используем специальный маршрут, который обеспечивает правильные CORS-заголовки
+        return `${LOCAL_BACKEND_URL}/api/book-cover-debug/${filename}`;
+      }
+      return cover;
+    }
+    
+    // Для путей вида /uploads/covers/... (отдельно обрабатываем для обхода CORS)
+    if (cover.includes('/uploads/covers/')) {
+      const parts = cover.split('/uploads/covers/');
+      const filename = parts[parts.length - 1];
+      return `${LOCAL_BACKEND_URL}/api/book-cover-debug/${filename}`;
+    }
+    
+    // Для путей вида /uploads/... (начинающихся с /)
+    if (cover.startsWith('/')) {
+      // Пытаемся извлечь имя файла, если это путь к обложке
+      if (cover.includes('/uploads/covers/')) {
+        const parts = cover.split('/uploads/covers/');
+        const filename = parts[parts.length - 1];
+        return `${LOCAL_BACKEND_URL}/api/book-cover-debug/${filename}`;
+      }
+      return `${LOCAL_BACKEND_URL}${cover}`;
+    }
+    
+    // Для относительных путей без начального слэша
+    return `${LOCAL_BACKEND_URL}/${cover}`;
   };
   
   /**

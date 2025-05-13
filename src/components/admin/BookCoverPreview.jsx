@@ -1,5 +1,7 @@
 import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
+import { getBookCoverUrl } from '../../utils';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Компонент для предварительного просмотра обложки книги
@@ -10,28 +12,24 @@ import { Box, Paper, Typography } from '@mui/material';
  * @param {string} props.title - Название книги (для alt текста)
  * @returns {JSX.Element} Компонент предпросмотра обложки
  */
-const BookCoverPreview = ({ file, imageUrl, title = 'Кітап мұқабасы' }) => {
-  // Обработка URL обложки, чтобы добавить домен сервера, если путь начинается с /uploads
-  const processImageUrl = (url) => {
-    if (url && url.startsWith('/uploads')) {
-      return `${window.location.protocol}//${window.location.host.replace(/:\d+/, ':5001')}${url}`;
-    }
-    return url;
-  };
-
-  // Сначала используем выбранный файл, если он есть, иначе существующий URL
-  const previewUrl = file 
-    ? URL.createObjectURL(file) 
-    : processImageUrl(imageUrl) || 'https://via.placeholder.com/200x300?text=Мұқаба+жоқ';
+const BookCoverPreview = ({ file, imageUrl, title }) => {
+  const { t } = useTranslation();
+  
+  // Создаем URL из File объекта, если он есть
+  const fileUrl = file ? URL.createObjectURL(file) : null;
+  
+  // Используем URL из файла, если он есть, иначе используем imageUrl, если он есть
+  // В противном случае используем заглушку
+  const previewUrl = fileUrl || (imageUrl ? getBookCoverUrl(imageUrl) : '/images/default-book-cover.jpg');
 
   // Эффект для очистки URL объекта при размонтировании компонента
   React.useEffect(() => {
     return () => {
-      if (file) {
-        URL.revokeObjectURL(previewUrl);
+      if (fileUrl) {
+        URL.revokeObjectURL(fileUrl);
       }
     };
-  }, [file, previewUrl]);
+  }, [fileUrl]);
 
   return (
     <Box
@@ -57,16 +55,20 @@ const BookCoverPreview = ({ file, imageUrl, title = 'Кітап мұқабасы
         <Box
           component="img"
           src={previewUrl}
-          alt={title}
+          alt={title || t('admin.noCover')}
           sx={{
             width: '100%',
             height: '100%',
             objectFit: 'cover'
           }}
+          onError={(e) => {
+            // В случае ошибки загрузки изображения заменяем на заглушку
+            e.target.src = '/images/default-book-cover.jpg';
+          }}
         />
       </Paper>
       <Typography variant="caption" color="text.secondary">
-        {file ? 'Алдын ала қарау' : 'Мұқаба сурет'}
+        {file ? t('admin.coverPreview', 'Алдын ала қарау') : t('admin.coverImage', 'Мұқаба сурет')}
       </Typography>
     </Box>
   );
