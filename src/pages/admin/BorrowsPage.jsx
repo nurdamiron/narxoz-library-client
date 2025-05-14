@@ -406,7 +406,7 @@ const BorrowsPage = () => {
               onClick={handleCheckOverdue}
               disabled={loading}
             >
-              {t('admin.checkOverdues', 'Проверить просроченные')}
+              {t('admin.borrowActions.checkOverdue', 'Проверить просроченные')}
             </Button>
             
             <Button
@@ -416,7 +416,7 @@ const BorrowsPage = () => {
               onClick={handleSendReminders}
               disabled={loading}
             >
-              {t('admin.sendReminders', 'Отправить напоминания')}
+              {t('admin.borrowActions.sendReminders', 'Отправить напоминания')}
             </Button>
             
             <Button
@@ -426,7 +426,7 @@ const BorrowsPage = () => {
               onClick={fetchBorrows}
               disabled={loading}
             >
-              {t('common.refresh', 'Обновить')}
+              {t('admin.borrowActions.refresh', 'Обновить')}
             </Button>
             
             <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Event Details Diagnostic Tool</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #d50032;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 12px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #d50032;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #b3002b;
+        }
+        input {
+            padding: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .url-display {
+            word-break: break-all;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .api-response {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Event Details Diagnostic Tool</h1>
+        
+        <div class="card">
+            <h2>1. Current Page Information</h2>
+            <p>Browser URL: <span id="currentUrl" class="url-display"></span></p>
+            <p>Path: <span id="currentPath" class="url-display"></span></p>
+        </div>
+        
+        <div class="card">
+            <h2>2. Test Event Page Navigation</h2>
+            <p>Enter an event ID to navigate to:</p>
+            <input type="text" id="eventId" placeholder="Enter event ID (e.g. 1)" value="1">
+            <div>
+                <button onclick="goToEventPage()">Go to Event Page</button>
+                <button onclick="goToDirectEventPage()">Go to Clean Event URL</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>3. API Test</h2>
+            <p>Test the API endpoint for the event:</p>
+            <input type="text" id="apiEventId" placeholder="Enter event ID for API test" value="1">
+            <button onclick="testEventAPI()">Test API Endpoint</button>
+            <div id="apiResult" class="test-result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>4. URL Sanitization Test</h2>
+            <p>Test URL parameter sanitization:</p>
+            <input type="text" id="testUrl" placeholder="Enter URL with potential issues" value="/events/1'">
+            <button onclick="testUrlSanitization()">Test URL Sanitization</button>
+            <div id="sanitizationResult" class="test-result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>5. Diagnostics</h2>
+            <pre id="diagnostics"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Display current URL and path
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('currentPath').textContent = window.location.pathname;
+        
+        // Function to navigate to the event page
+        function goToEventPage() {
+            const eventId = document.getElementById('eventId').value.trim();
+            if (!eventId) {
+                alert('Please enter an event ID');
+                return;
+            }
+            
+            // Navigate to the event page
+            window.location.href = `/events/${eventId}`;
+        }
+        
+        // Function to navigate to a clean event URL (no trailing quotes)
+        function goToDirectEventPage() {
+            const eventId = document.getElementById('eventId').value.trim();
+            if (!eventId) {
+                alert('Please enter an event ID');
+                return;
+            }
+            
+            // Remove any quotes from the ID
+            const sanitizedId = eventId.replace(/['"`]/g, '');
+            
+            // Navigate to the clean event URL
+            window.location.href = `/events/${sanitizedId}`;
+        }
+        
+        // Function to test the event API
+        async function testEventAPI() {
+            const eventId = document.getElementById('apiEventId').value.trim();
+            if (!eventId) {
+                alert('Please enter an event ID');
+                return;
+            }
+            
+            const apiResult = document.getElementById('apiResult');
+            apiResult.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                // Test the API endpoint
+                const sanitizedId = eventId.replace(/['"`]/g, '');
+                const response = await fetch(`/api/events/${sanitizedId}`);
+                const data = await response.json();
+                
+                // Display API response
+                if (response.ok) {
+                    apiResult.innerHTML = `
+                        <p class="success">✅ API request successful (${response.status})</p>
+                        <p><strong>Event found:</strong> ${data.success ? 'Yes' : 'No'}</p>
+                        <p><strong>Event title:</strong> ${data.data?.title || 'N/A'}</p>
+                        <details>
+                            <summary>View full API response</summary>
+                            <pre class="api-response">${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    apiResult.innerHTML = `
+                        <p class="error">❌ API request failed (${response.status})</p>
+                        <pre class="api-response">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                apiResult.innerHTML = `
+                    <p class="error">❌ API request error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Function to test URL sanitization
+        function testUrlSanitization() {
+            const testUrl = document.getElementById('testUrl').value.trim();
+            const sanitizationResult = document.getElementById('sanitizationResult');
+            
+            // Simple sanitization function
+            function sanitizeUrl(url) {
+                return url.replace(/['"`]/g, '');
+            }
+            
+            const sanitizedUrl = sanitizeUrl(testUrl);
+            const hasIssue = testUrl !== sanitizedUrl;
+            
+            if (hasIssue) {
+                sanitizationResult.innerHTML = `
+                    <p class="warning">⚠️ URL has issues that require sanitization</p>
+                    <p><strong>Original URL:</strong> <code>${testUrl}</code></p>
+                    <p><strong>Sanitized URL:</strong> <code>${sanitizedUrl}</code></p>
+                    <p>Characters removed: ${testUrl.length - sanitizedUrl.length}</p>
+                `;
+            } else {
+                sanitizationResult.innerHTML = `
+                    <p class="success">✅ URL is clean, no sanitization needed</p>
+                    <p><code>${testUrl}</code></p>
+                `;
+            }
+        }
+        
+        // Run diagnostics on page load
+        function runDiagnostics() {
+            const url = window.location.href;
+            const path = window.location.pathname;
+            const diagnostics = [];
+            
+            diagnostics.push(`Browser Information: ${navigator.userAgent}`);
+            diagnostics.push(`Page URL: ${url}`);
+            diagnostics.push(`Path: ${path}`);
+            
+            // Check for trailing quotes in URL
+            if (url.match(/['"`]$/)) {
+                diagnostics.push('⚠️ ISSUE: URL ends with a quote character');
+                diagnostics.push('This can cause React Router to fail matching the route correctly');
+                diagnostics.push('SOLUTION: Remove trailing quotes from the URL');
+            }
+            
+            // Check if the path includes quotes
+            if (path.includes("'") || path.includes('"') || path.includes('`')) {
+                diagnostics.push('⚠️ ISSUE: Path contains quote characters');
+                const fixedPath = path.replace(/['"`]/g, '');
+                diagnostics.push(`Corrected path should be: ${fixedPath}`);
+            }
+            
+            // Check if we're on events page
+            if (path.match(/\/events\/\d+/)) {
+                diagnostics.push('✅ You are on an event details page with a valid URL format');
+                
+                // Extract event ID
+                const eventId = path.match(/\/events\/(\d+)/)?.[1];
+                if (eventId) {
+                    diagnostics.push(`Event ID: ${eventId}`);
+                }
+            } else if (path.match(/\/events\/\d+['"`]/)) {
+                diagnostics.push('⚠️ You are on an event details page with an INVALID URL format (has trailing quote)');
+                
+                // Extract event ID
+                const eventId = path.match(/\/events\/(\d+)/)?.[1];
+                if (eventId) {
+                    diagnostics.push(`Event ID: ${eventId}`);
+                    diagnostics.push(`Try navigating to: /events/${eventId}`);
+                }
+            }
+            
+            diagnostics.push('\n--- Component Rendering Test ---');
+            diagnostics.push('This test will be filled in when you interact with the page');
+            
+            document.getElementById('diagnostics').textContent = diagnostics.join('\n');
+        }
+        
+        // Run diagnostics on load
+        window.onload = runDiagnostics;
+    </script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>URL Diagnostics Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d50032;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #d50032;
+            margin-top: 25px;
+            font-size: 1.2rem;
+        }
+        .problem {
+            background-color: #ffecec;
+            border-left: 4px solid #d50032;
+            padding: 10px 15px;
+            margin-top: 10px;
+            border-radius: 0 4px 4px 0;
+        }
+        .solution {
+            background-color: #e7f7e1;
+            border-left: 4px solid #28a745;
+            padding: 10px 15px;
+            margin-top: 10px;
+            border-radius: 0 4px 4px 0;
+        }
+        .code {
+            font-family: monospace;
+            background-color: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        button {
+            background-color: #d50032;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .info {
+            display: flex;
+            justify-content: space-between;
+            background-color: #e6f7ff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info-label {
+            font-weight: bold;
+            flex: 1;
+        }
+        .info-value {
+            flex: 2;
+            font-family: monospace;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Narxoz Library URL Diagnostics Tool</h1>
+        <p>This tool will help diagnose URL-related issues, especially problems with event or book detail pages.</p>
+        
+        <h2>Current URL Information</h2>
+        
+        <div class="info">
+            <div class="info-label">Current URL:</div>
+            <div class="info-value" id="current-url"></div>
+        </div>
+        
+        <div class="info">
+            <div class="info-label">Path:</div>
+            <div class="info-value" id="current-path"></div>
+        </div>
+        
+        <div class="info">
+            <div class="info-label">Detected ID:</div>
+            <div class="info-value" id="detected-id"></div>
+        </div>
+        
+        <div id="diagnosis-result"></div>
+        
+        <h2>Fix URL</h2>
+        <p>If your URL contains problematic characters (like quotes), click the button below to fix it:</p>
+        <button id="fix-url-btn">Fix Current URL</button>
+        
+        <div style="margin-top: 30px;">
+            <h2>Navigation Help</h2>
+            <p>You can directly navigate to these common pages:</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="window.location.href='/'">Home</button>
+                <button onclick="window.location.href='/books'">Books</button>
+                <button onclick="window.location.href='/events'">Events</button>
+                <button onclick="window.location.href='/events/1'">Event #1</button>
+                <button onclick="window.location.href='/books/1'">Book #1</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Display current URL information
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('current-path').textContent = window.location.pathname;
+        
+        // Extract and display ID from URL if it exists
+        function getIdFromPath(path) {
+            // Match patterns like /events/123 or /books/456
+            const match = path.match(/\/(events|books)\/(\d+)/i);
+            return match ? match[2] : 'None detected';
+        }
+        
+        // Check if URL contains quotes or other problematic characters
+        function hasProblematicCharacters(url) {
+            return /['"`]/.test(url);
+        }
+        
+        // Clean URL by removing problematic characters
+        function cleanUrl(url) {
+            return url.replace(/['"`]/g, '');
+        }
+        
+        // Get detected ID
+        const detectedId = getIdFromPath(window.location.pathname);
+        document.getElementById('detected-id').textContent = detectedId;
+        
+        // Perform diagnosis
+        const diagnosisResult = document.getElementById('diagnosis-result');
+        
+        if (hasProblematicCharacters(window.location.href)) {
+            diagnosisResult.innerHTML = `
+                <div class="problem">
+                    <h3>Problem Detected!</h3>
+                    <p>Your URL contains problematic characters (quotes or apostrophes) that interfere with proper routing.</p>
+                    <p>Current URL: <span class="code">${window.location.href}</span></p>
+                    <p>Corrected URL should be: <span class="code">${cleanUrl(window.location.href)}</span></p>
+                </div>
+                <div class="solution">
+                    <h3>Solution</h3>
+                    <p>Click the "Fix Current URL" button below to navigate to the correct URL without the problematic characters.</p>
+                </div>
+            `;
+        } else if (detectedId !== 'None detected') {
+            diagnosisResult.innerHTML = `
+                <div class="solution">
+                    <h3>No URL Problems Detected</h3>
+                    <p>Your URL appears to be correctly formatted. If you're still experiencing issues, please check your browser cache or contact support.</p>
+                </div>
+            `;
+        } else {
+            diagnosisResult.innerHTML = `
+                <div class="info">
+                    <p>This does not appear to be a detail page URL (no ID detected in the path).</p>
+                </div>
+            `;
+        }
+        
+        // Fix URL button functionality
+        document.getElementById('fix-url-btn').addEventListener('click', function() {
+            const currentUrl = window.location.href;
+            if (hasProblematicCharacters(currentUrl)) {
+                window.location.href = cleanUrl(currentUrl);
+            } else {
+                alert('No problematic characters found in the current URL.');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -379,7 +379,7 @@ const LoginPage = () => {
             <motion.div variants={itemVariants}>
               <Grid container spacing={1} sx={{ mt: 2 }}>
                 <Grid item xs>
-                  <Link 
+                  {/* <Link 
                     component={RouterLink} 
                     to="/forgot-password" 
                     variant="body3" 
@@ -392,7 +392,7 @@ const LoginPage = () => {
                     }}
                   >
                     {t('auth.forgotPassword', 'Құпия сөзді ұмыттыңыз ба?')}
-                  </Link>
+                  </Link> */}
                 </Grid>
               </Grid>
             </motion.div>

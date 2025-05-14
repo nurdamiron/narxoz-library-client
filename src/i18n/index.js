@@ -26,8 +26,11 @@ i18n
         translation: enTranslations
       }
     },
-    // Язык по умолчанию
-    fallbackLng: 'kz',
+    // Язык по умолчанию (для России используем русский, иначе казахский)
+    fallbackLng: (lng) => {
+      if (lng && lng.startsWith('ru')) return 'ru';
+      return 'kz';
+    },
     // Если ключ не найден, вернуть сам ключ
     keySeparator: '.',
     interpolation: {
@@ -36,9 +39,12 @@ i18n
     },
     // Обнаружение и сохранение языка в localStorage
     detection: {
-      order: ['localStorage', 'navigator'],
+      order: ['localStorage', 'navigator', 'querystring', 'htmlTag'],
       lookupLocalStorage: 'language',
+      lookupQuerystring: 'lng',
       caches: ['localStorage'],
+      // Ensure changes in language also update HTML lang attribute
+      htmlTag: document.documentElement
     },
   });
 

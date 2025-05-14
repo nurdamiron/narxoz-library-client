@@ -11,6 +11,7 @@ import RateReviewIcon from '@mui/icons-material/RateReview';
 import EventIcon from '@mui/icons-material/Event';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../context/AuthContext';
+import { isModerator, logUserRoleInfo } from '../../../debug-role';
 
 const AdminLayout = () => {
   const theme = useTheme();
@@ -18,21 +19,27 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const isModerator = user && user.role === 'moderator';
+  // Use the enhanced isModerator utility for more reliable role checking
+  const userIsModerator = isModerator(user);
+  
+  // Log user role information for debugging
+  logUserRoleInfo(user);
   
   console.log('AdminLayout rendered:', { 
     currentPath: location.pathname,
     userRole: user?.role, 
-    isModerator 
+    isModerator: userIsModerator, 
+    userRoleLowercase: user?.role?.toLowerCase()
   });
   
   // Конфигурация маршрутов для навигации
-  const adminRoutes = isModerator ? [
+  const adminRoutes = userIsModerator ? [
     { path: '/admin', index: 0, label: 'admin.dashboard', icon: <DashboardIcon /> },
     { path: '/admin/books', index: 1, label: 'admin.books', icon: <LibraryBooksIcon /> },
     { path: '/admin/borrows', index: 2, label: 'admin.borrows', icon: <BookmarkIcon /> },
-    { path: '/admin/events', index: 3, label: 'events.admin.title', icon: <EventIcon /> },
-    { path: '/admin/reviews', index: 4, label: 'admin.reviews', icon: <RateReviewIcon /> }
+    { path: '/admin/categories', index: 3, label: 'admin.categories', icon: <CategoryIcon /> },
+    { path: '/admin/events', index: 4, label: 'events.admin.title', icon: <EventIcon /> },
+    { path: '/admin/reviews', index: 5, label: 'admin.reviews', icon: <RateReviewIcon /> }
   ] : [
     { path: '/admin', index: 0, label: 'admin.dashboard', icon: <DashboardIcon /> },
     { path: '/admin/users', index: 1, label: 'admin.users', icon: <PeopleIcon /> },
@@ -64,7 +71,7 @@ const AdminLayout = () => {
       }
     }
     
-    const defaultIndex = isModerator ? 0 : 0;
+    const defaultIndex = userIsModerator ? 0 : 0;
     console.log(`No matching route for ${path}, using default index: ${defaultIndex}`);
     return defaultIndex; // По умолчанию первый таб
   };

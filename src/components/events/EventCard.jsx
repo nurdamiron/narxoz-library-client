@@ -72,21 +72,14 @@ const EventCard = ({ event }) => {
           boxShadow: 6,
         },
         opacity: !event.isActive || isPastEvent ? 0.8 : 1,
+        borderTop: `4px solid`,
+        borderColor: `${getTypeColor(event.type)}.main`,
       }}
     >
-      {/* Event Image */}
-      <CardMedia
-        component="img"
-        height="160"
-        image={event.image || '/images/event-placeholder.jpg'}
-        alt={event.title}
-        sx={{ objectFit: 'cover' }}
-      />
-      
       {/* Event Content */}
-      <CardContent sx={{ flexGrow: 1, pb: 1 }}>
+      <CardContent sx={{ flexGrow: 1, pb: 1, pt: 3 }}>
         {/* Event Type Chip */}
-        <Box sx={{ mb: 1.5 }}>
+        <Box sx={{ mb: 2 }}>
           <Chip
             label={t(`events.types.${event.type}`)}
             size="small"
@@ -128,13 +121,14 @@ const EventCard = ({ event }) => {
               fontWeight: 600,
               fontSize: '1.1rem',
               lineHeight: 1.3,
-              mb: 1.5,
+              mb: 2,
               height: '2.6rem',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
+              color: 'primary.main'
             }}
           >
             {event.title}

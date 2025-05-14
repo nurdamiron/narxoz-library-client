@@ -71,6 +71,9 @@ function ScrollToTop() {
  * - Маршрутизацию через Routes
  */
 function App() {
+  // Add rendering tracking for debugging
+  console.log('App rendering, creating main application structure');
+  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -86,6 +89,7 @@ function App() {
             <ToastProvider>
               <ScrollToTop />
               <Routes>
+                {/* All routes are wrapped in a single Layout component */}
                 <Route element={<Layout />}>
                   {/* Публичные маршруты */}
                   <Route path="/" element={<HomePage />} />
@@ -119,7 +123,7 @@ function App() {
                     <Route path="books" element={<AdminBooksPage />} />
                     <Route path="borrows" element={<BorrowsPage />} />
                     <Route path="categories" element={
-                      <ProtectedRoute requiredRole="admin">
+                      <ProtectedRoute requiredRole={['admin', 'moderator']}>
                         <CategoriesPage />
                       </ProtectedRoute>
                     } />

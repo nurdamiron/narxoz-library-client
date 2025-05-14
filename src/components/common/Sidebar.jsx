@@ -46,6 +46,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { userHasRole, logUserRoleInfo } from '../../debug-role';
 
 // Бүйір панелі енінің константасы
 const drawerWidth = 260;
@@ -265,16 +266,46 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
       {/* Негізгі меню элементтерінің тізімі */}
       <List component={motion.ul} initial="hidden" animate="visible">
         {mainMenuItems.map((item, index) => {
+          // Enhanced debug logging for menu items
+          if (item.path === '/admin' && isAuthenticated && user) {
+            // Log detailed information about the admin panel item
+            logUserRoleInfo(user);
+            console.log('Admin panel item check:', {
+              path: item.path,
+              userRole: user.role,
+              requireRole: item.requireRole,
+              hasRequiredRole: userHasRole(user, item.requireRole)
+            });
+          }
+          
           // Авторизация қажет элементтерді тексеру
           if (item.requireAuth && !isAuthenticated) {
             return null;
           }
           
-          // Белгілі бір рөл қажет болса, тексеру
-          if (item.requireRole && (!user || 
-             (Array.isArray(item.requireRole) 
-                ? !item.requireRole.includes(user.role) 
-                : user.role !== item.requireRole))) {
+          // Debug log for all menu items that require role
+          if (item.requireRole) {
+            console.log(`Menu item ${item.text}:`, {
+              itemText: item.text,
+              itemRequiresRole: item.requireRole,
+              userRole: user?.role,
+              userRoleLowercase: user?.role?.toLowerCase(),
+              hasRequiredRole: userHasRole(user, item.requireRole)
+            });
+          }
+          
+          // Белгілі бір рөл қажет болса, тексеру (регистрге нечувствительное сравнение)
+          // Using the userHasRole utility for more reliable role checking
+          if (item.requireRole && !userHasRole(user, item.requireRole)) {
+            // Extra logging for admin panel access
+            if (item.path === '/admin') {
+              console.warn('Admin panel access check failed:', {
+                userRole: user?.role,
+                userRoleLowercase: user?.role?.toLowerCase(),
+                requiredRoles: item.requireRole,
+                hasRequiredRole: userHasRole(user, item.requireRole)
+              });
+            }
             return null;
           }
           

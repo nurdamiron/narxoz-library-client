@@ -17,6 +17,7 @@ import {
   Fade
 } from '@mui/material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 /**
  * PaginationControl компоненті
@@ -44,6 +45,7 @@ const PaginationControl = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
   
   // Егер тек бір бет болса, пагинацияны көрсетпейміз
   if (totalPages <= 1 && totalItems <= 0) {
@@ -126,8 +128,8 @@ const PaginationControl = ({
             sx={{ mt: 2 }}
           >
             {currentItemCount > 0 
-              ? `Көрсетілген: ${currentItemCount} / ${totalItems} ${getItemNameWithCount(totalItems, itemName)}`
-              : `Барлығы: ${totalItems} ${getItemNameWithCount(totalItems, itemName)}`
+              ? t('pagination.showing', {currentItems: currentItemCount, totalItems: totalItems, itemName: getItemNameWithCount(totalItems, itemName)}, `Көрсетілген: ${currentItemCount} / ${totalItems} ${getItemNameWithCount(totalItems, itemName)}`)
+              : t('pagination.total', {totalItems: totalItems, itemName: getItemNameWithCount(totalItems, itemName)}, `Барлығы: ${totalItems} ${getItemNameWithCount(totalItems, itemName)}`)
             }
           </Typography>
         )}

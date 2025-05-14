@@ -34,6 +34,7 @@ import {
   Delete as DeleteIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { reviewService } from '../../services';
 
@@ -46,6 +47,7 @@ import { reviewService } from '../../services';
  * @returns {JSX.Element}
  */
 const ReviewList = ({ bookId, refreshTrigger }) => {
+  const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -82,8 +84,8 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
         setTotalPages(Math.ceil(response.count / 5) || 1);
       }
     } catch (err) {
-      console.error('Error fetching reviews:', err);
-      setError('Пікірлерді жүктеу кезінде қате орын алды');
+      console.error(t('books.reviews.loadError', 'Error fetching reviews:'), err);
+      setError(t('books.reviews.loadError', 'Пікірлерді жүктеу кезінде қате орын алды'));
     } finally {
       setLoading(false);
     }
@@ -147,8 +149,8 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
       
       setReviews(updatedReviews);
     } catch (err) {
-      console.error('Error reporting review:', err);
-      setError('Шағым жіберу кезінде қате орын алды');
+      console.error(t('books.reviews.errorSubmitting', 'Error reporting review:'), err);
+      setError(t('books.reviews.errorSubmitting', 'Шағым жіберу кезінде қате орын алды'));
     }
   };
   
@@ -180,8 +182,8 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
       // Тізімді жаңарту
       fetchReviews();
     } catch (err) {
-      console.error('Error deleting review:', err);
-      setError('Пікірді жою кезінде қате орын алды');
+      console.error(t('admin.errorDeletingReview', 'Error deleting review:'), err);
+      setError(t('books.reviews.errorSubmitting', 'Пікірді жою кезінде қате орын алды'));
     }
   };
   
@@ -195,7 +197,7 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
     try {
       return format(new Date(dateString), 'dd.MM.yyyy');
     } catch {
-      return 'Белгісіз күн';
+      return t('books.reviews.unknownDate', 'Белгісіз күн');
     }
   };
   
@@ -209,7 +211,7 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
     if (review.user) {
       return `${review.user.firstName || ''} ${review.user.lastName || ''}`.trim() || review.user.username;
     }
-    return 'Белгісіз пайдаланушы';
+    return t('books.reviews.unknown', 'Белгісіз пайдаланушы');
   };
   
   /**
@@ -232,7 +234,7 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
     <Card>
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          Пікірлер
+          {t('books.reviews.title', 'Пікірлер')}
         </Typography>
         
         {/* Қате хабарламасы */}
@@ -244,12 +246,15 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
         
         {/* Жүктелу күйі */}
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
             <CircularProgress />
+            <Typography variant="body2" sx={{ ml: 2 }}>
+              {t('books.reviews.loading', 'Жүктелуде...')}
+            </Typography>
           </Box>
         ) : reviews.length === 0 ? (
           <Typography variant="body1" align="center" color="text.secondary" sx={{ py: 4 }}>
-            Бұл кітап туралы пікірлер әлі жоқ
+            {t('books.reviews.noReviews', 'Бұл кітап туралы пікірлер әлі жоқ')}
           </Typography>
         ) : (
           // Пікірлер тізімі
@@ -282,9 +287,9 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
                   {user && user.role === 'admin' && (
                     <Box>
                       {review.isApproved ? (
-                        <Chip size="small" color="success" label="Бекітілген" />
+                        <Chip size="small" color="success" label={t('admin.statusApproved', 'Бекітілген')} />
                       ) : (
-                        <Chip size="small" color="warning" label="Күтілуде" />
+                        <Chip size="small" color="warning" label={t('admin.statusPending', 'Күтілуде')} />
                       )}
                     </Box>
                   )}
@@ -304,7 +309,7 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
                       startIcon={<FlagIcon />} 
                       onClick={() => handleOpenReportDialog(review)}
                     >
-                      Шағым
+                      {t('books.reviews.reportReview', 'Шағым')}
                     </Button>
                   )}
                   
@@ -314,7 +319,7 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
                       size="small" 
                       color="error" 
                       icon={<FlagIcon />} 
-                      label="Шағым білдірілген" 
+                      label={t('books.reviews.reported', 'Шағым білдірілген')} 
                     />
                   )}
                   
@@ -351,15 +356,15 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
       
       {/* Шағым білдіру диалогы */}
       <Dialog open={reportDialogOpen} onClose={handleCloseReportDialog}>
-        <DialogTitle>Пікірге шағым білдіру</DialogTitle>
+        <DialogTitle>{t('books.reviews.reportReview', 'Пікірге шағым білдіру')}</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            Бұл пікірге шағым білдіру себебін көрсетіңіз. Сіздің шағымыңыз әкімшіге жіберіледі.
+            {t('books.reviews.reportReason', 'Бұл пікірге шағым білдіру себебін көрсетіңіз. Сіздің шағымыңыз әкімшіге жіберіледі.')}
           </DialogContentText>
           <TextField
             autoFocus
             fullWidth
-            label="Шағым себебі"
+            label={t('books.reviews.reportReasonLabel', 'Шағым себебі')}
             type="text"
             multiline
             rows={3}
@@ -368,29 +373,29 @@ const ReviewList = ({ bookId, refreshTrigger }) => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseReportDialog}>Бас тарту</Button>
+          <Button onClick={handleCloseReportDialog}>{t('books.reviews.cancel', 'Бас тарту')}</Button>
           <Button 
             onClick={handleSubmitReport} 
             color="primary"
             disabled={!reportReason.trim()}
           >
-            Шағым жіберу
+            {t('books.reviews.submitReport', 'Шағым жіберу')}
           </Button>
         </DialogActions>
       </Dialog>
       
       {/* Пікірді жою диалогы */}
       <Dialog open={deleteDialogOpen} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>Пікірді жою</DialogTitle>
+        <DialogTitle>{t('books.reviews.deleteReview', 'Пікірді жою')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Бұл пікірді жоюға сенімдісіз бе? Бұл әрекетті болдырмау мүмкін емес.
+            {t('books.reviews.deleteConfirmation', 'Бұл пікірді жоюға сенімдісіз бе? Бұл әрекетті болдырмау мүмкін емес.')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteDialog}>Бас тарту</Button>
+          <Button onClick={handleCloseDeleteDialog}>{t('books.reviews.cancel', 'Бас тарту')}</Button>
           <Button onClick={handleDeleteReview} color="error">
-            Жою
+            {t('books.reviews.delete', 'Жою')}
           </Button>
         </DialogActions>
       </Dialog>

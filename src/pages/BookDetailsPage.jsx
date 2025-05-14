@@ -7,7 +7,8 @@
  * Ол bookController.js және borrowController.js бэкенд контроллерлерімен интеграцияланады.
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useParams } from '../utils/hookUtils';
 import { useTranslation } from 'react-i18next';
 import {
   Container,
@@ -618,7 +619,7 @@ const BookDetailsPage = () => {
                       onClick={handleExpandDescription}
                       sx={{ mt: 1 }}
                     >
-                      {expanded ? t('books.details.showLess') : t('books.details.showMore')}
+                      {expanded ? t('common.showLess') : t('common.showMore')}
                     </Button>
                   )}
                 </Box>

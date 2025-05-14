@@ -144,9 +144,9 @@ const ReviewsPage = () => {
       
       if (response && response.success) {
         if (isApproved) {
-          console.log(t('admin.reviewApproveSuccess', 'Пікір сәтті бекітілді'));
+          console.log(t('admin.reviewApproveSuccess', 'Review approved successfully'));
         } else {
-          console.log(t('admin.reviewRejectSuccess', 'Пікір сәтті қабылданбады'));
+          console.log(t('admin.reviewRejectSuccess', 'Review rejected successfully'));
         }
       }
       
@@ -167,7 +167,7 @@ const ReviewsPage = () => {
       const response = await reviewService.deleteReview(selectedReview.id);
       
       if (response && response.success) {
-        console.log(t('admin.reviewDeleteSuccess', 'Пікір сәтті жойылды'));
+        console.log(t('admin.reviewDeleteSuccess', 'Review deleted successfully'));
       }
       
       setOpenDeleteDialog(false);
@@ -239,7 +239,7 @@ const ReviewsPage = () => {
     try {
       return format(new Date(dateString), 'dd.MM.yyyy HH:mm');
     } catch {
-      return t('admin.unknownDate', 'Белгісіз күн');
+      return t('admin.unknownDate', 'Unknown date');
     }
   };
 
@@ -253,7 +253,7 @@ const ReviewsPage = () => {
     if (review.user) {
       return `${review.user.firstName || ''} ${review.user.lastName || ''}`.trim() || review.user.username;
     }
-    return t('admin.unknownUser', 'Белгісіз пайдаланушы');
+    return t('admin.unknownUser', 'Unknown user');
   };
 
   /**
@@ -266,30 +266,30 @@ const ReviewsPage = () => {
     if (bookDetails[bookId]) {
       return bookDetails[bookId].title;
     }
-    return t('admin.bookNotFound', 'Кітап анықталмады');
+    return t('admin.bookNotFound', 'Book not found');
   };
 
   return (
     <Container maxWidth="lg">
       <PageHeader
-        title={t('admin.reviewsManagement', 'Пікірлерді басқару')}
-        subtitle={t('admin.reviewsDescription', 'Кітап пікірлерін модерациялау, бекіту және жою')}
+        title={t('admin.reviewsManagement', 'Manage reviews')}
+        subtitle={t('admin.reviewsDescription', 'Moderation, approval and deletion of book reviews')}
       />
 
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={6}>
             <FormControl fullWidth>
-              <InputLabel>{t('admin.reviewsFilter', 'Пікірлер фильтрі')}</InputLabel>
+              <InputLabel>{t('admin.reviewsFilter', 'Reviews filter')}</InputLabel>
               <Select
                 value={filter}
-                label={t('admin.reviewsFilter', 'Пікірлер фильтрі')}
+                label={t('admin.reviewsFilter', 'Reviews filter')}
                 onChange={handleFilterChange}
               >
-                <MenuItem value="all">{t('admin.allReviews', 'Барлық пікірлер')}</MenuItem>
-                <MenuItem value="pending">{t('admin.pendingReviews', 'Күтудегі пікірлер')}</MenuItem>
-                <MenuItem value="approved">{t('admin.approvedReviews', 'Бекітілген пікірлер')}</MenuItem>
-                <MenuItem value="reported">{t('admin.reportedReviews', 'Шағым білдірілген пікірлер')}</MenuItem>
+                <MenuItem value="all">{t('admin.allReviews', 'All reviews')}</MenuItem>
+                <MenuItem value="pending">{t('admin.pendingReviews', 'Pending reviews')}</MenuItem>
+                <MenuItem value="approved">{t('admin.approvedReviews', 'Approved reviews')}</MenuItem>
+                <MenuItem value="reported">{t('admin.reportedReviews', 'Reported reviews')}</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -337,16 +337,16 @@ const ReviewsPage = () => {
                     {review.isReported && (
                       <Chip
                         icon={<FlagIcon />}
-                        label={t('admin.reported', 'Шағым')}
+                        label={t('admin.reported', 'Reported')}
                         color="error"
                         size="small"
                         sx={{ mr: 1 }}
                       />
                     )}
                     {review.isApproved ? (
-                      <Chip label={t('admin.statusApproved', 'Бекітілген')} color="success" size="small" />
+                      <Chip label={t('admin.statusApproved', 'Approved')} color="success" size="small" />
                     ) : (
-                      <Chip label={t('admin.statusPending', 'Күтуде')} color="warning" size="small" />
+                      <Chip label={t('admin.statusPending', 'Pending')} color="warning" size="small" />
                     )}
                   </TableCell>
                   <TableCell>
@@ -354,7 +354,7 @@ const ReviewsPage = () => {
                       size="small"
                       color="primary"
                       onClick={() => openReviewViewDialog(review)}
-                      title={t('admin.viewReview', 'Пікірді қарау')}
+                      title={t('admin.viewReview', 'View review')}
                     >
                       <VisibilityIcon fontSize="small" />
                     </IconButton>
@@ -364,7 +364,7 @@ const ReviewsPage = () => {
                         size="small"
                         color="success"
                         onClick={() => handleApproveReview(review.id, true)}
-                        title={t('admin.approveReview', 'Пікірді бекіту')}
+                        title={t('admin.approveReview', 'Approve review')}
                       >
                         <CheckIcon fontSize="small" />
                       </IconButton>
@@ -375,7 +375,7 @@ const ReviewsPage = () => {
                         size="small"
                         color="warning"
                         onClick={() => handleApproveReview(review.id, false)}
-                        title={t('admin.rejectReview', 'Пікірді қабылдамау')}
+                        title={t('admin.rejectReview', 'Reject review')}
                       >
                         <VisibilityOffIcon fontSize="small" />
                       </IconButton>
@@ -385,7 +385,7 @@ const ReviewsPage = () => {
                       size="small"
                       color="error"
                       onClick={() => openReviewDeleteDialog(review)}
-                      title={t('admin.deleteReview', 'Пікірді жою')}
+                      title={t('admin.deleteReview', 'Delete review')}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -418,7 +418,7 @@ const ReviewsPage = () => {
           fullWidth
         >
           <DialogTitle>
-            {t('admin.reviewDetails', 'Пікірді қарау')}
+            {t('admin.reviewDetails', 'Review details')}
           </DialogTitle>
           <DialogContent>
             <Grid container spacing={2}>
@@ -484,15 +484,15 @@ const ReviewsPage = () => {
                   {selectedReview.isReported && (
                     <Chip
                       icon={<FlagIcon />}
-                      label={t('admin.reported', 'Шағым білдірілген')}
+                      label={t('admin.reported', 'Reported')}
                       color="error"
                       sx={{ mr: 1 }}
                     />
                   )}
                   {selectedReview.isApproved ? (
-                    <Chip label={t('admin.statusApproved', 'Бекітілген')} color="success" />
+                    <Chip label={t('admin.statusApproved', 'Approved')} color="success" />
                   ) : (
-                    <Chip label={t('admin.statusPending', 'Күтуде')} color="warning" />
+                    <Chip label={t('admin.statusPending', 'Pending')} color="warning" />
                   )}
                 </Box>
               </Grid>
@@ -508,7 +508,7 @@ const ReviewsPage = () => {
                   setOpenViewDialog(false);
                 }}
               >
-                {t('admin.approve', 'Бекіту')}
+                {t('admin.approve', 'Approve')}
               </Button>
             )}
             
@@ -521,7 +521,7 @@ const ReviewsPage = () => {
                   setOpenViewDialog(false);
                 }}
               >
-                {t('admin.reject', 'Қабылдамау')}
+                {t('admin.reject', 'Reject')}
               </Button>
             )}
             
@@ -533,11 +533,11 @@ const ReviewsPage = () => {
                 openReviewDeleteDialog(selectedReview);
               }}
             >
-              {t('admin.delete', 'Жою')}
+              {t('admin.delete', 'Delete')}
             </Button>
             
             <Button onClick={() => setOpenViewDialog(false)}>
-              {t('common.close', 'Жабу')}
+              {t('common.close', 'Close')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -549,19 +549,19 @@ const ReviewsPage = () => {
         onClose={() => setOpenDeleteDialog(false)}
       >
         <DialogTitle>
-          {t('admin.deleteReview', 'Пікірді жою')}
+          {t('admin.deleteReview', 'Delete review')}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            {t('admin.deleteReviewConfirm', 'Бұл пікірді жоюға сенімдісіз бе? Бұл әрекетті болдырмау мүмкін емес.')}
+            {t('admin.deleteReviewConfirm', 'Are you sure you want to delete this review? This action cannot be undone.')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDeleteDialog(false)}>
-            {t('common.cancel', 'Бас тарту')}
+            {t('common.cancel', 'Cancel')}
           </Button>
           <Button onClick={handleDeleteReview} color="error">
-            {t('common.delete', 'Жою')}
+            {t('common.delete', 'Delete')}
           </Button>
         </DialogActions>
       </Dialog>

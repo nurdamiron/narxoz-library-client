@@ -78,7 +78,10 @@ const useEvents = (initialFilters = {}) => {
       setLoading(true);
       setErrorState(null);
       
-      const response = await eventService.getEvent(id);
+      // Ensure the ID is sanitized before making the API call
+      const sanitizedId = id.toString().replace(/['"`]/g, '');
+      
+      const response = await eventService.getEvent(sanitizedId);
       
       if (response.success) {
         setEvent(response.data);
@@ -143,7 +146,10 @@ const useEvents = (initialFilters = {}) => {
     try {
       setLoading(true);
       
-      const response = await eventService.registerForEvent(eventId);
+      // Sanitize the event ID before making the API call
+      const sanitizedId = eventId.toString().replace(/['"` ]/g, '');
+      
+      const response = await eventService.registerForEvent(sanitizedId);
       
       if (response.success) {
         success(t('events.registerSuccess'));
@@ -167,7 +173,10 @@ const useEvents = (initialFilters = {}) => {
     try {
       setLoading(true);
       
-      const response = await eventService.cancelRegistration(eventId);
+      // Sanitize the event ID before making the API call
+      const sanitizedId = eventId.toString().replace(/['"` ]/g, '');
+      
+      const response = await eventService.cancelRegistration(sanitizedId);
       
       if (response.success) {
         success(t('events.cancelSuccess'));

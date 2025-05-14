@@ -4,7 +4,8 @@
  * Displays detailed information about an event and allows registration
  */
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useParams } from '../../utils/hookUtils';
 import { useTranslation } from 'react-i18next';
 import {
   Container,
@@ -66,6 +67,7 @@ const EventDetails = () => {
   // Fetch event data on component mount
   useEffect(() => {
     if (id) {
+      // id is already sanitized by our custom useParams hook
       fetchEvent(id);
     }
   }, [id, fetchEvent]);
@@ -75,10 +77,12 @@ const EventDetails = () => {
     setConfirmOpen(false);
     
     if (!isAuthenticated) {
+      // id is already sanitized by our custom useParams hook
       navigate('/login', { state: { from: `/events/${id}` } });
       return;
     }
     
+    // id is already sanitized by our custom useParams hook
     const success = await registerForEvent(id);
     if (success) {
       fetchEvent(id); // Refresh event data
@@ -89,6 +93,7 @@ const EventDetails = () => {
   const handleCancelRegistration = async () => {
     setCancelOpen(false);
     
+    // id is already sanitized by our custom useParams hook
     const success = await cancelRegistration(id);
     if (success) {
       fetchEvent(id); // Refresh event data
@@ -96,27 +101,15 @@ const EventDetails = () => {
   };
   
   if (loading) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <LoadingSkeleton type="eventDetails" />
-      </Container>
-    );
+    return <LoadingSkeleton type="eventDetails" />;
   }
   
   if (error) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
-    );
+    return <Alert severity="error">{error}</Alert>;
   }
   
   if (!event) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="info">{t('events.notFound')}</Alert>
-      </Container>
-    );
+    return <Alert severity="info">{t('events.notFound')}</Alert>;
   }
   
   // Format dates
@@ -133,7 +126,7 @@ const EventDetails = () => {
   const canCancel = isAuthenticated && event.isRegistered && event.registrationStatus === 'registered' && now < startDate;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <>
       {/* Status alert */}
       {(!event.isActive || isPastEvent) && (
         <Alert 
@@ -161,31 +154,16 @@ const EventDetails = () => {
       <Grid container spacing={4}>
         {/* Left column - Main content */}
         <Grid item xs={12} md={8}>
-          <Paper elevation={2} sx={{ mb: 3, overflow: 'hidden' }}>
-            {/* Event image */}
-            <Box sx={{ position: 'relative' }}>
-              <CardMedia
-                component="img"
-                height={300}
-                image={event.image || '/images/event-placeholder.jpg'}
-                alt={event.title}
-                sx={{ objectFit: 'cover' }}
-              />
-              
+          <Paper elevation={2} sx={{ mb: 3, overflow: 'hidden', borderTop: '6px solid', borderColor: 'primary.main' }}>
+            <Box sx={{ p: 3, pt: 3 }}>
               {/* Event type chip */}
-              <Chip
-                label={t(`events.types.${event.type}`)}
-                color="primary"
-                sx={{
-                  position: 'absolute',
-                  top: 16,
-                  left: 16,
-                  fontWeight: 'medium',
-                }}
-              />
-            </Box>
-            
-            <Box sx={{ p: 3 }}>
+              <Box sx={{ mb: 2 }}>
+                <Chip
+                  label={t(`events.types.${event.type}`)}
+                  color="primary"
+                  sx={{ fontWeight: 'medium' }}
+                />
+              </Box>
               <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
                 {event.title}
               </Typography>
@@ -230,10 +208,10 @@ const EventDetails = () => {
                 
                 <Box>
                   <Typography fontWeight="medium">
-                    {event.creator.name}
+                    {`${event.creator.firstName} ${event.creator.lastName}` || event.creator.username}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {t(`roles.${event.creator.role}`)}
+                    {t(`roles.${event.creator.role}`, event.creator.role)}
                   </Typography>
                 </Box>
               </Box>
@@ -309,7 +287,7 @@ const EventDetails = () => {
                   <GroupIcon color="primary" />
                 </ListItemIcon>
                 <ListItemText
-                  primary={t('events.capacity')}
+                  primary={t('events.capacity', { capacity: event.capacity })}
                   secondary={
                     <>
                       <Typography 
@@ -473,7 +451,7 @@ const EventDetails = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </>
   );
 };
 

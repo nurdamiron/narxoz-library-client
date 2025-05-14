@@ -16,6 +16,9 @@ import EventsPage from './pages/EventsPage';
 import EventDetailsPage from './pages/EventDetailsPage';
 import MyEventsPage from './pages/MyEventsPage';
 
+// Debug tools
+import RoleDiagnostic from './components/debug/RoleDiagnostic';
+
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminBooksPage from './pages/admin/BooksPage';
@@ -118,7 +121,7 @@ const routes = [
     path: '/admin/categories',
     element: <AdminCategoriesPage />,
     protected: true,
-    roles: ['admin'],
+    roles: ['admin', 'moderator'],
   },
   {
     path: '/admin/events',
@@ -143,6 +146,13 @@ const routes = [
     element: <EventRegistrationsPage />,
     protected: true,
     roles: ['admin', 'moderator'],
+  },
+  
+  // Debug routes
+  {
+    path: '/debug/role',
+    element: <RoleDiagnostic />,
+    protected: true,
   },
   
   // Not found route

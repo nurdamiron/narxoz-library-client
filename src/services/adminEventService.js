@@ -4,6 +4,8 @@
  * Provides functions for administrators to manage events
  */
 import BaseService from './baseService';
+import apiClient from './api';
+import { validateEventMediaFile } from '../utils/eventMediaUtils';
 
 class AdminEventService {
   /**
@@ -96,6 +98,144 @@ class AdminEventService {
    */
   async deleteEventCategory(id) {
     return BaseService.delete(`/events/categories/${id}`);
+  }
+
+  /**
+   * Upload event media image
+   * 
+   * @param {string} id - Event ID
+   * @param {File} file - Media file
+   * @returns {Promise} - Promise with upload result
+   */
+  async uploadEventMedia(id, file) {
+    try {
+      console.log(`🗓️ ID: ${id} іс-шара суретін жүктеу. Файл: ${file.name}, өлшемі: ${file.size} байт, типі: ${file.type}`);
+      
+      // Validate file
+      const validation = validateEventMediaFile(file);
+      if (!validation.valid) {
+        console.error('❌ Файл валидациясы қатесі:', validation.message);
+        return { 
+          success: false, 
+          message: validation.message
+        };
+      }
+      
+      // Create FormData for sending file
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Detailed request logging
+      console.log('📤 Сурет жүктеу сұранысы жіберілуде...');
+      console.log('📤 API endpoint:', `/events/${id}/image`);
+      
+      // Backend URL for future use in building full URL
+      const backendBaseUrl = 'http://localhost:5001';
+      
+      const response = await apiClient.put(`/events/${id}/image`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        // For tracking upload progress
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`📤 Жүктеу үрдісі: ${percentCompleted}%`);
+        }
+      });
+      
+      console.log('✅ Сурет сәтті жүктелді:', response.data);
+      
+      // Check if response contains correct URL
+      const responseData = response.data.data || response.data;
+      
+      if (responseData && responseData.image) {
+        console.log('✅ Алынған сурет URL:', responseData.image);
+        
+        // Make sure URL is absolute
+        if (!responseData.image.startsWith('http')) {
+          // Use hard-coded backend URL
+          const fullUrl = `${backendBaseUrl}${responseData.relativePath || responseData.image}`;
+          console.log('✅ Түрлендірілген толық URL:', fullUrl);
+          responseData.image = fullUrl;
+        }
+      } else {
+        console.warn('⚠️ Жауапта сурет URL-і жоқ');
+      }
+      
+      return { success: true, data: responseData };
+    } catch (error) {
+      console.error(`❌ Сурет жүктеу қатесі (ID: ${id}):`, error);
+      
+      // If error is already structured in our format
+      if (error.success === false) {
+        return error;
+      }
+      
+      if (error.response) {
+        const { status, data } = error.response;
+        console.error(`❌ Сурет жүктеу қатесі: HTTP ${status}`, data);
+        
+        // 404 handling - event not found
+        if (status === 404) {
+          return { 
+            success: false, 
+            message: 'Іс-шара табылмады. Беттегі мәліметтер ескірген болуы мүмкін.' 
+          };
+        }
+        
+        // 400 - invalid file type or size
+        if (status === 400) {
+          return { 
+            success: false, 
+            message: data.error || data.message || 'Файл типі немесе өлшемі жарамсыз. JPG, PNG немесе GIF форматындағы 5MB-дан аспайтын сурет жүктеңіз.' 
+          };
+        }
+        
+        // 401 - authorization error
+        if (status === 401) {
+          return {
+            success: false,
+            message: 'Авторизация қатесі. Қайта кіріңіз.'
+          };
+        }
+        
+        // 403 - no permission
+        if (status === 403) {
+          return {
+            success: false,
+            message: 'Осы іс-шараға сурет жүктеуге рұқсатыңыз жоқ.'
+          };
+        }
+        
+        // 500 - server error
+        if (status === 500) {
+          return { 
+            success: false, 
+            message: 'Сурет жүктеу кезінде сервер қатесі орын алды. Кейінірек қайталап көріңіз.' 
+          };
+        }
+        
+        // For other server errors
+        return {
+          success: false, 
+          message: data?.message || data?.error || 'Сурет жүктеу кезінде серверде қате орын алды',
+          status: status
+        };
+      }
+      
+      // For network errors (e.g., connection interruption)
+      if (error.message && error.message.includes('Network Error')) {
+        return {
+          success: false,
+          message: 'Желі қатесі. Интернет байланысын тексеріңіз және қайталап көріңіз.'
+        };
+      }
+      
+      return {
+        success: false,
+        message: error.message || 'Сурет жүктеу кезінде белгісіз қате орын алды'
+      };
+    }
   }
 }
 

@@ -148,7 +148,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Статистика - show different stats for admin vs moderator */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 5 }}>
         {!isModerator && (
           <Grid item xs={12} sm={6} md={3}>
             <StatCard
@@ -309,9 +309,6 @@ const AdminDashboard = () => {
         
         {/* Right column */}
         <Grid item xs={12} md={4}>
-          
-          {/* Category Statistics */}
-          <CategoryStats sx={{ mb: 4 }} />
         </Grid>
       </Grid>
     </Container>

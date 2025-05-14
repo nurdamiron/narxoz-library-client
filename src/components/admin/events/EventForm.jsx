@@ -31,7 +31,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import eventService from '../../../services/eventService';
-import adminEventService from '../../../services/adminEventService';
 import useAdminEvents from '../../../hooks/useAdminEvents';
 
 const ITEM_HEIGHT = 48;
@@ -55,6 +54,8 @@ const EventForm = ({ event = null, onSuccess }) => {
   
   // Check if editing or creating
   const isEditing = !!event;
+  
+  // State management
   
   // Fetch categories on component mount
   useEffect(() => {
@@ -87,25 +88,30 @@ const EventForm = ({ event = null, onSuccess }) => {
       .required(t('events.admin.form.errors.locationRequired')),
     startDate: Yup.date()
       .required(t('events.admin.form.errors.startDateRequired'))
-      .min(isEditing ? undefined : new Date(), t('events.admin.form.errors.startDateFuture')),
+      .when('$isEditing', {
+        is: true,
+        then: (schema) => schema,
+        otherwise: (schema) => schema.min(new Date(), t('events.admin.form.errors.startDateFuture'))
+      }),
     endDate: Yup.date()
       .required(t('events.admin.form.errors.endDateRequired'))
-      .min(Yup.ref('startDate'), t('events.admin.form.errors.endDateAfterStart')),
+      .when('startDate', (startDate, schema) => {
+        return startDate ? schema.min(startDate, t('events.admin.form.errors.endDateAfterStart')) : schema;
+      }),
     registrationDeadline: Yup.date()
       .required(t('events.admin.form.errors.registrationDeadlineRequired'))
-      .max(Yup.ref('startDate'), t('events.admin.form.errors.registrationDeadlineBeforeStart')),
+      .when('startDate', (startDate, schema) => {
+        return startDate ? schema.max(startDate, t('events.admin.form.errors.registrationDeadlineBeforeStart')) : schema;
+      }),
     capacity: Yup.number()
       .required(t('events.admin.form.errors.capacityRequired'))
       .integer(t('events.admin.form.errors.capacityInteger'))
       .min(1, t('events.admin.form.errors.capacityMin')),
-    image: Yup.string()
-      .url(t('events.admin.form.errors.imageUrl'))
-      .nullable(),
     isActive: Yup.boolean(),
     categories: Yup.array()
       .of(Yup.number())
   });
-  
+
   // Form initialization and handling
   const formik = useFormik({
     initialValues: {
@@ -113,15 +119,15 @@ const EventForm = ({ event = null, onSuccess }) => {
       description: event?.description || '',
       type: event?.type || 'workshop',
       location: event?.location || '',
-      startDate: event?.startDate ? new Date(event.startDate) : null,
-      endDate: event?.endDate ? new Date(event.endDate) : null,
-      registrationDeadline: event?.registrationDeadline ? new Date(event.registrationDeadline) : null,
+      startDate: event?.startDate ? new Date(event.startDate) : isEditing ? null : new Date(),
+      endDate: event?.endDate ? new Date(event.endDate) : isEditing ? null : new Date(Date.now() + 7200000), // Default to 2 hours after start time
+      registrationDeadline: event?.registrationDeadline ? new Date(event.registrationDeadline) : isEditing ? null : new Date(),
       capacity: event?.capacity || 30,
-      image: event?.image || '',
       isActive: event?.isActive ?? true,
       categories: event?.categories?.map(cat => cat.id) || []
     },
     validationSchema,
+    context: { isEditing },
     onSubmit: async (values) => {
       setLoading(true);
       setError(null);
@@ -378,25 +384,6 @@ const EventForm = ({ event = null, onSuccess }) => {
               helperText={formik.touched.capacity && formik.errors.capacity}
               required
               InputProps={{ inputProps: { min: 1 } }}
-            />
-          </Grid>
-          
-          {/* Image URL */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              id="image"
-              name="image"
-              label={t('events.admin.form.imageUrl')}
-              value={formik.values.image}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.image && Boolean(formik.errors.image)}
-              helperText={
-                (formik.touched.image && formik.errors.image) || 
-                t('events.admin.form.imageUrlHint')
-              }
-              placeholder="https://example.com/image.jpg"
             />
           </Grid>
           

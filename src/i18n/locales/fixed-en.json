@@ -1,0 +1,46 @@
+{
+  "events": {
+    "admin": {
+      "form": {
+        "createTitle": "Create New Event",
+        "editTitle": "Edit Event",
+        "title": "Event Title",
+        "type": "Event Type",
+        "categories": "Categories",
+        "location": "Location",
+        "startDate": "Start Date & Time",
+        "endDate": "End Date & Time",
+        "registrationDeadline": "Registration Deadline",
+        "capacity": "Maximum Capacity",
+        "imageUrl": "Image URL",
+        "imageUrlHint": "URL for event image (optional)",
+        "description": "Event Description",
+        "isActive": "Event is active",
+        "isActiveHint": "Inactive events are still visible but cannot be registered for",
+        "dateTimeSection": "Date and Time",
+        "detailsSection": "Event Details",
+        "errors": {
+          "titleRequired": "Title is required",
+          "titleMin": "Title must be at least 3 characters",
+          "titleMax": "Title cannot exceed 200 characters",
+          "descriptionRequired": "Description is required",
+          "typeRequired": "Event type is required",
+          "typeInvalid": "Invalid event type",
+          "locationRequired": "Location is required",
+          "startDateRequired": "Start date is required",
+          "startDateFuture": "Start date must be in the future",
+          "endDateRequired": "End date is required",
+          "endDateAfterStart": "End date must be after start date",
+          "registrationDeadlineRequired": "Registration deadline is required",
+          "registrationDeadlineBeforeStart": "Registration deadline must be before start date",
+          "capacityRequired": "Capacity is required",
+          "capacityInteger": "Capacity must be a whole number",
+          "capacityMin": "Capacity must be at least 1",
+          "imageUrl": "Please enter a valid URL",
+          "submitError": "An error occurred while submitting the form",
+          "eventNotFound": "Event not found"
+        }
+      }
+    }
+  }
+}

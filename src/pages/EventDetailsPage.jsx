@@ -3,15 +3,25 @@
  * 
  * Page for viewing event details and registration
  */
-import React from 'react';
+import React, { useEffect } from 'react';
 import { EventDetails } from '../components/events';
-import Layout from '../components/layout/Layout';
+import { Container, Box } from '@mui/material';
+import { useParams } from '../utils/hookUtils';
 
 const EventDetailsPage = () => {
+  const { id } = useParams();
+  
+  // Log the event ID for debugging
+  useEffect(() => {
+    console.log('EventDetailsPage rendering, id:', id);
+  }, [id]);
+
   return (
-    <Layout>
-      <EventDetails />
-    </Layout>
+    <Box>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <EventDetails />
+      </Container>
+    </Box>
   );
 };
 

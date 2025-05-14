@@ -19,6 +19,7 @@ import {
   Fade,
   CircularProgress
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { reviewService } from '../../services';
 import { useAuth } from '../../context/AuthContext';
 
@@ -31,6 +32,7 @@ import { useAuth } from '../../context/AuthContext';
  * @returns {JSX.Element}
  */
 const ReviewForm = ({ bookId, onReviewSubmitted }) => {
+  const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
@@ -41,11 +43,11 @@ const ReviewForm = ({ bookId, onReviewSubmitted }) => {
 
   // Рейтинг түсіндірмелері
   const ratingLabels = {
-    1: 'Өте нашар',
-    2: 'Нашар',
-    3: 'Орташа',
-    4: 'Жақсы',
-    5: 'Өте жақсы'
+    1: t('books.reviews.ratingLabels.1', 'Өте нашар'),
+    2: t('books.reviews.ratingLabels.2', 'Нашар'),
+    3: t('books.reviews.ratingLabels.3', 'Орташа'),
+    4: t('books.reviews.ratingLabels.4', 'Жақсы'),
+    5: t('books.reviews.ratingLabels.5', 'Өте жақсы')
   };
 
   // Пікір мәтінінің максималды ұзындығы
@@ -84,17 +86,17 @@ const ReviewForm = ({ bookId, onReviewSubmitted }) => {
     
     // Қажетті өрістерді тексеру
     if (rating === 0) {
-      setError('Рейтингті таңдаңыз');
+      setError(t('books.reviews.selectRating', 'Рейтингті таңдаңыз'));
       return;
     }
     
     if (!reviewText.trim()) {
-      setError('Пікір мәтінін енгізіңіз');
+      setError(t('books.reviews.enterReviewText', 'Пікір мәтінін енгізіңіз'));
       return;
     }
     
     if (reviewText.trim().length < 10) {
-      setError('Пікір мәтіні кем дегенде 10 таңбадан тұруы керек');
+      setError(t('books.reviews.reviewTooShort', 'Пікір мәтіні кем дегенде 10 таңбадан тұруы керек'));
       return;
     }
     
@@ -120,8 +122,8 @@ const ReviewForm = ({ bookId, onReviewSubmitted }) => {
         onReviewSubmitted();
       }
     } catch (err) {
-      console.error('Error submitting review:', err);
-      setError(err.message || 'Пікір жіберу кезінде қате орын алды');
+      console.error(t('books.reviews.errorSubmitting', 'Error submitting review:'), err);
+      setError(err.message || t('books.reviews.errorSubmitting', 'Пікір жіберу кезінде қате орын алды'));
     } finally {
       setLoading(false);
     }
@@ -140,7 +142,7 @@ const ReviewForm = ({ bookId, onReviewSubmitted }) => {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="body1" align="center">
-            Пікір қалдыру үшін жүйеге кіріңіз
+            {t('books.reviews.loginToReview', 'Пікір қалдыру үшін жүйеге кіріңіз')}
           </Typography>
         </CardContent>
       </Card>
@@ -151,7 +153,7 @@ const ReviewForm = ({ bookId, onReviewSubmitted }) => {
     <Card sx={{ mb: 3 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          Пікір қалдыру
+          {t('books.reviews.leaveReview', 'Пікір қалдыру')}
         </Typography>
         
         {/* Қате хабарламасы */}
@@ -164,7 +166,7 @@ const ReviewForm = ({ bookId, onReviewSubmitted }) => {
         {/* Сәтті жіберілгені туралы хабарландыру */}
         <Fade in={success}>
           <Alert severity="success" sx={{ mb: 2 }} onClose={handleCloseSuccess}>
-            Пікіріңіз сәтті жіберілді! Әкімші тексергеннен кейін жарияланады.
+            {t('books.reviews.reviewSuccess', 'Пікіріңіз сәтті жіберілді! Әкімші тексергеннен кейін жарияланады.')}
           </Alert>
         </Fade>
         
@@ -172,7 +174,7 @@ const ReviewForm = ({ bookId, onReviewSubmitted }) => {
           {/* Рейтинг таңдау */}
           <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              Кітапты бағалаңыз
+              {t('books.reviews.rateBook', 'Кітапты бағалаңыз')}
             </Typography>
             
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -203,14 +205,14 @@ const ReviewForm = ({ bookId, onReviewSubmitted }) => {
             multiline
             rows={4}
             variant="outlined"
-            label="Пікіріңізді жазыңыз"
-            placeholder="Осы кітап туралы пікіріңізді жазыңыз..."
+            label={t('books.reviews.writeReview', 'Пікіріңізді жазыңыз')}
+            placeholder={t('books.reviews.reviewPlaceholder', 'Осы кітап туралы пікіріңізді жазыңыз...')}
             value={reviewText}
             onChange={handleReviewTextChange}
             disabled={loading}
             sx={{ mb: 2 }}
             inputProps={{ maxLength: MAX_REVIEW_LENGTH }}
-            helperText={`${reviewText.length}/${MAX_REVIEW_LENGTH} таңба`}
+            helperText={`${reviewText.length}/${MAX_REVIEW_LENGTH} ${t('books.reviews.characters', 'таңба')}`}
           />
           
           {/* Жіберу түймесі */}
@@ -222,7 +224,7 @@ const ReviewForm = ({ bookId, onReviewSubmitted }) => {
               disabled={loading}
               startIcon={loading && <CircularProgress size={20} color="inherit" />}
             >
-              {loading ? 'Жіберілуде...' : 'Пікір қалдыру'}
+              {loading ? t('books.reviews.submitting', 'Жіберілуде...') : t('books.reviews.submitReview', 'Пікір қалдыру')}
             </Button>
           </Box>
         </form>

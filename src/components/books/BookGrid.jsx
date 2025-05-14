@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LocalLibrary as LocalLibraryIcon } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 // Локальные компоненты
 import BookCard from './BookCard';
@@ -61,6 +62,7 @@ const BookGrid = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const { t } = useTranslation();
   
   // Кіру диалогының күйі
   const [loginDialog, setLoginDialog] = useState({
@@ -190,8 +192,8 @@ const BookGrid = ({
       <Box sx={{ width: '100%', ...sx }}>
         <EmptyState
           icon={<LocalLibraryIcon />}
-          title="Кітаптар табылмады"
-          description="Іздеу параметрлерін өзгертіп көріңіз немесе басқа категория таңдаңыз"
+          title={t('books.noBooks', 'Кітаптар табылмады')}
+          description={t('books.tryDifferentSearch', 'Іздеу параметрлерін өзгертіп көріңіз немесе басқа категория таңдаңыз')}
         />
       </Box>
     );
@@ -232,7 +234,7 @@ const BookGrid = ({
           totalPages={totalPages}
           totalItems={totalItems}
           onPageChange={onPageChange}
-          itemName="кітап"
+          itemName={t('books.book', 'кітап')}
           currentItemCount={books.length}
           sx={{ mt: 4 }}
         />
@@ -242,17 +244,17 @@ const BookGrid = ({
       <AlertDialog
         open={loginDialog.open}
         onClose={handleCloseLoginDialog}
-        title="Жүйеге кіру қажет"
+        title={t('books.loginRequired', 'Жүйеге кіру қажет')}
         content={
           <Typography variant="body1">
             {loginDialog.action === 'bookmark'
-              ? 'Кітапты бетбелгіге қосу үшін жүйеге кіру қажет'
-              : 'Кітапты алу үшін жүйеге кіру қажет'}
+              ? t('auth.loginToBookmark', 'Кітапты бетбелгіге қосу үшін жүйеге кіру қажет')
+              : t('auth.loginToBorrow', 'Кітапты алу үшін жүйеге кіру қажет')}
           </Typography>
         }
         type="info"
-        confirmText="Кіру"
-        cancelText="Болдырмау"
+        confirmText={t('auth.loginButton', 'Кіру')}
+        cancelText={t('common.cancel', 'Болдырмау')}
         onConfirm={handleLogin}
       />
     </Box>

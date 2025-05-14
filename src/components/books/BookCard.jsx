@@ -40,6 +40,7 @@ import {
   BrokenImage as BrokenImageIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 // Локальные компоненты
 import BookRating from './BookRating';
@@ -66,6 +67,7 @@ const BookCard = ({
   sx = {}
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   
   // Күйлер
   const [expanded, setExpanded] = useState(false);
@@ -306,7 +308,7 @@ const BookCard = ({
               >
                 <BrokenImageIcon sx={{ fontSize: 48, mb: 1 }} />
                 <Typography variant="caption" align="center" sx={{ px: 2 }}>
-                  Мұқаба жүктелмеді
+                  {t('books.coverLoadFailed', 'Мұқаба жүктелмеді')}
                 </Typography>
                 {/* Детали ошибки для отладки */}
                 <Typography variant="caption" align="center" sx={{ 
@@ -398,7 +400,7 @@ const BookCard = ({
                     mt: 1
                   }}
                 >
-                  Уақытша қолжетімсіз
+                  {t('books.temporarilyUnavailable', 'Уақытша қолжетімсіз')}
                 </Typography>
               </Box>
             )}
@@ -484,7 +486,7 @@ const BookCard = ({
                     variant="body2" 
                     sx={{ fontWeight: 'medium' }}
                   >
-                    Сипаттама
+                    {t('books.description', 'Сипаттама')}
                   </Typography>
                   <IconButton
                     size="small"
@@ -527,7 +529,7 @@ const BookCard = ({
         <CardActions sx={{ p: 2, pt: 1.5, pb: 1.5, justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Tooltip 
-              title={book.availableCopies > 0 ? "Қолжетімді" : "Қолжетімсіз"}
+              title={book.availableCopies > 0 ? t('books.available', 'Қолжетімді') : t('books.unavailable', 'Қолжетімсіз')}
               arrow
             >
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -540,7 +542,7 @@ const BookCard = ({
                   variant="body2" 
                   color={book.availableCopies > 0 ? "success.main" : "text.disabled"}
                 >
-                  {book.availableCopies || 0} дана
+                  {book.availableCopies || 0} {t('books.copies', 'дана')}
                 </Typography>
               </Box>
             </Tooltip>
@@ -563,19 +565,19 @@ const BookCard = ({
                   }
                 }}
               >
-                Алу
+                {t('books.borrow', 'Алу')}
               </Button>
             )}
             
             <Tooltip 
-              title={book.isBookmarked ? "Бетбелгіден алып тастау" : "Бетбелгіге қосу"}
+              title={book.isBookmarked ? t('books.removeFromBookmarks', 'Бетбелгіден алып тастау') : t('books.addToBookmarks', 'Бетбелгіге қосу')}
               arrow
             >
               <IconButton
                 onClick={handleToggleBookmark}
                 size="small"
                 color="primary"
-                aria-label={book.isBookmarked ? "Бетбелгіден алып тастау" : "Бетбелгіге қосу"}
+                aria-label={book.isBookmarked ? t('books.removeFromBookmarks', 'Бетбелгіден алып тастау') : t('books.addToBookmarks', 'Бетбелгіге қосу')}
               >
                 {book.isBookmarked ? (
                   <BookmarkIcon color="primary" />

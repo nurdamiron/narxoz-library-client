@@ -72,9 +72,11 @@ const EventsTable = () => {
   
   // Filter events based on search term
   const filteredEvents = myCreatedEvents.filter(event => 
-    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.location.toLowerCase().includes(searchTerm.toLowerCase())
+    event && event.title && (
+      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (event.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (event.location || '').toLowerCase().includes(searchTerm.toLowerCase())
+    )
   );
   
   // Handle page change

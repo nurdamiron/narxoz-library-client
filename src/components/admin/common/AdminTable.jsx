@@ -235,10 +235,10 @@ const AdminTable = ({
                 {columns.map((column) => (
                   <TableCell key={column.id} align={column.align || 'left'}>
                     {column.render 
-                      ? column.render(row[column.id], row) 
+                      ? column.render(row, row) // Pass the entire row as both arguments
                       : column.format 
-                        ? column.format(row[column.id]) 
-                        : row[column.id]}
+                        ? column.format(row[column.id] || '') 
+                        : row[column.id] || ''}
                   </TableCell>
                 ))}
               </TableRow>
@@ -257,6 +257,7 @@ const AdminTable = ({
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         labelRowsPerPage={t('pagination.rowsPerPage', 'Строк на странице:')}
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} ${t('pagination.of', '/')} ${count}`}
       />
     </Paper>
   );

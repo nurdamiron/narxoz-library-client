@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services';
+import { normalizeRole } from '../debug-role';
 
 // Создание контекста авторизации
 const AuthContext = createContext();
@@ -40,9 +41,44 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login(credentials);
       
       if (response.success) {
+        // Ensure role is normalized to lowercase for consistent comparison
+        const userData = {
+          ...response.data,
+          role: normalizeRole(response.data.role)
+        };
+        
+        // Print user data for debugging
+        console.log('Login response received:', {
+          originalRole: response.data.role,
+          normalizedRole: userData.role,
+          name: userData.firstName
+        });
+        
+        // Добавляем расширенное логирование для отладки проблем с ролью модератора
+        if (userData.role === 'moderator') {
+          console.log('%c👨‍💼 Модератор успешно вошел в систему', 'background: #4caf50; color: white; padding: 4px 8px; border-radius: 4px;');
+          console.log('Убедитесь, что роль сохранена в нижнем регистре:', userData.role);
+        } else if (response.data.role && response.data.role.toLowerCase() === 'moderator') {
+          console.warn('%c⚠️ Роль модератора обнаружена, но с неправильным регистром!', 'background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px;');
+          console.warn('Оригинальная роль:', response.data.role);
+          console.warn('Нормализованная роль:', userData.role);
+        }
+        
+        // Extra logging for moderator role normalization
+        if (response.data.role && response.data.role.toLowerCase() === 'moderator') {
+          console.info('Moderator login detected:', {
+            originalRole: response.data.role,
+            normalizedRole: userData.role,
+            isNormalized: response.data.role === userData.role
+          });
+        }
+
         // Сохраняем данные пользователя (без JWT)
-        setUser(response.data);
+        setUser(userData);
         setIsAuthenticated(true);
+        
+        // Также сохраняем данные пользователя в localStorage для отладки
+        localStorage.setItem('userData', JSON.stringify(userData));
         
         // Сохраняем учетные данные в сессии, чтобы использовать их при последующих запросах
         sessionStorage.setItem('email', credentials.email);
@@ -100,7 +136,13 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.getCurrentUser({ email, password });
       
       if (response.success) {
-        setUser(response.data);
+        // Ensure role is normalized to lowercase for consistent comparison
+        const userData = {
+          ...response.data,
+          role: normalizeRole(response.data.role)
+        };
+        
+        setUser(userData);
         setIsAuthenticated(true);
       } else {
         // Если запрос не удался, выходим из системы
@@ -128,8 +170,21 @@ export const AuthProvider = ({ children }) => {
           const response = await authService.getCurrentUser({ email, password });
           
           if (response.success) {
+            // Ensure role is normalized to lowercase for consistent comparison
+            const userData = {
+              ...response.data,
+              role: normalizeRole(response.data.role)
+            };
+            
+            // Log user data for debugging
+            console.log('User data loaded on init:', {
+              originalRole: response.data.role,
+              normalizedRole: userData.role,
+              name: userData.firstName
+            });
+            
             // Если успешно получили данные, устанавливаем пользователя
-            setUser(response.data);
+            setUser(userData);
             setIsAuthenticated(true);
           } else {
             // Если запрос не удался, выходим из системы

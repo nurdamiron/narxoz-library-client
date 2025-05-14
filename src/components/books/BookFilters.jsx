@@ -306,7 +306,7 @@ const BookFilters = ({
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <FilterIcon sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            {t('admin.filters', 'Фильтрлер')}
+            {t('books.filter.title', 'Фильтрлер')}
           </Typography>
         </Box>
         
@@ -328,7 +328,7 @@ const BookFilters = ({
               opacity: hasActiveFilters ? 1 : 0.5
             }}
           >
-            {t('admin.resetFilters', 'Тазалау')}
+            {t('books.filter.clear', 'Тазалау')}
           </Button>
         </Box>
       </Box>
@@ -442,7 +442,7 @@ const BookFilters = ({
                 }
               >
                 <MenuItem value="">
-                  <em>{t('admin.filterAll', 'Барлығы')}</em>
+                  <em>{t('books.filter.allOptions', 'Барлығы')}</em>
                 </MenuItem>
                 {categories.map((category) => (
                   <MenuItem key={category.id} value={category.id}>
@@ -477,7 +477,7 @@ const BookFilters = ({
                 }
               >
                 <MenuItem value="">
-                  <em>{t('admin.filterAll', 'Барлығы')}</em>
+                  <em>{t('books.filter.allOptions', 'Барлығы')}</em>
                 </MenuItem>
                 {getYearOptions().map((year) => (
                   <MenuItem key={year} value={year}>
@@ -512,7 +512,7 @@ const BookFilters = ({
                 }
               >
                 <MenuItem value="">
-                  <em>{t('admin.filterAll', 'Барлығы')}</em>
+                  <em>{t('books.filter.allOptions', 'Барлығы')}</em>
                 </MenuItem>
                 {languages.map((language) => (
                   <MenuItem key={language} value={language}>
@@ -618,7 +618,7 @@ const BookFilters = ({
                 fontWeight: 'bold'
               }}
             >
-              {t('admin.applyFilters', 'Қолдану')}
+              {t('books.filter.apply', 'Қолдану')}
             </Button>
           </motion.div>
         </motion.div>

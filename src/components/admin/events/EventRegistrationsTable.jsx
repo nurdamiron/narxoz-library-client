@@ -87,8 +87,11 @@ const EventRegistrationsTable = () => {
   
   // Filter registrations based on search and status
   const filteredRegistrations = eventRegistrations.filter(registration => {
-    const nameMatch = registration.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                     registration.user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    // Add null checks to avoid "Cannot read properties of undefined" error
+    const nameMatch = registration.user && registration.user.name && 
+                      registration.user.email && 
+                      (registration.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      registration.user.email.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const statusMatch = statusFilter === 'all' || registration.status === statusFilter;
     
