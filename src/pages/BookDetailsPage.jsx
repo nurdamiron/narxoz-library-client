@@ -544,7 +544,7 @@ const BookDetailsPage = () => {
                           {t('books.details.languageLabel')}
                         </Typography>
                         <Typography variant="body1">
-                          {book.language || t('books.details.notSpecified')}
+                          {book.language ? (t(`languages.${book.language}`) || t(book.language) || book.language) : t('books.details.notSpecified')}
                         </Typography>
                       </Box>
                     </Box>

@@ -217,18 +217,10 @@ const BookCard = ({
       }
       
       // Проверяем, не является ли текущий src уже запасным вариантом
-      if (!e.target.src.includes('placeholder.com')) {
-        // Try direct access to the book-cover-debug endpoint if it's a path with filename
-        if (book.cover && book.cover.includes('/uploads/covers/')) {
-          const filename = book.cover.split('/uploads/covers/')[1];
-          e.target.src = `http://localhost:5001/api/book-cover-debug/${filename}`;
-          console.log(`✅ Пробуем использовать прямой debug-URL: ${e.target.src}`);
-          return;
-        }
-        
-        // Заменяем src на запасной вариант
-        e.target.src = 'https://via.placeholder.com/200x300?text=No+Cover';
-        console.log('✅ Заменяем недоступное изображение на placeholder');
+      if (!e.target.src.includes('placeholder.com') && !e.target.src.includes('default-book-cover.jpg')) {
+        // Заменяем src на дефолтную обложку
+        e.target.src = 'http://localhost:5001/uploads/covers/default-book-cover.jpg';
+        console.log('✅ Заменяем недоступное изображение на дефолтную обложку');
         return;
       }
     }
@@ -249,15 +241,19 @@ const BookCard = ({
       <Card 
         sx={{ 
           height: '100%', 
+          minHeight: 320,
           display: 'flex', 
           flexDirection: 'column',
           position: 'relative',
           borderRadius: 2,
           overflow: 'hidden',
-          boxShadow: theme.shadows[2],
-          transition: 'box-shadow 0.3s ease-in-out',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          transition: 'all 0.3s ease-in-out',
+          border: '1px solid',
+          borderColor: alpha(theme.palette.divider, 0.08),
           '&:hover': {
-            boxShadow: theme.shadows[6],
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+            borderColor: alpha(theme.palette.primary.main, 0.15),
           },
           ...sx
         }}
@@ -270,11 +266,14 @@ const BookCard = ({
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'flex-start',
-            height: '100%'
+            height: '100%',
+            '& .MuiCardActionArea-focusHighlight': {
+              background: 'transparent'
+            }
           }}
         >
           {/* Кітап мұқабасы */}
-          <Box sx={{ position: 'relative', width: '100%', paddingTop: '140%' }}>
+          <Box sx={{ position: 'relative', width: '100%', paddingTop: '130%' }}>
             {!imageLoaded && (
               <Skeleton 
                 variant="rectangular" 
@@ -407,7 +406,7 @@ const BookCard = ({
           </Box>
           
           {/* Кітап мәліметтері */}
-          <CardContent sx={{ flexGrow: 1, width: '100%' }}>
+          <CardContent sx={{ flexGrow: 1, width: '100%', p: 2 }}>
             <Typography 
               gutterBottom 
               variant="h6" 
@@ -417,10 +416,12 @@ const BookCard = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 display: '-webkit-box',
-                WebkitLineClamp: 2,
+                WebkitLineClamp: 1,
                 WebkitBoxOrient: 'vertical',
                 lineHeight: 1.3,
-                minHeight: '2.6em'
+                height: '1.3em',
+                fontSize: '0.95rem',
+                mb: 0.5
               }}
             >
               {book.title}
@@ -429,13 +430,19 @@ const BookCard = ({
             <Typography 
               variant="body2" 
               color="text.secondary"
-              sx={{ mb: 1 }}
+              sx={{ 
+                mb: 0.5, 
+                fontSize: '0.85rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
             >
               {book.author}
             </Typography>
             
             {/* Рейтинг */}
-            <Box sx={{ mb: 1 }}>
+            <Box sx={{ mb: 0.5 }}>
               <BookRating 
                 rating={book.rating || 0} 
                 reviewCount={book.reviewCount || 0}
@@ -466,7 +473,7 @@ const BookCard = ({
                   variant="body2" 
                   color="text.secondary"
                 >
-                  {book.language}
+                  {t(`languages.${book.language}`) || t(book.language) || book.language}
                 </Typography>
               </Box>
             </Box>
@@ -526,7 +533,15 @@ const BookCard = ({
         
         {/* Төменгі панель және әрекеттер */}
         <Divider />
-        <CardActions sx={{ p: 2, pt: 1.5, pb: 1.5, justifyContent: 'space-between' }}>
+        <CardActions sx={{ 
+          p: 1.5, 
+          pt: 1, 
+          pb: 1, 
+          justifyContent: 'space-between',
+          mt: 'auto',
+          borderTop: 1,
+          borderColor: 'divider'
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Tooltip 
               title={book.availableCopies > 0 ? t('books.available', 'Қолжетімді') : t('books.unavailable', 'Қолжетімсіз')}
@@ -539,10 +554,11 @@ const BookCard = ({
                   sx={{ mr: 0.5 }} 
                 />
                 <Typography 
-                  variant="body2" 
+                  variant="caption" 
                   color={book.availableCopies > 0 ? "success.main" : "text.disabled"}
+                  sx={{ fontWeight: 'medium' }}
                 >
-                  {book.availableCopies || 0} {t('books.copies', 'дана')}
+                  {book.availableCopies || 0}
                 </Typography>
               </Box>
             </Tooltip>

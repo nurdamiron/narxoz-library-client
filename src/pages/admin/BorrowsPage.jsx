@@ -141,10 +141,30 @@ const BorrowsPage = () => {
       const response = await adminBorrowService.sendDueReminders();
       
       if (response.success) {
-        showSnackbar(
-          t('admin.remindersSent', { count: response.notificationsCreated }, 'Еске салу хабарландырулары жіберілді. {{count}} хабарландыру жасалды.'),
-          'success'
-        );
+        let message = '';
+        
+        // Детальное сообщение о результатах
+        if (response.count === 0) {
+          message = t('admin.noRemindersNeeded', 'Нет заимствований, требующих напоминания.');
+        } else if (response.notificationsCreated > 0 || response.emailsSent > 0) {
+          const parts = [];
+          
+          if (response.notificationsCreated > 0) {
+            parts.push(t('admin.notificationsCreatedCount', { count: response.notificationsCreated }, '{{count}} уведомлений создано'));
+          }
+          
+          if (response.emailsSent > 0) {
+            parts.push(t('admin.emailsSentCount', { count: response.emailsSent }, '{{count}} email отправлено'));
+          }
+          
+          message = t('admin.remindersSentDetails', 'Напоминания отправлены: ') + parts.join(', ');
+        } else if (response.count > 0 && response.notificationsCreated === 0) {
+          message = t('admin.remindersAlreadySent', 'Напоминания уже были отправлены для всех найденных заимствований.');
+        } else {
+          message = t('admin.remindersProcessed', { count: response.count }, 'Обработано {{count}} заимствований.');
+        }
+        
+        showSnackbar(message, 'success');
       } else {
         showSnackbar(t('admin.errorSendingReminders', 'Еске салу хабарландыруларын жіберу қатесі'), 'error');
       }
@@ -396,7 +416,17 @@ const BorrowsPage = () => {
       
       <Paper sx={{ p: 2, mb: 3 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 1 }}>
-          <Typography variant="h6">{t('admin.borrowsList', 'Список заимствований')}</Typography>
+          <Box>
+            <Typography variant="h6">{t('admin.borrowsList', 'Список заимствований')}</Typography>
+            {process.env.NODE_ENV === 'development' && (
+              <Typography variant="caption" color="text.secondary">
+                {process.env.REACT_APP_DISABLE_EMAIL === 'true' 
+                  ? t('admin.emailMode.disabled', 'Email отправка отключена (режим разработки)')
+                  : t('admin.emailMode.enabled', 'Email отправка включена')
+                }
+              </Typography>
+            )}
+          </Box>
           
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button

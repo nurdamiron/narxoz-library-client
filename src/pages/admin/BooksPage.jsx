@@ -67,7 +67,8 @@ const BooksPage = () => {
     totalCopies: 1,
     availableCopies: 1,
     categoryId: '',
-    language: 'Казахский'
+    language: 'Казахский',
+    borrowDuration: 14
   });
 
   const [fieldErrors, setFieldErrors] = useState({});
@@ -152,7 +153,7 @@ const BooksPage = () => {
     const { name, value } = e.target;
     
     // Для числовых полей разрешаем только числа (без букв и спецсимволов)
-    if (name === 'publishYear' || name === 'totalCopies' || name === 'availableCopies') {
+    if (name === 'publishYear' || name === 'totalCopies' || name === 'availableCopies' || name === 'borrowDuration') {
       // Проверка, является ли вводимое значение числом или пустой строкой
       if (value === '' || /^\d+$/.test(value)) {
         setFormData(prev => ({
@@ -244,7 +245,8 @@ const BooksPage = () => {
       totalCopies: 1,
       availableCopies: 1,
       categoryId: '',
-      language: t('languages.kazakh', 'Казахский')
+      language: t('languages.kazakh', 'Казахский'),
+      borrowDuration: 14
     });
     setSelectedBook(null);
     setFormError('');
@@ -308,6 +310,11 @@ const BooksPage = () => {
       
       if (parseInt(formData.availableCopies) > parseInt(formData.totalCopies)) {
         errors.availableCopies = 'Қолжетімді даналар саны жалпы саннан аспауы керек';
+        hasErrors = true;
+      }
+      
+      if (isNaN(parseInt(formData.borrowDuration)) || parseInt(formData.borrowDuration) < 1) {
+        errors.borrowDuration = 'Қарызға алу ұзақтығы кем дегенде 1 күн болуы керек';
         hasErrors = true;
       }
       
@@ -441,6 +448,11 @@ const BooksPage = () => {
       
       if (parseInt(formData.availableCopies) > parseInt(formData.totalCopies)) {
         errors.availableCopies = 'Қолжетімді даналар саны жалпы саннан аспауы керек';
+        hasErrors = true;
+      }
+      
+      if (isNaN(parseInt(formData.borrowDuration)) || parseInt(formData.borrowDuration) < 1) {
+        errors.borrowDuration = 'Қарызға алу ұзақтығы кем дегенде 1 күн болуы керек';
         hasErrors = true;
       }
       
@@ -610,7 +622,8 @@ const BooksPage = () => {
       totalCopies: book.totalCopies,
       availableCopies: book.availableCopies,
       categoryId: book.categoryId,
-      language: book.language
+      language: book.language,
+      borrowDuration: book.borrowDuration || 14
     });
     setEditBookCoverFile(null);
     setEditBookCoverError('');
@@ -756,6 +769,7 @@ const BooksPage = () => {
                     <TableCell>{t('books.language')}</TableCell>
                     <TableCell>{t('books.totalCopies')}</TableCell>
                     <TableCell>{t('books.availableCopies')}</TableCell>
+                    <TableCell>Срок бронирования (дни)</TableCell>
                     <TableCell>{t('admin.actions')}</TableCell>
                   </TableRow>
                 </TableHead>
@@ -783,6 +797,13 @@ const BooksPage = () => {
                           <Chip 
                             label={book.availableCopies} 
                             color={book.availableCopies > 0 ? "success" : "error"}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={`${book.borrowDuration || 14} дней`} 
+                            color="primary"
                             size="small"
                           />
                         </TableCell>
@@ -980,6 +1001,20 @@ const BooksPage = () => {
                 onChange={handleFormChange}
                 error={!!fieldErrors.availableCopies}
                 helperText={fieldErrors.availableCopies || t('admin.availableCopiesHelp')}
+                required
+              />
+              <TextField
+                margin="dense"
+                id="borrowDuration"
+                name="borrowDuration"
+                label="Срок бронирования (дни)"
+                type="text"
+                fullWidth
+                variant="outlined"
+                value={formData.borrowDuration}
+                onChange={handleFormChange}
+                error={!!fieldErrors.borrowDuration}
+                helperText={fieldErrors.borrowDuration || 'Количество дней для бронирования книги (по умолчанию 14 дней)'}
                 required
               />
               
@@ -1198,6 +1233,20 @@ const BooksPage = () => {
                 onChange={handleFormChange}
                 error={!!fieldErrors.availableCopies}
                 helperText={fieldErrors.availableCopies || t('admin.availableCopiesHelp')}
+                required
+              />
+              <TextField
+                margin="dense"
+                id="borrowDuration-edit"
+                name="borrowDuration"
+                label="Срок бронирования (дни)"
+                type="text"
+                fullWidth
+                variant="outlined"
+                value={formData.borrowDuration}
+                onChange={handleFormChange}
+                error={!!fieldErrors.borrowDuration}
+                helperText={fieldErrors.borrowDuration || 'Количество дней для бронирования книги (по умолчанию 14 дней)'}
                 required
               />
               

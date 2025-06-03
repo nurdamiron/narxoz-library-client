@@ -227,7 +227,7 @@ const BookListItem = ({
           
           {/* Язык */}
           <Chip
-            label={book.language}
+            label={t(`languages.${book.language}`) || t(book.language) || book.language}
             size="small"
             variant="outlined"
             sx={{ mr: 1, mt: 0.5, height: 20, fontSize: '0.7rem' }}

@@ -35,12 +35,15 @@ import {
   Search as SearchIcon,
   Clear as ClearIcon,
   FilterList as FilterIcon,
-  NavigateNext as NavigateNextIcon
+  NavigateNext as NavigateNextIcon,
+  Download as DownloadIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import useAdminEvents from '../../../hooks/useAdminEvents';
 import eventService from '../../../services/eventService';
 import AdminTable from '../common/AdminTable';
+import EventRegistrationStats from './EventRegistrationStats';
 
 const EventRegistrationsTable = () => {
   const { id } = useParams();
@@ -85,17 +88,24 @@ const EventRegistrationsTable = () => {
     }
   }, [id, fetchEventRegistrations, t]);
   
-  // Filter registrations based on search and status
+  // Enhanced filtering for registrations
   const filteredRegistrations = eventRegistrations.filter(registration => {
-    // Add null checks to avoid "Cannot read properties of undefined" error
-    const nameMatch = registration.user && registration.user.name && 
-                      registration.user.email && 
-                      (registration.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      registration.user.email.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (!registration.user) return false;
+    
+    // Enhanced search - check multiple fields
+    const searchMatch = !searchTerm || [
+      registration.user.firstName,
+      registration.user.lastName,
+      registration.user.username,
+      registration.user.email,
+      registration.user.id?.toString()
+    ].some(field => 
+      field && field.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    );
     
     const statusMatch = statusFilter === 'all' || registration.status === statusFilter;
     
-    return nameMatch && statusMatch;
+    return searchMatch && statusMatch;
   });
   
   // Handle status change
@@ -105,6 +115,47 @@ const EventRegistrationsTable = () => {
     if (result.success) {
       fetchEventRegistrations(id);
     }
+  };
+  
+  // Handle export to CSV
+  const handleExportRegistrations = () => {
+    if (filteredRegistrations.length === 0) return;
+    
+    const csvHeaders = [
+      'ID',
+      'Имя',
+      'Email',
+      'Имя пользователя',
+      'Роль',
+      'Статус регистрации',
+      'Дата регистрации'
+    ];
+    
+    const csvData = filteredRegistrations.map(registration => [
+      registration.user.id,
+      registration.user.firstName && registration.user.lastName 
+        ? `${registration.user.firstName} ${registration.user.lastName}`
+        : registration.user.username || registration.user.name || '',
+      registration.user.email,
+      registration.user.username,
+      registration.user.role || '',
+      registration.status,
+      format(new Date(registration.registrationDate), 'dd.MM.yyyy HH:mm')
+    ]);
+    
+    const csvContent = [csvHeaders, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `event-${event.id}-registrations-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
   
   // Get status chip color
@@ -129,10 +180,35 @@ const EventRegistrationsTable = () => {
       render: (registration) => (
         <Box>
           <Typography variant="subtitle2">
-            {registration.user.name}
+            {registration.user.firstName && registration.user.lastName 
+              ? `${registration.user.firstName} ${registration.user.lastName}`
+              : registration.user.username || registration.user.name
+            }
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {registration.user.email}
+          </Typography>
+          {registration.user.role && (
+            <Chip
+              label={t(`users.roles.${registration.user.role}`)}
+              size="small"
+              variant="outlined"
+              sx={{ mt: 0.5, fontSize: '0.65rem' }}
+            />
+          )}
+        </Box>
+      ),
+    },
+    {
+      id: 'userInfo',
+      label: t('events.admin.registrations.userDetails'),
+      render: (registration) => (
+        <Box>
+          <Typography variant="body2">
+            ID: {registration.user.id}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            @{registration.user.username}
           </Typography>
         </Box>
       ),
@@ -140,11 +216,30 @@ const EventRegistrationsTable = () => {
     {
       id: 'registrationDate',
       label: t('events.admin.registrations.registrationDate'),
-      render: (registration) => (
-        <Typography variant="body2">
-          {format(new Date(registration.registrationDate), 'd MMM yyyy, HH:mm')}
-        </Typography>
-      ),
+      render: (registration) => {
+        const regDate = new Date(registration.registrationDate);
+        const now = new Date();
+        const timeDiff = now - regDate;
+        const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+        
+        return (
+          <Box>
+            <Typography variant="body2">
+              {format(regDate, 'd MMM yyyy, HH:mm')}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {daysDiff === 0 
+                ? t('events.admin.registrations.today')
+                : daysDiff === 1
+                ? t('events.admin.registrations.yesterday')
+                : daysDiff < 7
+                ? t('events.admin.registrations.daysAgo', { days: daysDiff })
+                : null
+              }
+            </Typography>
+          </Box>
+        );
+      },
     },
     {
       id: 'status',
@@ -285,9 +380,32 @@ const EventRegistrationsTable = () => {
               <MenuItem value="cancelled">{t('events.status.cancelled')}</MenuItem>
             </Select>
           </FormControl>
+          
+          {/* Export and Refresh buttons */}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<DownloadIcon />}
+              onClick={() => handleExportRegistrations()}
+              disabled={filteredRegistrations.length === 0}
+            >
+              Экспорт CSV
+            </Button>
+            
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RefreshIcon />}
+              onClick={() => fetchEventRegistrations(id)}
+              disabled={loading}
+            >
+              Обновить
+            </Button>
+          </Box>
         </Stack>
         
-        {/* Event summary */}
+        {/* Event summary with enhanced statistics */}
         <Paper sx={{ p: 2, mb: 3, bgcolor: 'background.paper' }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} divider={<Box component="span" sx={{ border: '0.5px solid #eee', mx: 2 }} />}>
             <Box>
@@ -303,8 +421,11 @@ const EventRegistrationsTable = () => {
               <Typography variant="body2" color="text.secondary">
                 {t('events.admin.registrations.registeredCount')}
               </Typography>
-              <Typography variant="h6">
+              <Typography variant="h6" color="primary.main">
                 {eventRegistrations.filter(r => r.status === 'registered' || r.status === 'attended').length}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {((eventRegistrations.filter(r => r.status === 'registered' || r.status === 'attended').length / event.capacity) * 100).toFixed(0)}% заполненности
               </Typography>
             </Box>
             
@@ -312,8 +433,14 @@ const EventRegistrationsTable = () => {
               <Typography variant="body2" color="text.secondary">
                 {t('events.admin.registrations.attendedCount')}
               </Typography>
-              <Typography variant="h6">
+              <Typography variant="h6" color="success.main">
                 {eventRegistrations.filter(r => r.status === 'attended').length}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {eventRegistrations.filter(r => r.status === 'registered' || r.status === 'attended').length > 0 
+                  ? ((eventRegistrations.filter(r => r.status === 'attended').length / eventRegistrations.filter(r => r.status === 'registered' || r.status === 'attended').length) * 100).toFixed(0) + '% посещаемость'
+                  : '0% посещаемость'
+                }
               </Typography>
             </Box>
             
@@ -321,12 +448,30 @@ const EventRegistrationsTable = () => {
               <Typography variant="body2" color="text.secondary">
                 {t('events.admin.registrations.cancelledCount')}
               </Typography>
-              <Typography variant="h6">
+              <Typography variant="h6" color="error.main">
                 {eventRegistrations.filter(r => r.status === 'cancelled').length}
+              </Typography>
+            </Box>
+            
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                Доступно мест
+              </Typography>
+              <Typography 
+                variant="h6" 
+                color={event.capacity - eventRegistrations.filter(r => r.status === 'registered' || r.status === 'attended').length <= 3 ? 'error.main' : 'text.primary'}
+              >
+                {event.capacity - eventRegistrations.filter(r => r.status === 'registered' || r.status === 'attended').length}
               </Typography>
             </Box>
           </Stack>
         </Paper>
+        
+        {/* Registration Statistics */}
+        <EventRegistrationStats 
+          event={event}
+          registrations={eventRegistrations}
+        />
       </Box>
       
       <AdminTable

@@ -8,6 +8,7 @@
  * және жою функционалын қамтамасыз етеді.
  */
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -66,6 +67,7 @@ import { formatDateTime } from '../utils';
  * @returns {JSX.Element} - Хабарламалар беті
  */
 const NotificationsPage = () => {
+  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -148,6 +150,40 @@ const NotificationsPage = () => {
       showError(t('notifications.refreshError', 'Хабарламаларды жаңарту кезінде қате орын алды'));
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  /**
+   * Хабарламаға клик өңдеу функциясы
+   * 
+   * @param {Object} notification - Хабарлама объектісі
+   */
+  const handleNotificationClick = (notification) => {
+    // Хабарлама түріне және байланысты модельге сәйкес навигация
+    switch (notification.type) {
+      case 'return':
+      case 'overdue':
+      case 'info':
+        // Егер Borrow моделімен байланысты болса
+        if (notification.relatedModel === 'Borrow' && notification.relatedId) {
+          navigate('/profile/current-books');
+        } 
+        // Егер Book моделімен байланысты болса
+        else if (notification.relatedModel === 'Book' && notification.relatedId) {
+          navigate(`/books/${notification.relatedId}`);
+        }
+        // Егер Event моделімен байланысты болса
+        else if (notification.relatedModel === 'Event' && notification.relatedId) {
+          navigate(`/events/${notification.relatedId}`);
+        }
+        break;
+      case 'warning':
+        navigate('/profile/current-books');
+        break;
+      case 'system':
+      default:
+        // Жалпы хабарламалар үшін ешқандай навигация жасамау
+        break;
     }
   };
   
@@ -507,8 +543,8 @@ const NotificationsPage = () => {
                           borderRadius: 2,
                           overflow: 'hidden',
                           transition: 'all 0.2s',
-                          borderLeft: `4px solid ${theme.palette[color].main}`,
-                          bgcolor: notification.read ? 'transparent' : alpha(theme.palette[color].light, 0.05),
+                          borderLeft: color && color !== 'default' ? `4px solid ${theme.palette[color].main}` : `4px solid ${theme.palette.grey[400]}`,
+                          bgcolor: notification.read ? 'transparent' : color && color !== 'default' ? alpha(theme.palette[color].light, 0.05) : alpha(theme.palette.grey[100], 0.5),
                           '&:hover': {
                             boxShadow: theme.shadows[3],
                           }
@@ -543,7 +579,7 @@ const NotificationsPage = () => {
                               <Avatar
                                 sx={{
                                   bgcolor: background,
-                                  color: theme.palette[color].main,
+                                  color: color && color !== 'default' ? theme.palette[color].main : theme.palette.text.secondary,
                                   borderRadius: 2,
                                   p: 1,
                                   width: 40,
@@ -602,7 +638,14 @@ const NotificationsPage = () => {
                                   </Typography>
                                 </>
                               }
-                              sx={{ pr: { xs: 6, sm: 8 } }}
+                              sx={{ 
+                                pr: { xs: 6, sm: 8 },
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  backgroundColor: alpha(theme.palette.action.hover, 0.5)
+                                }
+                              }}
+                              onClick={() => handleNotificationClick(notification)}
                             />
                             
                             {/* Әрекет түймелері */}

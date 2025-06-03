@@ -65,7 +65,7 @@ const BookFilters = ({
   onApplyFilters,
   onClearFilters,
   years = [],
-  languages = ['Қазақша', 'Русский', 'English'],
+  languages = [],
   showActiveFilters = true,
   sx = {}
 }) => {
@@ -129,9 +129,10 @@ const BookFilters = ({
   }
   
   if (localFilters.language) {
+    const translatedLanguage = t(`languages.${localFilters.language}`) || t(localFilters.language) || localFilters.language;
     activeFilters.push({
       id: 'language',
-      label: `${t('books.language')}: ${localFilters.language}`,
+      label: `${t('books.language')}: ${translatedLanguage}`,
       value: localFilters.language,
       onDelete: () => handleFilterChange('language', '')
     });
@@ -516,7 +517,7 @@ const BookFilters = ({
                 </MenuItem>
                 {languages.map((language) => (
                   <MenuItem key={language} value={language}>
-                    {language}
+                    {t(`languages.${language}`) || t(language) || language}
                   </MenuItem>
                 ))}
               </Select>

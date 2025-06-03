@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="kz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест фильтров книг</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .filters {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .filter-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .book-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .book-title {
+            font-weight: bold;
+            color: #333;
+        }
+        .book-info {
+            color: #666;
+            margin-top: 5px;
+        }
+        .stats {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .error {
+            color: red;
+            padding: 10px;
+            background: #fee;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            padding: 10px;
+            background: #efe;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Кітаптар фильтрін тестілеу</h1>
+        
+        <div class="filters">
+            <h2>Фильтрлер</h2>
+            <div class="filter-group">
+                <label for="language">Тіл:</label>
+                <select id="language">
+                    <option value="">Барлығы</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="year">Жыл:</label>
+                <select id="year">
+                    <option value="">Барлығы</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="search">Іздеу:</label>
+                <input type="text" id="search" placeholder="Кітап атауы, автор немесе сипаттама...">
+            </div>
+            
+            <button onclick="applyFilters()">Қолдану</button>
+            <button onclick="clearFilters()">Тазалау</button>
+        </div>
+        
+        <div id="stats" class="stats"></div>
+        <div id="message"></div>
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5001/api';
+        let filterOptions = { languages: [], years: [] };
+
+        // Инициализация
+        async function init() {
+            try {
+                // Получаем опции фильтров
+                const response = await fetch(`${API_URL}/books/filter-options`);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    filterOptions = data.data;
+                    
+                    // Заполняем языки
+                    const langSelect = document.getElementById('language');
+                    filterOptions.languages.forEach(lang => {
+                        const option = document.createElement('option');
+                        option.value = lang;
+                        option.textContent = lang;
+                        langSelect.appendChild(option);
+                    });
+                    
+                    // Заполняем годы
+                    const yearSelect = document.getElementById('year');
+                    filterOptions.years.forEach(year => {
+                        const option = document.createElement('option');
+                        option.value = year;
+                        option.textContent = year;
+                        yearSelect.appendChild(option);
+                    });
+                    
+                    showMessage(`✅ Фильтр опциялары жүктелді: ${filterOptions.languages.length} тіл, ${filterOptions.years.length} жыл`, 'success');
+                }
+                
+                // Загружаем книги
+                loadBooks();
+            } catch (error) {
+                showMessage('❌ Фильтр опцияларын жүктеу қатесі: ' + error.message, 'error');
+            }
+        }
+
+        // Загрузка книг
+        async function loadBooks(filters = {}) {
+            try {
+                const queryParams = new URLSearchParams(filters);
+                const response = await fetch(`${API_URL}/books?${queryParams}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayBooks(data.data);
+                    updateStats(data);
+                }
+            } catch (error) {
+                showMessage('❌ Кітаптарды жүктеу қатесі: ' + error.message, 'error');
+            }
+        }
+
+        // Отображение книг
+        function displayBooks(books) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (books.length === 0) {
+                resultsDiv.innerHTML = '<p>Кітаптар табылмады</p>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = books.map(book => `
+                <div class="book-card">
+                    <div class="book-title">${book.title}</div>
+                    <div class="book-info">
+                        <strong>Автор:</strong> ${book.author}<br>
+                        <strong>Тіл:</strong> ${book.language}<br>
+                        <strong>Жыл:</strong> ${book.publicationYear}<br>
+                        <strong>Қолжетімді:</strong> ${book.availableCopies} дана
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Обновление статистики
+        function updateStats(data) {
+            const statsDiv = document.getElementById('stats');
+            statsDiv.innerHTML = `
+                <strong>Статистика:</strong> 
+                Табылды: ${data.count} кітап | 
+                Барлығы: ${data.total} кітап | 
+                Беттер: ${data.totalPages}
+            `;
+        }
+
+        // Применение фильтров
+        function applyFilters() {
+            const filters = {
+                language: document.getElementById('language').value,
+                year: document.getElementById('year').value,
+                search: document.getElementById('search').value,
+                limit: 20
+            };
+            
+            // Удаляем пустые значения
+            Object.keys(filters).forEach(key => {
+                if (!filters[key]) delete filters[key];
+            });
+            
+            console.log('Фильтрлер қолданылуда:', filters);
+            loadBooks(filters);
+        }
+
+        // Очистка фильтров
+        function clearFilters() {
+            document.getElementById('language').value = '';
+            document.getElementById('year').value = '';
+            document.getElementById('search').value = '';
+            loadBooks();
+        }
+
+        // Показ сообщений
+        function showMessage(text, type = 'info') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = type;
+            messageDiv.textContent = text;
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.className = '';
+            }, 5000);
+        }
+
+        // Запуск при загрузке страницы
+        init();
+    </script>
+</body>
+</html>

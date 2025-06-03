@@ -160,6 +160,59 @@ const NotificationMenu = () => {
     handleCloseMenu();
     navigate('/notifications');
   };
+
+  /**
+   * Хабарламаға клик өңдеу
+   * 
+   * @param {Object} notification - Хабарлама объектісі
+   * @param {Object} event - Оқиға объектісі
+   */
+  const handleNotificationClick = async (notification, event) => {
+    event.stopPropagation();
+    
+    try {
+      // Хабарламаны оқылды деп белгілеу
+      if (!notification.read) {
+        await markAsRead(notification.id);
+      }
+      
+      handleCloseMenu();
+      
+      // Хабарлама түріне және байланысты модельге сәйкес навигация
+      switch (notification.type) {
+        case 'return':
+        case 'overdue':
+        case 'info':
+          // Егер Borrow моделімен байланысты болса
+          if (notification.relatedModel === 'Borrow' && notification.relatedId) {
+            navigate('/profile/current-books');
+          } 
+          // Егер Book моделімен байланысты болса
+          else if (notification.relatedModel === 'Book' && notification.relatedId) {
+            navigate(`/books/${notification.relatedId}`);
+          }
+          // Егер Event моделімен байланысты болса
+          else if (notification.relatedModel === 'Event' && notification.relatedId) {
+            navigate(`/events/${notification.relatedId}`);
+          }
+          else {
+            navigate('/notifications');
+          }
+          break;
+        case 'warning':
+          navigate('/profile/current-books');
+          break;
+        case 'system':
+        default:
+          // Жалпы хабарламалар үшін хабарламалар бетіне өту
+          navigate('/notifications');
+          break;
+      }
+    } catch (err) {
+      console.error('Хабарламаны өңдеу қатесі:', err);
+      showError(t('notifications.navigationError', 'Хабарламаны өңдеу кезінде қате орын алды'));
+    }
+  };
   
   /**
    * Хабарлама типіне сәйкес иконка алу
@@ -492,7 +545,7 @@ const NotificationMenu = () => {
                           }}
                         >
                           <ListItemButton 
-                            onClick={handleGoToNotifications}
+                            onClick={(e) => handleNotificationClick(notification, e)}
                             sx={{ 
                               py: 1.5,
                               pl: 2

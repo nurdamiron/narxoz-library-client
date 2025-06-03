@@ -25,12 +25,42 @@ import {
   LocationOn as LocationIcon,
   Person as PersonIcon,
   Category as CategoryIcon,
-  Group as GroupIcon
+  Group as GroupIcon,
+  ImageNotSupported as ImageNotSupportedIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
+import { getEventImageUrl } from '../../utils/eventMediaUtils';
 
-const EventCard = ({ event }) => {
+const EventCard = ({ event, isLoading = false }) => {
   const { t } = useTranslation();
+  
+  // Return loading skeleton if in loading state
+  if (isLoading) {
+    return (
+      <Card
+        elevation={2}
+        sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Box sx={{ height: 200, bgcolor: 'grey.200' }} />
+        <CardContent>
+          <Box sx={{ height: 24, width: '40%', bgcolor: 'grey.300', borderRadius: 1, mb: 2 }} />
+          <Box sx={{ height: 32, bgcolor: 'grey.300', borderRadius: 1, mb: 3 }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+            <Box sx={{ height: 24, width: 24, bgcolor: 'grey.300', borderRadius: '50%', mr: 1.5 }} />
+            <Box sx={{ height: 16, width: '70%', bgcolor: 'grey.300', borderRadius: 1 }} />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+            <Box sx={{ height: 24, width: 24, bgcolor: 'grey.300', borderRadius: '50%', mr: 1.5 }} />
+            <Box sx={{ height: 16, width: '50%', bgcolor: 'grey.300', borderRadius: 1 }} />
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
   
   // Format dates
   const startDate = new Date(event.startDate);
@@ -42,6 +72,9 @@ const EventCard = ({ event }) => {
   // Calculate available spots
   const registeredCount = event.registeredCount || 0;
   const availableSpots = event.capacity - registeredCount;
+  
+  // Get event image URL
+  const eventImageUrl = getEventImageUrl(event);
   
   // Get event type color
   const getTypeColor = (type) => {
@@ -76,8 +109,26 @@ const EventCard = ({ event }) => {
         borderColor: `${getTypeColor(event.type)}.main`,
       }}
     >
+      {/* Event Image */}
+      <CardMedia
+        component="img"
+        height="200"
+        image={eventImageUrl}
+        alt={event.title}
+        sx={{
+          objectFit: 'cover',
+          backgroundColor: 'grey.100',
+          borderBottom: `1px solid`,
+          borderColor: 'divider'
+        }}
+        onError={(e) => {
+          // If image fails to load, show placeholder
+          e.target.src = '/images/event-placeholder.jpg';
+        }}
+      />
+      
       {/* Event Content */}
-      <CardContent sx={{ flexGrow: 1, pb: 1, pt: 3 }}>
+      <CardContent sx={{ flexGrow: 1, pb: 1, pt: 2 }}>
         {/* Event Type Chip */}
         <Box sx={{ mb: 2 }}>
           <Chip

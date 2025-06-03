@@ -42,6 +42,7 @@ import {
   FilterList as FilterIcon,
   GroupAdd as RegistrationsIcon
 } from '@mui/icons-material';
+import { LinearProgress } from '@mui/material';
 import { format } from 'date-fns';
 import useAdminEvents from '../../../hooks/useAdminEvents';
 import AdminTable from '../common/AdminTable';
@@ -214,19 +215,40 @@ const EventsTable = () => {
       id: 'capacity',
       label: t('events.admin.table.capacity'),
       render: (event) => {
-        const registeredCount = event.registrations?.length || 0;
+        const registeredCount = event.registrations?.filter(r => r.status === 'registered' || r.status === 'attended')?.length || 0;
+        const attendedCount = event.registrations?.filter(r => r.status === 'attended')?.length || 0;
         const availableSpots = event.capacity - registeredCount;
+        const fillRate = (registeredCount / event.capacity) * 100;
         
         return (
           <Box>
-            <Typography variant="body2">
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
               {registeredCount}/{event.capacity}
             </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+              <LinearProgress 
+                variant="determinate" 
+                value={fillRate} 
+                sx={{ 
+                  flexGrow: 1, 
+                  height: 4, 
+                  borderRadius: 2,
+                  bgcolor: 'grey.200',
+                  '& .MuiLinearProgress-bar': {
+                    bgcolor: fillRate >= 90 ? 'error.main' : fillRate >= 70 ? 'warning.main' : 'success.main'
+                  }
+                }} 
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+                {fillRate.toFixed(0)}%
+              </Typography>
+            </Box>
             <Typography 
               variant="caption" 
               color={availableSpots <= 3 ? 'error.main' : 'text.secondary'}
             >
-              {availableSpots} {t('events.admin.table.available')}
+              {availableSpots > 0 ? `${availableSpots} мест` : 'Мест нет'}
+              {attendedCount > 0 && ` • ${attendedCount} присутствовали`}
             </Typography>
           </Box>
         );

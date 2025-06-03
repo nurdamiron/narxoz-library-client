@@ -39,11 +39,29 @@ const bookService = {
   },
 
   /**
+   * Получить ТОП книги по категориям
+   * @param {number} limit - Количество книг на категорию
+   * @param {number} minRating - Минимальный рейтинг
+   * @returns {Promise} Promise с ТОП книгами по категориям
+   */
+  getTopBooksByCategory: async (limit = 3, minRating = 0) => {
+    return BaseService.get('/books/top-by-category', { limit, minRating });
+  },
+
+  /**
    * Получить все категории
    * @returns {Promise} Promise с данными категорий
    */
   getCategories: async () => {
     return BaseService.get('/books/categories');
+  },
+
+  /**
+   * Получить опции для фильтров (языки и годы)
+   * @returns {Promise} Promise с данными опций фильтров
+   */
+  getFilterOptions: async () => {
+    return BaseService.get('/books/filter-options');
   },
 
   /**

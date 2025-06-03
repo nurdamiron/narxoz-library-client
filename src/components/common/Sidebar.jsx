@@ -91,6 +91,12 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
     { text: t('sidebar.mainMenu.books'), icon: <LibraryBooksIcon />, path: '/books' },
     { text: t('sidebar.mainMenu.events'), icon: <EventIcon />, path: '/events' },
     { 
+      text: t('userDashboard.title'), 
+      icon: <DashboardIcon />, 
+      path: '/user-dashboard',
+      requireAuth: true
+    },
+    { 
       text: t('sidebar.mainMenu.bookmarks'), 
       icon: <BookmarkIcon />, 
       path: '/bookmarks',

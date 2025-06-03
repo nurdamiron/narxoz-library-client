@@ -12,9 +12,22 @@ import {
  * @param {Object} props - Компонент параметрлері
  * @param {Object} props.notification - Хабарлама объектісі
  * @param {Function} props.onReadNotification - Хабарламаны оқылды деп белгілеу функциясы
+ * @param {Function} props.onNotificationClick - Хабарламаға клик өңдеу функциясы
  */
-const NotificationItem = ({ notification, onReadNotification }) => {
+const NotificationItem = ({ notification, onReadNotification, onNotificationClick }) => {
   const theme = useTheme();
+
+  const handleClick = () => {
+    // Алдымен хабарламаны оқылды деп белгілеу
+    if (!notification.read && onReadNotification) {
+      onReadNotification(notification.id);
+    }
+    
+    // Содан кейін клик өңдеу
+    if (onNotificationClick) {
+      onNotificationClick(notification);
+    }
+  };
 
   return (
     <Paper
@@ -36,7 +49,7 @@ const NotificationItem = ({ notification, onReadNotification }) => {
           cursor: 'pointer',
         },
       }}
-      onClick={() => onReadNotification(notification.id)}
+      onClick={handleClick}
     >
       {/* Хабарландыру тақырыбы */}
       <Typography

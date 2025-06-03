@@ -366,9 +366,9 @@ const BookList = () => {
                   }}
                 >
                   <MenuItem value="">Барлық тілдер</MenuItem>
-                  <MenuItem value="Қазақша">Қазақша</MenuItem>
+                  <MenuItem value="Казахский">Қазақша</MenuItem>
                   <MenuItem value="Русский">Орысша</MenuItem>
-                  <MenuItem value="English">Ағылшынша</MenuItem>
+                  <MenuItem value="Английский">Ағылшынша</MenuItem>
                 </Select>
               </FormControl>
               

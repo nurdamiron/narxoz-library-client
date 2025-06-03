@@ -39,6 +39,7 @@ import {
 
 // Импорт компонентов
 import BookCard from '../components/books/BookCard';
+import TopBooksByCategory from '../components/books/TopBooksByCategory';
 import EmptyState from '../components/common/EmptyState';
 import AlertDialog from '../components/common/AlertDialog';
 import EventCard from '../components/events/EventCard';
@@ -549,10 +550,10 @@ const HomePage = () => {
             <Divider sx={{ mb: 4 }} />
             
             <AnimatePresence>
-              <Grid container spacing={3}>
+              <Grid container spacing={2}>
                 {popularBooks.length > 0 ? (
                   popularBooks.map((book) => (
-                    <Grid item key={book.id} xs={12} sm={6} md={isTablet ? 6 : 3}>
+                    <Grid item key={book.id} xs={12} sm={6} md={3} lg={2.4}>
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -569,7 +570,7 @@ const HomePage = () => {
                 ) : loading ? (
                   // Жүктелу кезінде заглушка
                   [...Array(4)].map((_, index) => (
-                    <Grid item key={index} xs={12} sm={6} md={isTablet ? 6 : 3}>
+                    <Grid item key={index} xs={12} sm={6} md={3} lg={2.4}>
                       <BookCard isLoading={true} />
                     </Grid>
                   ))
@@ -619,10 +620,10 @@ const HomePage = () => {
             <Divider sx={{ mb: 4 }} />
             
             <AnimatePresence>
-              <Grid container spacing={3}>
+              <Grid container spacing={2}>
                 {newBooks.length > 0 ? (
                   newBooks.map((book) => (
-                    <Grid item key={book.id} xs={12} sm={6} md={isTablet ? 6 : 3}>
+                    <Grid item key={book.id} xs={12} sm={6} md={3} lg={2.4}>
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -639,7 +640,7 @@ const HomePage = () => {
                 ) : loading ? (
                   // Жүктелу кезінде заглушка
                   [...Array(4)].map((_, index) => (
-                    <Grid item key={index} xs={12} sm={6} md={isTablet ? 6 : 3}>
+                    <Grid item key={index} xs={12} sm={6} md={3} lg={2.4}>
                       <BookCard isLoading={true} />
                     </Grid>
                   ))
@@ -654,6 +655,19 @@ const HomePage = () => {
                 )}
               </Grid>
             </AnimatePresence>
+          </Box>
+        </motion.div>
+        
+        {/* ТОП кітаптар категориялар бойынша секциясы */}
+        <motion.div variants={itemVariants}>
+          <Box sx={{ mb: 8 }}>
+            <TopBooksByCategory
+              onToggleBookmark={handleToggleBookmark}
+              onBorrow={handleBorrow}
+              booksPerCategory={3}
+              minRating={3.0}
+              showViewAll={true}
+            />
           </Box>
         </motion.div>
         
@@ -689,7 +703,7 @@ const HomePage = () => {
             <Divider sx={{ mb: 4 }} />
             
             <AnimatePresence>
-              <Grid container spacing={3}>
+              <Grid container spacing={2}>
                 {upcomingEvents.length > 0 ? (
                   upcomingEvents.map((event) => (
                     <Grid item key={event.id} xs={12} sm={6} md={isTablet ? 6 : 3}>
@@ -705,30 +719,8 @@ const HomePage = () => {
                 ) : eventsLoading ? (
                   // Жүктелу кезінде заглушка
                   [...Array(4)].map((_, index) => (
-                    <Grid item key={index} xs={12} sm={6} md={isTablet ? 6 : 3}>
-                      <Card 
-                        elevation={2}
-                        sx={{ 
-                          height: '100%', 
-                          display: 'flex', 
-                          flexDirection: 'column',
-                          borderRadius: 1
-                        }}
-                      >
-                        <Box sx={{ height: 160, bgcolor: 'grey.200' }} />
-                        <CardContent>
-                          <Box sx={{ height: 24, width: '40%', bgcolor: 'grey.300', borderRadius: 1, mb: 2 }} />
-                          <Box sx={{ height: 32, bgcolor: 'grey.300', borderRadius: 1, mb: 3 }} />
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                            <Box sx={{ height: 24, width: 24, bgcolor: 'grey.300', borderRadius: '50%', mr: 1.5 }} />
-                            <Box sx={{ height: 16, width: '70%', bgcolor: 'grey.300', borderRadius: 1 }} />
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                            <Box sx={{ height: 24, width: 24, bgcolor: 'grey.300', borderRadius: '50%', mr: 1.5 }} />
-                            <Box sx={{ height: 16, width: '50%', bgcolor: 'grey.300', borderRadius: 1 }} />
-                          </Box>
-                        </CardContent>
-                      </Card>
+                    <Grid item key={index} xs={12} sm={6} md={3} lg={2.4}>
+                      <EventCard isLoading={true} />
                     </Grid>
                   ))
                 ) : (

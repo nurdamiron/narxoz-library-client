@@ -66,6 +66,8 @@ const BooksPage = () => {
   // Күйлер
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [languages, setLanguages] = useState([]);
+  const [availableYears, setAvailableYears] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalPages, setTotalPages] = useState(1);
@@ -88,27 +90,39 @@ const BooksPage = () => {
     sort: queryParams.get('sort') || '-createdAt'
   });
   
-  // Жылдар тізімі
+  // Жылдар тізімі (әдепкі)
   const currentYear = new Date().getFullYear();
-  const yearOptions = [currentYear, currentYear-1, currentYear-2, currentYear-3, currentYear-4, 2020, 2019, 2018, 2017, 2016, 2015, 2010, 2005, 2000];
+  const defaultYearOptions = [currentYear, currentYear-1, currentYear-2, currentYear-3, currentYear-4, 2020, 2019, 2018, 2017, 2016, 2015, 2010, 2005, 2000];
   
   /**
-   * Категориялар тізімін жүктеу
+   * Категориялар және фильтр опцияларын жүктеу
    */
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchFiltersData = async () => {
       try {
-        // Correct method call
+        // Категорияларды жүктеу
         const categoriesData = await bookService.getCategories();
-        // Extract just the data array from the response
         setCategories(categoriesData.data || []);
+        
+        // Фильтр опцияларын жүктеу (тілдер мен жылдар)
+        try {
+          const filterOptions = await bookService.getFilterOptions();
+          if (filterOptions.data) {
+            setLanguages(filterOptions.data.languages || []);
+            setAvailableYears(filterOptions.data.years || []);
+          }
+        } catch (filterErr) {
+          console.log('Фильтр опцияларын жүктеу қатесі:', filterErr);
+          // Әдепкі мәндерді қолдану
+          setLanguages(['Казахский', 'Русский', 'Английский']);
+        }
       } catch (err) {
         console.error(`${t('admin.errorLoadingCategories')}:`, err);
         showError(t('admin.errorLoadingCategories'));
       }
     };
     
-    fetchCategories();
+    fetchFiltersData();
   }, [showError, t]);
   
   /**
@@ -146,7 +160,7 @@ const BooksPage = () => {
         const result = await bookService.getBooks(filters);
         setBooks(result.data);
         setTotalPages(result.totalPages);
-        setTotalItems(result.totalItems);
+        setTotalItems(result.total || result.count || 0);
       } catch (err) {
         console.error(`${t('books.errorLoading')}:`, err);
         setError(t('books.errorLoading', 'Кітаптарды жүктеу кезінде қате орын алды'));
@@ -370,7 +384,8 @@ const BooksPage = () => {
                 filters={filters}
                 onApplyFilters={handleApplyFilters}
                 onClearFilters={handleClearFilters}
-                years={yearOptions}
+                years={availableYears.length > 0 ? availableYears : defaultYearOptions}
+                languages={languages}
               />
             </motion.div>
           </Grid>
@@ -390,7 +405,8 @@ const BooksPage = () => {
               }}
               onSubmit={(e) => {
                 e.preventDefault();
-                handleApplyFilters(filters);
+                // Используем текущее значение из состояния
+                handleApplyFilters({ search: filters.search });
               }}
             >
               <TextField
@@ -399,6 +415,12 @@ const BooksPage = () => {
                 placeholder={t('books.searchPlaceholder', 'Кітаптарды атауы, авторы немесе сипаттамасы бойынша іздеу')}
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleApplyFilters({ search: filters.search });
+                  }
+                }}
                 size="small"
                 InputProps={{
                   startAdornment: (

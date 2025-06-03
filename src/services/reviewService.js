@@ -134,6 +134,20 @@ const reviewService = {
     } catch (error) {
       throw error.response?.data || error;
     }
+  },
+
+  /**
+   * Пайдаланушының барлық пікірлерін алу
+   * 
+   * @returns {Promise} - Пайдаланушы пікірлерінің тізімі
+   */
+  getMyReviews: async () => {
+    try {
+      const response = await apiClient.get('/reviews/my');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
   }
 };
 

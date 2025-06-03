@@ -4,49 +4,62 @@
 
 /**
  * Get event media image URL with default fallback
+ * @param {Object} event - Event object containing image information
+ * @returns {string} Event image URL
+ */
+export const getEventImageUrl = (event) => {
+  // Use environment variable or fallback to localhost for development
+  const LOCAL_BACKEND_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+  
+  // If no event or no image, return placeholder
+  if (!event || !event.image) {
+    return getEventPlaceholderImage(event?.type);
+  }
+  
+  // If image is already a full URL (processed by backend), return as is
+  if (event.image.startsWith('http')) {
+    return event.image;
+  }
+  
+  // For paths like /uploads/events/... 
+  if (event.image.includes('/uploads/events/')) {
+    const parts = event.image.split('/uploads/events/');
+    const filename = parts[parts.length - 1];
+    return `${LOCAL_BACKEND_URL}/uploads/events/${filename}`;
+  }
+  
+  // For relative paths without starting slash (just filename)
+  if (event.imageStoredLocally !== false) {
+    return `${LOCAL_BACKEND_URL}/uploads/events/${event.image}`;
+  }
+  
+  // For external URLs
+  return event.image;
+};
+
+/**
+ * Get placeholder image for events without images
+ * @param {string} eventType - Optional event type for type-specific placeholders
+ * @returns {string} Placeholder image URL
+ */
+export const getEventPlaceholderImage = (eventType = 'default') => {
+  // Try to use event-specific placeholder first
+  if (eventType && eventType !== 'default') {
+    const typeSpecificPlaceholder = `/images/event-placeholder-${eventType}.jpg`;
+    return typeSpecificPlaceholder;
+  }
+
+  // Use generic event placeholder
+  return '/images/event-placeholder.jpg';
+};
+
+/**
+ * Legacy function name for backward compatibility
  * @param {string} image - Image path from API
  * @returns {string} Event image URL
  */
 export const getEventMediaUrl = (image) => {
-  // Constant for local server address - always use explicitly specified URL
-  const LOCAL_BACKEND_URL = 'http://localhost:5001';
-  
-  // If path is not specified or empty, return default image
-  if (!image) {
-    return '/images/event-placeholder.jpg';
-  }
-  
-  // If path is already a full URL, check if it needs to be transformed to bypass CORS
-  if (image.startsWith('http')) {
-    // If URL contains /uploads/events/, extract the filename to use with debug route
-    if (image.includes('/uploads/events/')) {
-      const filename = image.split('/uploads/events/')[1];
-      // Use special route that provides correct CORS headers
-      return `${LOCAL_BACKEND_URL}/api/event-media-debug/${filename}`;
-    }
-    return image;
-  }
-  
-  // For paths like /uploads/events/... (handle separately to bypass CORS)
-  if (image.includes('/uploads/events/')) {
-    const parts = image.split('/uploads/events/');
-    const filename = parts[parts.length - 1];
-    return `${LOCAL_BACKEND_URL}/api/event-media-debug/${filename}`;
-  }
-  
-  // For paths like /uploads/... (starting with /)
-  if (image.startsWith('/')) {
-    // Try to extract filename if it's a path to event media
-    if (image.includes('/uploads/events/')) {
-      const parts = image.split('/uploads/events/');
-      const filename = parts[parts.length - 1];
-      return `${LOCAL_BACKEND_URL}/api/event-media-debug/${filename}`;
-    }
-    return `${LOCAL_BACKEND_URL}${image}`;
-  }
-  
-  // For relative paths without starting slash
-  return `${LOCAL_BACKEND_URL}/${image}`;
+  return getEventImageUrl({ image, imageStoredLocally: true });
 };
 
 /**

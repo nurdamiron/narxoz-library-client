@@ -117,6 +117,15 @@ const adminBookService = {
         };
       }
       
+      if (bookData.borrowDuration && (isNaN(parseInt(bookData.borrowDuration)) || parseInt(bookData.borrowDuration) < 1)) {
+        console.error('❌ Жарамсыз қарызға алу ұзақтығы:', bookData.borrowDuration);
+        throw {
+          success: false,
+          message: 'Қарызға алу ұзақтығы кем дегенде 1 күн болуы керек',
+          validationErrors: [{ field: 'borrowDuration', message: 'Қарызға алу ұзақтығы кем дегенде 1 күн болуы керек' }]
+        };
+      }
+      
       // Очистка и преобразование строковых чисел в числа
       const cleanedData = { ...bookData };
       
@@ -160,6 +169,10 @@ const adminBookService = {
       
       if (cleanedData.availableCopies) {
         cleanedData.availableCopies = parseInt(cleanedData.availableCopies, 10);
+      }
+      
+      if (cleanedData.borrowDuration) {
+        cleanedData.borrowDuration = parseInt(cleanedData.borrowDuration, 10);
       }
       
       // Логирование итоговых данных для отправки
@@ -295,6 +308,15 @@ const adminBookService = {
         };
       }
       
+      if (bookData.borrowDuration && (isNaN(parseInt(bookData.borrowDuration)) || parseInt(bookData.borrowDuration) < 1)) {
+        console.error('❌ Жарамсыз қарызға алу ұзақтығы:', bookData.borrowDuration);
+        throw {
+          success: false,
+          message: 'Қарызға алу ұзақтығы кем дегенде 1 күн болуы керек',
+          validationErrors: [{ field: 'borrowDuration', message: 'Қарызға алу ұзақтығы кем дегенде 1 күн болуы керек' }]
+        };
+      }
+      
       // Очистка и преобразование строковых чисел в числа
       const cleanedData = { ...bookData };
       
@@ -338,6 +360,10 @@ const adminBookService = {
       
       if (cleanedData.availableCopies) {
         cleanedData.availableCopies = parseInt(cleanedData.availableCopies, 10);
+      }
+      
+      if (cleanedData.borrowDuration) {
+        cleanedData.borrowDuration = parseInt(cleanedData.borrowDuration, 10);
       }
       
       // Логирование итоговых данных для отправки

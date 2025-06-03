@@ -19,6 +19,11 @@ import MyEventsPage from './pages/MyEventsPage';
 // Debug tools
 import RoleDiagnostic from './components/debug/RoleDiagnostic';
 
+// User pages  
+import UserDashboard from './pages/UserDashboard';
+import MyReviewsPage from './pages/MyReviewsPage';
+import UserEventsManager from './pages/UserEventsManager';
+
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminBooksPage from './pages/admin/BooksPage';
@@ -83,6 +88,21 @@ const routes = [
   {
     path: '/my-events',
     element: <MyEventsPage />,
+    protected: true,
+  },
+  {
+    path: '/user-dashboard',
+    element: <UserDashboard />,
+    protected: true,
+  },
+  {
+    path: '/my-reviews',
+    element: <MyReviewsPage />,
+    protected: true,
+  },
+  {
+    path: '/user-events-manager',
+    element: <UserEventsManager />,
     protected: true,
   },
   

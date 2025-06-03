@@ -18,8 +18,9 @@ import EmptyState from '../common/EmptyState';
  * @param {Object} props - Компонент параметрлері
  * @param {Array} props.notifications - Хабарламалар тізімі
  * @param {Function} props.onReadNotification - Хабарламаны оқылды деп белгілеу функциясы
+ * @param {Function} props.onNotificationClick - Хабарламаға клик өңдеу функциясы
  */
-const NotificationsList = ({ notifications, onReadNotification }) => {
+const NotificationsList = ({ notifications, onReadNotification, onNotificationClick }) => {
   const theme = useTheme();
   const { t } = useTranslation();
 
@@ -36,6 +37,7 @@ const NotificationsList = ({ notifications, onReadNotification }) => {
               key={notification.id}
               notification={notification}
               onReadNotification={onReadNotification}
+              onNotificationClick={onNotificationClick}
             />
           ))}
         </List>

@@ -68,6 +68,25 @@ const adminBorrowService = {
   getAllBookmarks: async (params = {}) => {
     const response = await apiClient.get('/bookmarks/all', { params });
     return response.data;
+  },
+
+  /**
+   * Send notification to user about borrow
+   * @param {string} userId - User ID
+   * @param {string} borrowId - Borrow ID
+   * @param {string} message - Notification message
+   * @returns {Promise} Promise object with notification result
+   */
+  sendNotification: async (userId, borrowId, message) => {
+    const response = await apiClient.post('/notifications', {
+      userId,
+      title: 'Кітапханадан хабарландыру',
+      message,
+      type: 'info',
+      relatedModel: 'Borrow',
+      relatedId: borrowId
+    });
+    return response.data;
   }
 };
 

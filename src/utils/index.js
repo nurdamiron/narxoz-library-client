@@ -228,7 +228,7 @@ export const formatDate = (date, options = {}) => {
     
     // Если путь не указан или пустой, возвращаем изображение по умолчанию
     if (!cover) {
-      return 'https://via.placeholder.com/200x300?text=No+Cover';
+      return `${LOCAL_BACKEND_URL}/uploads/covers/default-book-cover.jpg`;
     }
     
     // Если это явно указанный placeholder, используем его
@@ -236,32 +236,13 @@ export const formatDate = (date, options = {}) => {
       return 'http://localhost:5001/api/narxoz-cover';
     }
     
-    // Если путь уже полный URL, проверяем, не нужно ли его преобразовать для обхода CORS
+    // Если путь уже полный URL, возвращаем как есть
     if (cover.startsWith('http')) {
-      // Если URL содержит /uploads/covers/, извлекаем имя файла для использования с debug-маршрутом
-      if (cover.includes('/uploads/covers/')) {
-        const filename = cover.split('/uploads/covers/')[1];
-        // Используем специальный маршрут, который обеспечивает правильные CORS-заголовки
-        return `${LOCAL_BACKEND_URL}/api/book-cover-debug/${filename}`;
-      }
       return cover;
-    }
-    
-    // Для путей вида /uploads/covers/... (отдельно обрабатываем для обхода CORS)
-    if (cover.includes('/uploads/covers/')) {
-      const parts = cover.split('/uploads/covers/');
-      const filename = parts[parts.length - 1];
-      return `${LOCAL_BACKEND_URL}/api/book-cover-debug/${filename}`;
     }
     
     // Для путей вида /uploads/... (начинающихся с /)
     if (cover.startsWith('/')) {
-      // Пытаемся извлечь имя файла, если это путь к обложке
-      if (cover.includes('/uploads/covers/')) {
-        const parts = cover.split('/uploads/covers/');
-        const filename = parts[parts.length - 1];
-        return `${LOCAL_BACKEND_URL}/api/book-cover-debug/${filename}`;
-      }
       return `${LOCAL_BACKEND_URL}${cover}`;
     }
     
