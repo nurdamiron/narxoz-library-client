@@ -32,6 +32,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import eventService from '../../../services/eventService';
 import useAdminEvents from '../../../hooks/useAdminEvents';
+import EventMediaPreview from './EventMediaPreview';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -50,6 +51,9 @@ const EventForm = ({ event = null, onSuccess }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [imageUrl, setImageUrl] = useState(event?.image || null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState(null);
   const { createEvent, updateEvent } = useAdminEvents();
   
   // Check if editing or creating
@@ -124,47 +128,101 @@ const EventForm = ({ event = null, onSuccess }) => {
       registrationDeadline: event?.registrationDeadline ? new Date(event.registrationDeadline) : isEditing ? null : new Date(),
       capacity: event?.capacity || 30,
       isActive: event?.isActive ?? true,
-      categories: event?.categories?.map(cat => cat.id) || []
+      categories: event?.categories?.map(cat => cat.id) || [],
+      imageFile: null
     },
     validationSchema,
     context: { isEditing },
-    onSubmit: async (values) => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        // Format dates for API
-        const formattedValues = {
-          ...values,
-          startDate: values.startDate?.toISOString(),
-          endDate: values.endDate?.toISOString(),
-          registrationDeadline: values.registrationDeadline?.toISOString()
-        };
-        
-        let result;
-        
-        if (isEditing) {
-          result = await updateEvent(event.id, formattedValues);
-        } else {
-          result = await createEvent(formattedValues);
-        }
-        
-        if (result.success) {
-          if (onSuccess) {
-            onSuccess(result.data);
-          } else {
-            navigate('/admin/events');
-          }
-        } else {
-          setError(result.error || t('events.admin.form.errors.submitError'));
-        }
-      } catch (err) {
-        setError(err.message || t('events.admin.form.errors.submitError'));
-      } finally {
-        setLoading(false);
-      }
-    }
+    onSubmit: () => {} // Will be replaced with custom handler
   });
+
+  // Handle image upload
+  const handleImageUpload = async (file) => {
+    setImageUploading(true);
+    setImageError(null);
+
+    try {
+      // If we're editing an existing event, upload immediately
+      if (isEditing && event?.id) {
+        const result = await eventService.uploadEventImage(event.id, file);
+        if (result.success) {
+          setImageUrl(result.data.media);
+        } else {
+          setImageError(result.error || t('events.admin.form.errors.imageUploadFailed'));
+        }
+      } else {
+        // For new events, store the file temporarily and create a preview URL
+        const previewUrl = URL.createObjectURL(file);
+        setImageUrl(previewUrl);
+        // Store the file for later upload when the event is created
+        formik.setFieldValue('imageFile', file);
+      }
+    } catch (err) {
+      setImageError(err.message || t('events.admin.form.errors.imageUploadFailed'));
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  // Handle image removal
+  const handleImageRemove = () => {
+    setImageUrl(null);
+    setImageError(null);
+    formik.setFieldValue('imageFile', null);
+  };
+
+  // Custom submit handler to handle image upload for new events
+  const handleFormSubmit = async (values) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Format dates for API
+      const formattedValues = {
+        ...values,
+        startDate: values.startDate?.toISOString(),
+        endDate: values.endDate?.toISOString(),
+        registrationDeadline: values.registrationDeadline?.toISOString()
+      };
+      
+      // Remove imageFile from form data as it's not part of the API
+      const { imageFile, ...apiValues } = formattedValues;
+      
+      let result;
+      
+      if (isEditing) {
+        result = await updateEvent(event.id, apiValues);
+      } else {
+        result = await createEvent(apiValues);
+        
+        // If event was created successfully and we have an image file, upload it
+        if (result.success && imageFile) {
+          try {
+            const imageResult = await eventService.uploadEventImage(result.data.id, imageFile);
+            if (!imageResult.success) {
+              console.warn('Event created but image upload failed:', imageResult.error);
+            }
+          } catch (imageErr) {
+            console.warn('Event created but image upload failed:', imageErr);
+          }
+        }
+      }
+      
+      if (result.success) {
+        if (onSuccess) {
+          onSuccess(result.data);
+        } else {
+          navigate('/admin/events');
+        }
+      } else {
+        setError(result.error || t('events.admin.form.errors.submitError'));
+      }
+    } catch (err) {
+      setError(err.message || t('events.admin.form.errors.submitError'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Paper elevation={2} sx={{ p: 3 }}>
@@ -180,7 +238,7 @@ const EventForm = ({ event = null, onSuccess }) => {
         </Alert>
       )}
       
-      <Box component="form" onSubmit={formik.handleSubmit} noValidate sx={{ mt: 3 }}>
+      <Box component="form" onSubmit={(e) => { e.preventDefault(); handleFormSubmit(formik.values); }} noValidate sx={{ mt: 3 }}>
         <Grid container spacing={3}>
           {/* Event Title */}
           <Grid item xs={12}>
@@ -195,6 +253,18 @@ const EventForm = ({ event = null, onSuccess }) => {
               error={formik.touched.title && Boolean(formik.errors.title)}
               helperText={formik.touched.title && formik.errors.title}
               required
+            />
+          </Grid>
+
+          {/* Event Image Upload */}
+          <Grid item xs={12}>
+            <EventMediaPreview
+              imageUrl={imageUrl}
+              onImageUpload={handleImageUpload}
+              onImageRemove={handleImageRemove}
+              loading={imageUploading}
+              error={imageError}
+              disabled={loading}
             />
           </Grid>
           

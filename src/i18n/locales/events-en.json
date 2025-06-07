@@ -158,6 +158,13 @@
         "isActiveHint": "Inactive events are still visible but cannot be registered for",
         "dateTimeSection": "Date and Time",
         "detailsSection": "Event Details",
+        "eventImage": "Event Image",
+        "uploadImageTitle": "Upload Event Cover Image",
+        "uploadImageDescription": "Drag and drop an image here, or click to select a file",
+        "selectImage": "Select Image",
+        "changeImage": "Change Image",
+        "uploadingImage": "Uploading image...",
+        "imageUploadHint": "Supported formats: JPG, PNG, GIF. Maximum size: 5MB",
         "create": "Create Event",
         "update": "Update Event",
         "errors": {
@@ -178,6 +185,7 @@
           "capacityInteger": "Capacity must be a whole number",
           "capacityMin": "Capacity must be at least 1",
           "imageUrl": "Please enter a valid URL",
+          "imageUploadFailed": "Failed to upload image",
           "submitError": "An error occurred while submitting the form"
         }
       },

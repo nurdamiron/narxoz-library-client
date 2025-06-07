@@ -80,6 +80,22 @@ class EventService {
   async cancelRegistration(eventId) {
     return BaseService.delete(`/events/${eventId}/register`);
   }
+
+  /**
+   * Upload image for an event
+   * 
+   * @param {number} eventId - Event ID
+   * @param {File} file - Image file to upload
+   * @returns {Promise} - Promise with upload result
+   */
+  async uploadEventImage(eventId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return BaseService.put(`/events/${eventId}/media`, formData, {
+      'Content-Type': 'multipart/form-data',
+    });
+  }
 }
 
 export default new EventService();
