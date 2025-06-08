@@ -85,17 +85,14 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
     setCategoriesOpen(!categoriesOpen);
   };
   
-  // Негізгі меню элементтері
+  // Role-based menu items according to specifications
   const mainMenuItems = [
+    // Visible to all users
     { text: t('sidebar.mainMenu.home'), icon: <HomeIcon />, path: '/' },
     { text: t('sidebar.mainMenu.books'), icon: <LibraryBooksIcon />, path: '/books' },
     { text: t('sidebar.mainMenu.events'), icon: <EventIcon />, path: '/events' },
-    { 
-      text: t('userDashboard.title'), 
-      icon: <DashboardIcon />, 
-      path: '/user-dashboard',
-      requireAuth: true
-    },
+    
+    // Only for authenticated users (students, moderators, admins)
     { 
       text: t('sidebar.mainMenu.bookmarks'), 
       icon: <BookmarkIcon />, 
@@ -111,18 +108,33 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
       badge: stats.activeborrows || 0,
       alert: stats.overdueborrows > 0
     },
+    
+    // Dashboard - only for moderators and admins
+    { 
+      text: t('userDashboard.title'), 
+      icon: <DashboardIcon />, 
+      path: '/user-dashboard',
+      requireAuth: true,
+      requireRole: ['moderator', 'admin', 'librarian']
+    },
+    
+    // My Events - only for authenticated users
     { 
       text: t('sidebar.mainMenu.myEvents'), 
       icon: <EventIcon />, 
       path: '/my-events',
       requireAuth: true
     },
+    
+    // Admin/Moderator Panel - only for moderators and admins
     { 
-      text: t('sidebar.mainMenu.adminPanel'), 
-      icon: <DashboardIcon />, 
+      text: user?.role === 'moderator' 
+        ? t('sidebar.mainMenu.moderatorPanel', 'Moderator Panel')
+        : t('sidebar.mainMenu.adminPanel', 'Admin Panel'), 
+      icon: <SettingsIcon />, 
       path: '/admin',
       requireAuth: true,
-      requireRole: ['admin', 'moderator']
+      requireRole: ['admin', 'moderator', 'librarian']
     },
   ];
   

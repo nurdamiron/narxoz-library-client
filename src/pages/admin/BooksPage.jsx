@@ -782,8 +782,22 @@ const BooksPage = () => {
                           <Box 
                             component="img" 
                             src={getCoverUrl(book)} 
-                            alt={t('admin.coverPreview')}
-                            sx={{ width: 50, height: 70, objectFit: 'cover' }}
+                            alt={book.title}
+                            sx={{ 
+                              width: 60, 
+                              height: 80, 
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '1px solid #e0e0e0',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                              '&:hover': {
+                                transform: 'scale(1.05)',
+                                transition: 'transform 0.2s ease-in-out'
+                              }
+                            }}
+                            onError={(e) => {
+                              e.target.src = '/images/default-book-cover.jpg';
+                            }}
                           />
                         </TableCell>
                         <TableCell>{book.title}</TableCell>

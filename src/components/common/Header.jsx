@@ -316,8 +316,9 @@ const Header = ({ toggleSidebar }) => {
             </IconButton>
           </Tooltip>
           
-          {/* Global Navigation buttons - visible to all users */}
+          {/* Role-based Navigation buttons */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.25, sm: 0.5 } }}>
+            {/* Books - visible to all users */}
             <Tooltip title={t('books.catalog')}>
               <IconButton
                 color="inherit"
@@ -354,6 +355,7 @@ const Header = ({ toggleSidebar }) => {
               {t('books.catalog')}
             </Button>
             
+            {/* Events - visible to all users */}
             <Tooltip title={t('events.title')}>
               <IconButton
                 color="inherit"
@@ -389,6 +391,125 @@ const Header = ({ toggleSidebar }) => {
             >
               {t('events.title')}
             </Button>
+
+            {/* Bookmarks - only for authenticated users (students, moderators, admins) */}
+            {isAuthenticated && (
+              <>
+                <Tooltip title={t('bookmarks.title')}>
+                  <IconButton
+                    color="inherit"
+                    component={RouterLink}
+                    to="/bookmarks"
+                    sx={{ 
+                      display: { xs: 'flex', lg: 'none' },
+                      p: { xs: 0.5, sm: 0.75 }
+                    }}
+                  >
+                    <BookmarkBorder sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                  </IconButton>
+                </Tooltip>
+                
+                <Button
+                  color="inherit"
+                  component={RouterLink}
+                  to="/bookmarks"
+                  startIcon={<BookmarkBorder sx={{ fontSize: 16 }} />}
+                  sx={{ 
+                    display: { xs: 'none', lg: 'flex' },
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: '0.813rem',
+                    minWidth: 'auto',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    '& .MuiButton-startIcon': {
+                      marginRight: 0.5,
+                    }
+                  }}
+                >
+                  {t('bookmarks.title')}
+                </Button>
+
+                {/* Borrowing History - only for authenticated users */}
+                <Tooltip title={t('borrowHistory.title')}>
+                  <IconButton
+                    color="inherit"
+                    component={RouterLink}
+                    to="/borrows"
+                    sx={{ 
+                      display: { xs: 'flex', lg: 'none' },
+                      p: { xs: 0.5, sm: 0.75 }
+                    }}
+                  >
+                    <History sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                  </IconButton>
+                </Tooltip>
+                
+                <Button
+                  color="inherit"
+                  component={RouterLink}
+                  to="/borrows"
+                  startIcon={<History sx={{ fontSize: 16 }} />}
+                  sx={{ 
+                    display: { xs: 'none', lg: 'flex' },
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: '0.813rem',
+                    minWidth: 'auto',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    '& .MuiButton-startIcon': {
+                      marginRight: 0.5,
+                    }
+                  }}
+                >
+                  {t('borrowHistory.title')}
+                </Button>
+
+                {/* Dashboard - only for moderators and admins */}
+                {(user?.role === 'moderator' || user?.role === 'admin' || user?.role === 'librarian') && (
+                  <>
+                    <Tooltip title={t('userDashboard.title')}>
+                      <IconButton
+                        color="inherit"
+                        component={RouterLink}
+                        to="/user-dashboard"
+                        sx={{ 
+                          display: { xs: 'flex', lg: 'none' },
+                          p: { xs: 0.5, sm: 0.75 }
+                        }}
+                      >
+                        <DashboardIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                      </IconButton>
+                    </Tooltip>
+                    
+                    <Button
+                      color="inherit"
+                      component={RouterLink}
+                      to="/user-dashboard"
+                      startIcon={<DashboardIcon sx={{ fontSize: 16 }} />}
+                      sx={{ 
+                        display: { xs: 'none', lg: 'flex' },
+                        px: 1.5,
+                        py: 0.5,
+                        fontSize: '0.813rem',
+                        minWidth: 'auto',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        },
+                        '& .MuiButton-startIcon': {
+                          marginRight: 0.5,
+                        }
+                      }}
+                    >
+                      {t('userDashboard.title')}
+                    </Button>
+                  </>
+                )}
+              </>
+            )}
           </Box>
 
           {/* Аутентификацияланған пайдаланушы элементтері */}
@@ -455,21 +576,55 @@ const Header = ({ toggleSidebar }) => {
                   elevation: 2,
                   sx: {
                     borderRadius: 2,
-                    width: 200,
+                    width: 220,
                   }
                 }}
               >
-                {/* Басқару панелі */}
+                {/* Профиль - для всех аутентифицированных пользователей */}
                 <MenuItem
                   component={RouterLink}
-                  to="/user-dashboard"
+                  to="/profile"
                   onClick={handleMenuClose}
                 >
                   <ListItemIcon>
-                    <DashboardIcon sx={{ color: '#d50032' }} />
+                    <Person sx={{ color: '#d50032' }} />
                   </ListItemIcon>
-                  <ListItemText primary={t('userDashboard.title')} />
+                  <ListItemText primary={t('profile.title')} />
                 </MenuItem>
+
+                {/* Уведомления - для всех аутентифицированных пользователей */}
+                <MenuItem
+                  component={RouterLink}
+                  to="/notifications"
+                  onClick={handleMenuClose}
+                >
+                  <ListItemIcon>
+                    <Badge badgeContent={unreadNotifications} color="error">
+                      <NotificationsIcon sx={{ color: '#d50032' }} />
+                    </Badge>
+                  </ListItemIcon>
+                  <ListItemText primary={t('notifications.title')} />
+                </MenuItem>
+
+                {/* Панель управления - только для модераторов и администраторов */}
+                {(user?.role === 'moderator' || user?.role === 'admin' || user?.role === 'librarian') && (
+                  <MenuItem
+                    component={RouterLink}
+                    to="/admin"
+                    onClick={handleMenuClose}
+                  >
+                    <ListItemIcon>
+                      <DashboardIcon sx={{ color: '#d50032' }} />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={
+                        user?.role === 'moderator' 
+                          ? t('admin.goToModeratorPanel', 'Go to moderator panel')
+                          : t('admin.goToAdminPanel', 'Go to admin panel')
+                      } 
+                    />
+                  </MenuItem>
+                )}
                 
                 <Divider sx={{ my: 1 }} />
                 

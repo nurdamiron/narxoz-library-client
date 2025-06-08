@@ -604,7 +604,7 @@ const NotificationsPage = () => {
                                   
                                   {!notification.read && (
                                     <Chip 
-                                      label="Жаңа" 
+                                      label={t('notifications.new', 'Жаңа')} 
                                       color="primary" 
                                       size="small"
                                       sx={{

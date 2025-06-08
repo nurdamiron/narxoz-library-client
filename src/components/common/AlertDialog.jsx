@@ -30,6 +30,7 @@ import {
   CheckCircle as SuccessIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 /**
  * AlertDialog компоненті
@@ -56,14 +57,18 @@ const AlertDialog = ({
   content,
   type = 'info',
   confirmText = 'OK',
-  cancelText = 'Болдырмау',
+  cancelText,
   onConfirm,
   closeOnConfirm = true,
   loading = false,
   fullWidth = true,
   maxWidth = 'sm'
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
+  
+  // Set default values for text using translations
+  const defaultCancelText = cancelText || t('common.cancel');
   
   /**
    * Диалог түріне байланысты түс пен белгішені анықтау
@@ -180,13 +185,13 @@ const AlertDialog = ({
       
       {/* Диалог түймелері */}
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        {onClose && cancelText && !loading && (
+        {onClose && defaultCancelText && !loading && (
           <Button 
             onClick={onClose} 
             color="inherit"
             variant="text"
           >
-            {cancelText}
+            {defaultCancelText}
           </Button>
         )}
         

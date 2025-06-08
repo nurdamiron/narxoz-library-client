@@ -15,7 +15,16 @@ class AdminEventService {
    * @returns {Promise} - Promise with created event data
    */
   async createEvent(eventData) {
-    return BaseService.post('/events', eventData);
+    console.log('🔴 adminEventService.createEvent called with eventData:', eventData);
+    console.log('🔴 EventData keys:', Object.keys(eventData));
+    console.log('🔴 EventData title:', eventData.title);
+    console.log('🔴 EventData description:', eventData.description);
+    console.log('🔴 EventData location:', eventData.location);
+    
+    const result = await BaseService.post('/events', eventData);
+    console.log('🔴 BaseService.post result:', result);
+    
+    return result;
   }
 
   /**

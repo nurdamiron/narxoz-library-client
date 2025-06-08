@@ -1,6 +1,7 @@
 // src/components/auth/RegisterForm/index.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -46,6 +47,7 @@ import {
  * @returns {JSX.Element} - Тіркелу формасы компоненті
  */
 const RegisterForm = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -62,7 +64,7 @@ const RegisterForm = () => {
    * steps - қадамдар атауларының массиві
    */
   const [activeStep, setActiveStep] = useState(0);
-  const steps = ['Жеке ақпарат', 'Байланыс ақпараты', 'Оқу ақпараты', 'Құпия сөз құру'];
+  const steps = [t('auth.register.steps.personalInfo'), t('auth.register.steps.contactInfo'), t('auth.register.steps.educationInfo'), t('auth.register.steps.password')];
   
   /**
    * Форма күйі
@@ -291,7 +293,7 @@ const RegisterForm = () => {
     
     // Барлық қажетті өрістерді тексеру
     if (!formValid.step3) {
-      setError('Барлық міндетті өрістерді толтырып, қателерді түзетіңіз');
+      setError(t('auth.register.errors.fillAllFields'));
       return;
     }
   

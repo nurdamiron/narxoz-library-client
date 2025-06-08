@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { Box, Button, Typography, Divider, useTheme } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Жүйеге кіру сілтемесі бар бөлім компоненті
@@ -14,6 +15,7 @@ import { Box, Button, Typography, Divider, useTheme } from '@mui/material';
  * @returns {JSX.Element} - Кіру сілтемесі бар бөлім
  */
 const LoginLink = ({ isLoading }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   
   return (
@@ -35,14 +37,14 @@ const LoginLink = ({ isLoading }) => {
             bgcolor: theme.palette.background.paper
           }}
         >
-          НЕМЕСЕ
+          {t('auth.register.or')}
         </Typography>
       </Divider>
       
       {/* Жүйеге кіру бөлімі */}
       <Box sx={{ textAlign: 'center' }}>
         <Typography variant="body1" sx={{ mb: 2 }}>
-          Аккаунтыңыз бар ма?
+          {t('auth.register.haveAccount')}
         </Typography>
         <Button
           component={RouterLink}
@@ -65,7 +67,7 @@ const LoginLink = ({ isLoading }) => {
             }
           }}
         >
-          Жүйеге кіру
+          {t('auth.register.loginButton')}
         </Button>
       </Box>
     </>

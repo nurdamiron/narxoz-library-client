@@ -11,6 +11,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -55,11 +56,15 @@ import {
   Search as SearchIcon,
   Visibility as VisibilityIcon
 } from '@mui/icons-material';
+import {
+  Avatar
+} from '@mui/material';
 import { getBookCoverUrl } from '../../utils';
 
 import borrowService from '../services/borrowService';
 
 const BookDetails = ({ book }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -81,14 +86,14 @@ const BookDetails = ({ book }) => {
       setBookmarked(!bookmarked);
       setSnackbarMessage(
         bookmarked
-          ? 'Кітап бетбелгілерден алынып тасталды'
-          : 'Кітап бетбелгілерге қосылды'
+          ? t('books.details.bookmarkRemoved')
+          : t('books.details.bookmarkAdded')
       );
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch (err) {
       console.error('Error toggling bookmark:', err);
-      setSnackbarMessage('Бетбелгіні өзгерту кезінде қате орын алды');
+      setSnackbarMessage(t('books.details.bookmarkError'));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
@@ -97,7 +102,7 @@ const BookDetails = ({ book }) => {
   // Сілтемені көшіру функциясы
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
-    setSnackbarMessage('Сілтеме буферге көшірілді');
+    setSnackbarMessage(t('books.details.linkCopied'));
     setSnackbarSeverity('info');
     setSnackbarOpen(true);
   };
@@ -119,7 +124,7 @@ const BookDetails = ({ book }) => {
       await borrowService.borrowBook({ bookId: book.id });
       
       setDialogOpen(false);
-      setSnackbarMessage('Кітап сәтті тапсырылды! Оны кітапханадан 3 күн ішінде алыңыз.');
+      setSnackbarMessage(t('books.details.borrowSuccessMsg'));
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch (err) {
@@ -133,7 +138,7 @@ const BookDetails = ({ book }) => {
         setSnackbarOpen(true);
       } else {
         setDialogOpen(false);
-        setSnackbarMessage('Кітапты алу кезінде қате орын алды');
+        setSnackbarMessage(t('books.details.borrowErrorMsg'));
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
@@ -160,7 +165,7 @@ const BookDetails = ({ book }) => {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Alert severity="warning">
-          Кітап туралы ақпарат табылмады.
+          {t('books.details.notFoundDescription')}
         </Alert>
       </Container>
     );
@@ -223,7 +228,7 @@ const BookDetails = ({ book }) => {
                 }
               }}
             >
-              Артқа қайту
+              {t('books.details.backButton')}
             </Button>
           </Box>
         </motion.div>
@@ -312,7 +317,7 @@ const BookDetails = ({ book }) => {
                     transition: 'opacity 0.5s ease-in-out',
                   }}
                 />
-                <Tooltip title="Үлкейту/кішірейту" arrow>
+                <Tooltip title={t('books.details.zoomTooltip')} arrow>
                   <IconButton
                     sx={{
                       position: 'absolute',
@@ -359,7 +364,7 @@ const BookDetails = ({ book }) => {
                         transition: 'transform 0.2s, box-shadow 0.2s',
                       }}
                     >
-                      Кітапты алу
+                      {t('books.details.borrowButton')}
                     </Button>
                   ) : (
                     <Button
@@ -374,7 +379,7 @@ const BookDetails = ({ book }) => {
                         textTransform: 'none',
                       }}
                     >
-                      Қолжетімді емес
+                      {t('books.details.unavailable')}
                     </Button>
                   )}
                   
@@ -385,7 +390,7 @@ const BookDetails = ({ book }) => {
                       align="center"
                       sx={{ mt: 1 }}
                     >
-                      Қазіргі уақытта кітап қолжетімді емес
+                      {t('books.details.currentlyUnavailableDescription')}
                     </Typography>
                   )}
                 </Box>
@@ -460,7 +465,7 @@ const BookDetails = ({ book }) => {
                       color="text.secondary"
                       sx={{ ml: 1 }}
                     >
-                      {book.rating} ({book.reviewCount} пікір)
+                      {t('books.details.reviewsCount', { rating: book.rating, count: book.reviewCount })}
                     </Typography>
                   </Box>
                 </Box>
@@ -487,7 +492,7 @@ const BookDetails = ({ book }) => {
                         color: theme.palette.primary.main
                       }} 
                     />
-                    Кітап туралы
+                    {t('books.details.aboutBook')}
                   </Typography>
                   <Typography 
                     variant="body1" 
@@ -541,7 +546,7 @@ const BookDetails = ({ book }) => {
                           </Avatar>
                           <Box>
                             <Typography variant="body2" component="span" fontWeight="bold" sx={{ mr: 1, display: 'block' }}>
-                              Шығарылған жылы:
+                              {t('books.details.publishedYearLabel')}
                             </Typography>
                             <Typography variant="body1" component="span">
                               {book.publicationYear}
@@ -566,7 +571,7 @@ const BookDetails = ({ book }) => {
                           </Avatar>
                           <Box>
                             <Typography variant="body2" component="span" fontWeight="bold" sx={{ mr: 1, display: 'block' }}>
-                              Категория:
+                              {t('books.details.category')}
                             </Typography>
                             <Typography variant="body1" component="span">
                               {book.category}
@@ -591,10 +596,10 @@ const BookDetails = ({ book }) => {
                           </Avatar>
                           <Box>
                             <Typography variant="body2" component="span" fontWeight="bold" sx={{ mr: 1, display: 'block' }}>
-                              Тілі:
+                              {t('books.details.languageLabel')}:
                             </Typography>
                             <Typography variant="body1" component="span">
-                              Орыс
+                              {t('books.details.languageValue')}
                             </Typography>
                           </Box>
                         </Box>
@@ -636,14 +641,14 @@ const BookDetails = ({ book }) => {
                           </Avatar>
                           <Box>
                             <Typography variant="body2" component="span" fontWeight="bold" sx={{ mr: 1, display: 'block' }}>
-                              Мамандық:
+                              {t('books.details.specialization')}
                             </Typography>
                             <Typography variant="body1" component="span">
                               {book.category === 'IT и программирование'
-                                ? 'Ақпараттық технологиялар'
+                                ? t('books.details.informationTechnology')
                                 : book.category === 'Право'
-                                ? 'Құқықтану'
-                                : 'Экономика және бизнес'}
+                                ? t('books.details.law')
+                                : t('books.details.economicsAndBusiness')}
                             </Typography>
                           </Box>
                         </Box>
@@ -671,7 +676,7 @@ const BookDetails = ({ book }) => {
                           </Avatar>
                           <Box>
                             <Typography variant="body2" component="span" fontWeight="bold" sx={{ mr: 1, display: 'block' }}>
-                              Қолжетімділік:
+                              {t('books.details.availability')}
                             </Typography>
                             <Typography
                               variant="body1"
@@ -683,7 +688,7 @@ const BookDetails = ({ book }) => {
                                 fontWeight: 'medium',
                               }}
                             >
-                              {book.available ? 'Қолжетімді' : 'Қолжетімді емес'}
+                              {book.available ? t('books.details.available') : t('books.details.unavailable')}
                             </Typography>
                           </Box>
                         </Box>
@@ -714,14 +719,14 @@ const BookDetails = ({ book }) => {
                       color: theme.palette.primary.main
                     }} 
                   />
-                  Ұсынылатын курстар
+                  {t('books.details.recommendedCourses')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 5 }}>
                   {/* Категорияға қарай ұсынылатын курстар */}
                   {book.category === 'Финансы' && (
                     <>
                       <Chip 
-                        label="Қаржылық менеджмент" 
+                        label={t('books.details.financialManagement')} 
                         sx={{ 
                           bgcolor: alpha(theme.palette.primary.main, 0.1),
                           color: theme.palette.primary.main,
@@ -733,7 +738,7 @@ const BookDetails = ({ book }) => {
                         }}
                       />
                       <Chip 
-                        label="Корпоративтік қаржы" 
+                        label={t('books.details.corporateFinance')} 
                         sx={{ 
                           bgcolor: alpha(theme.palette.primary.main, 0.1),
                           color: theme.palette.primary.main,
@@ -745,7 +750,7 @@ const BookDetails = ({ book }) => {
                         }}
                       />
                       <Chip 
-                        label="Инвестициялық талдау" 
+                        label={t('books.details.investmentAnalysis')} 
                         sx={{ 
                           bgcolor: alpha(theme.palette.primary.main, 0.1),
                           color: theme.palette.primary.main,
@@ -761,7 +766,7 @@ const BookDetails = ({ book }) => {
                   {/* Басқа категориялар үшін */}
                   {!book.category || book.category !== 'Финансы' && (
                     <Typography variant="body1" color="text.secondary">
-                      Бұл кітап үшін ұсынылған курстар жоқ.
+                      {t('books.details.noRecommendedCourses')}
                     </Typography>
                   )}
                 </Box>
@@ -795,7 +800,7 @@ const BookDetails = ({ book }) => {
                           transition: 'transform 0.2s, box-shadow 0.2s',
                         }}
                       >
-                        Кітапты алу
+                        {t('books.details.borrowButton')}
                       </Button>
                     ) : (
                       <Button
@@ -811,7 +816,7 @@ const BookDetails = ({ book }) => {
                           textTransform: 'none',
                         }}
                       >
-                        Қолжетімді емес
+                        {t('books.details.unavailable')}
                       </Button>
                     )}
                     
@@ -821,7 +826,7 @@ const BookDetails = ({ book }) => {
                         color="error.main"
                         sx={{ mt: 1 }}
                       >
-                        Қазіргі уақытта кітап қолжетімді емес
+                        {t('books.details.currentlyUnavailableDescription')}
                       </Typography>
                     )}
                   </Box>
@@ -889,7 +894,7 @@ const BookDetails = ({ book }) => {
                     transition: 'color 0.3s ease, background-color 0.3s ease'
                   }}
                 >
-                  {isMobile ? "" : "Бетбелгілер"}
+                  {isMobile ? "" : t('books.details.bookmarks')}
                 </Button>
 
                 <Divider orientation="vertical" flexItem />
@@ -913,7 +918,7 @@ const BookDetails = ({ book }) => {
                     justifyContent: 'center'
                   }}
                 >
-                  {isMobile ? "" : "Бөлісу"}
+                  {isMobile ? "" : t('books.details.share')}
                 </Button>
               </Box>
             </Card>
@@ -954,7 +959,7 @@ const BookDetails = ({ book }) => {
             }}
           >
             <Typography variant="h6" fontWeight="bold">
-              Кітапты алуды растау
+              {t('books.details.borrowDialogTitle')}
             </Typography>
             <IconButton
               aria-label="close"
@@ -984,7 +989,7 @@ const BookDetails = ({ book }) => {
                 }}
               >
                 <img 
-                  src={getBookCoverUrl(book.cover) || 'https://via.placeholder.com/100x150?text=Мұқаба+жоқ'} 
+                  src={getBookCoverUrl(book.cover) || 'https://via.placeholder.com/100x150?text=No+Cover'} 
                   alt={book.title}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
@@ -999,7 +1004,7 @@ const BookDetails = ({ book }) => {
               </Box>
             </Box>
             <DialogContentText id="borrow-dialog-description">
-              "{book.title}" кітабын алғыңыз келе ме? Кітап сіздің атыңызға сақталады және оны 3 жұмыс күні ішінде кітапханадан алуыңыз керек.
+              {t('books.details.borrowDialogDescription', { title: book.title })}
             </DialogContentText>
             <Box 
               sx={{ 
@@ -1012,7 +1017,7 @@ const BookDetails = ({ book }) => {
             >
               <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
                 <InfoIcon fontSize="small" color="primary" sx={{ mr: 1 }} />
-                Кітапты алу үшін студенттік билетіңізді көрсету керек.
+                {t('books.details.borrowRequiresId')}
               </Typography>
             </Box>
           </DialogContent>
@@ -1030,7 +1035,7 @@ const BookDetails = ({ book }) => {
                 borderRadius: 2
               }}
             >
-              Бас тарту
+              {t('books.details.cancel')}
             </Button>
             <Button 
               onClick={handleConfirmBorrow} 
@@ -1044,7 +1049,7 @@ const BookDetails = ({ book }) => {
                 px: 3
               }}
             >
-              Растау
+              {t('books.details.confirm')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1082,7 +1087,7 @@ const BookDetails = ({ book }) => {
             </IconButton>
             <Box 
               component="img"
-              src={getBookCoverUrl(book.cover) || 'https://via.placeholder.com/800x1200?text=Мұқаба+жоқ'}
+              src={getBookCoverUrl(book.cover) || 'https://via.placeholder.com/800x1200?text=No+Cover'}
               alt={book.title}
               sx={{
                 width: '100%',

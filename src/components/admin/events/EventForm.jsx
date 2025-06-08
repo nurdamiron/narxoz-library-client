@@ -116,63 +116,14 @@ const EventForm = ({ event = null, onSuccess }) => {
       .of(Yup.number())
   });
 
-  // Form initialization and handling
-  const formik = useFormik({
-    initialValues: {
-      title: event?.title || '',
-      description: event?.description || '',
-      type: event?.type || 'workshop',
-      location: event?.location || '',
-      startDate: event?.startDate ? new Date(event.startDate) : isEditing ? null : new Date(),
-      endDate: event?.endDate ? new Date(event.endDate) : isEditing ? null : new Date(Date.now() + 7200000), // Default to 2 hours after start time
-      registrationDeadline: event?.registrationDeadline ? new Date(event.registrationDeadline) : isEditing ? null : new Date(),
-      capacity: event?.capacity || 30,
-      isActive: event?.isActive ?? true,
-      categories: event?.categories?.map(cat => cat.id) || [],
-      imageFile: null
-    },
-    validationSchema,
-    context: { isEditing },
-    onSubmit: () => {} // Will be replaced with custom handler
-  });
-
-  // Handle image upload
-  const handleImageUpload = async (file) => {
-    setImageUploading(true);
-    setImageError(null);
-
-    try {
-      // If we're editing an existing event, upload immediately
-      if (isEditing && event?.id) {
-        const result = await eventService.uploadEventImage(event.id, file);
-        if (result.success) {
-          setImageUrl(result.data.media);
-        } else {
-          setImageError(result.error || t('events.admin.form.errors.imageUploadFailed'));
-        }
-      } else {
-        // For new events, store the file temporarily and create a preview URL
-        const previewUrl = URL.createObjectURL(file);
-        setImageUrl(previewUrl);
-        // Store the file for later upload when the event is created
-        formik.setFieldValue('imageFile', file);
-      }
-    } catch (err) {
-      setImageError(err.message || t('events.admin.form.errors.imageUploadFailed'));
-    } finally {
-      setImageUploading(false);
-    }
-  };
-
-  // Handle image removal
-  const handleImageRemove = () => {
-    setImageUrl(null);
-    setImageError(null);
-    formik.setFieldValue('imageFile', null);
-  };
-
   // Custom submit handler to handle image upload for new events
   const handleFormSubmit = async (values) => {
+    console.log('🔴 EventForm handleFormSubmit called with values:', values);
+    console.log('🔴 Values keys:', Object.keys(values));
+    console.log('🔴 Title value:', values.title);
+    console.log('🔴 Description value:', values.description);
+    console.log('🔴 Location value:', values.location);
+    
     setLoading(true);
     setError(null);
     
@@ -185,8 +136,12 @@ const EventForm = ({ event = null, onSuccess }) => {
         registrationDeadline: values.registrationDeadline?.toISOString()
       };
       
+      console.log('🔴 Formatted values for API:', formattedValues);
+      
       // Remove imageFile from form data as it's not part of the API
       const { imageFile, ...apiValues } = formattedValues;
+      
+      console.log('🔴 Final API values being sent:', apiValues);
       
       let result;
       
@@ -224,6 +179,61 @@ const EventForm = ({ event = null, onSuccess }) => {
     }
   };
 
+  // Form initialization and handling
+  const formik = useFormik({
+    initialValues: {
+      title: event?.title || '',
+      description: event?.description || '',
+      type: event?.type || 'workshop',
+      location: event?.location || '',
+      startDate: event?.startDate ? new Date(event.startDate) : isEditing ? null : new Date(),
+      endDate: event?.endDate ? new Date(event.endDate) : isEditing ? null : new Date(Date.now() + 7200000), // Default to 2 hours after start time
+      registrationDeadline: event?.registrationDeadline ? new Date(event.registrationDeadline) : isEditing ? null : new Date(),
+      capacity: event?.capacity || 30,
+      isActive: event?.isActive ?? true,
+      categories: event?.categories?.map(cat => cat.id) || [],
+      imageFile: null
+    },
+    validationSchema,
+    context: { isEditing },
+    onSubmit: handleFormSubmit
+  });
+
+  // Handle image upload
+  const handleImageUpload = async (file) => {
+    setImageUploading(true);
+    setImageError(null);
+
+    try {
+      // If we're editing an existing event, upload immediately
+      if (isEditing && event?.id) {
+        const result = await eventService.uploadEventImage(event.id, file);
+        if (result.success) {
+          setImageUrl(result.data.media);
+        } else {
+          setImageError(result.error || t('events.admin.form.errors.imageUploadFailed'));
+        }
+      } else {
+        // For new events, store the file temporarily and create a preview URL
+        const previewUrl = URL.createObjectURL(file);
+        setImageUrl(previewUrl);
+        // Store the file for later upload when the event is created
+        formik.setFieldValue('imageFile', file);
+      }
+    } catch (err) {
+      setImageError(err.message || t('events.admin.form.errors.imageUploadFailed'));
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  // Handle image removal
+  const handleImageRemove = () => {
+    setImageUrl(null);
+    setImageError(null);
+    formik.setFieldValue('imageFile', null);
+  };
+
   return (
     <Paper elevation={2} sx={{ p: 3 }}>
       <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">
@@ -238,7 +248,7 @@ const EventForm = ({ event = null, onSuccess }) => {
         </Alert>
       )}
       
-      <Box component="form" onSubmit={(e) => { e.preventDefault(); handleFormSubmit(formik.values); }} noValidate sx={{ mt: 3 }}>
+      <Box component="form" onSubmit={formik.handleSubmit} noValidate sx={{ mt: 3 }}>
         <Grid container spacing={3}>
           {/* Event Title */}
           <Grid item xs={12}>

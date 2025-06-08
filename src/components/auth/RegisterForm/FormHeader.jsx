@@ -1,6 +1,7 @@
 // src/components/auth/RegisterForm/FormHeader.jsx
 import React from 'react';
 import { Box, Typography, Avatar, Badge, Tooltip, useTheme, useMediaQuery } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { LibraryBooks, BookmarkBorder } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -17,6 +18,7 @@ import { motion } from 'framer-motion';
  * @returns {JSX.Element} - Тіркелу формасының тақырып бөлігі
  */
 const FormHeader = ({ activeStep, steps, completionPercentage }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -44,7 +46,7 @@ const FormHeader = ({ activeStep, steps, completionPercentage }) => {
           overlap="circular"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           badgeContent={
-            <Tooltip title={`${completionPercentage}% аяқталды`}>
+            <Tooltip title={t('auth.register.completed', { percentage: completionPercentage })}>
               <Avatar 
                 sx={{ 
                   width: 28, 
@@ -99,7 +101,7 @@ const FormHeader = ({ activeStep, steps, completionPercentage }) => {
             fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' }
           }}
         >
-          Нархоз кітапханасына тіркелу
+          {t('auth.register.title')}
         </Typography>
         
         <Typography
@@ -111,7 +113,7 @@ const FormHeader = ({ activeStep, steps, completionPercentage }) => {
             mb: 1
           }}
         >
-          Кітапханалық қызметтерге қол жеткізу үшін тіркеліңіз
+          {t('auth.register.subtitle')}
         </Typography>
 
         <Box 
@@ -129,7 +131,7 @@ const FormHeader = ({ activeStep, steps, completionPercentage }) => {
         >
           <BookmarkBorder fontSize="small" color="primary" />
           <Typography variant="caption" color="primary.main" fontWeight={500}>
-            {activeStep + 1}/{steps.length} қадам
+            {t('auth.register.stepProgress', { current: activeStep + 1, total: steps.length })}
           </Typography>
         </Box>
       </Box>

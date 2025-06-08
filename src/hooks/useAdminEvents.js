@@ -45,11 +45,14 @@ const useAdminEvents = () => {
    * Create a new event
    */
   const createEvent = useCallback(async (eventData) => {
+    console.log('🔴 useAdminEvents createEvent called with eventData:', eventData);
+    
     try {
       setLoading(true);
       setError(null);
       
       const response = await adminEventService.createEvent(eventData);
+      console.log('🔴 adminEventService.createEvent response:', response);
       
       if (response.success) {
         showToast(t('events.admin.createSuccess'), { severity: 'success' });

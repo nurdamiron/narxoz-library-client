@@ -50,12 +50,20 @@ class BaseService {
    */
   static async post(url, data = {}) {
     try {
+      console.log('🔴 BaseService.post called:', { url, data });
+      console.log('🔴 Data keys:', Object.keys(data));
+      console.log('🔴 Auth headers:', this.getAuthHeaders());
+      
       const response = await apiClient.post(url, data, {
         headers: this.getAuthHeaders()
       });
+      
+      console.log('🔴 BaseService.post response:', response.data);
       return response.data;
     } catch (error) {
       console.error(`POST error for ${url}:`, error);
+      console.error('🔴 Error response:', error.response?.data);
+      console.error('🔴 Error status:', error.response?.status);
       throw error;
     }
   }

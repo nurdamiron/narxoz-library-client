@@ -25,11 +25,13 @@ import {
   Info as InfoIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Жеке ақпарат қадамы компоненті - Enhanced with better UI and animations
  */
 const PersonalInfoStep = ({ formData, formErrors, handleInputChange, isLoading }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isExtraSmall = useMediaQuery(theme.breakpoints.down('xs'));
@@ -100,7 +102,7 @@ const PersonalInfoStep = ({ formData, formErrors, handleInputChange, isLoading }
             transition: 'all 0.5s ease'
           }}
         >
-          Жеке ақпарат
+          {t('auth.register.personalInfoTitle')}
         </Typography>
       </Box>
 
@@ -155,10 +157,10 @@ const PersonalInfoStep = ({ formData, formErrors, handleInputChange, isLoading }
               }}
             >
               <InfoIcon fontSize="small" sx={{ mr: 1, color: theme.palette.info.main }} />
-              Тіркелу үшін аты-жөніңізді толық енгізіңіз
+              {t('auth.register.personalInfoSubtitle')}
             </Typography>
             
-            <Tooltip title="Аты-жөнді қалай жазу керек?">
+            <Tooltip title={t('auth.register.howToWriteName')}>
               <IconButton 
                 size="small" 
                 onClick={toggleHelp}
@@ -188,8 +190,7 @@ const PersonalInfoStep = ({ formData, formErrors, handleInputChange, isLoading }
               }}
             >
               <Typography variant="caption" color="text.secondary">
-                Аты-жөніңізді толық түрде жазыңыз. Мысалы: <b>Асанов Асан Асанұлы</b>. 
-                Бұл ақпарат сіздің университеттік жеке куәлігіңіздегі мәліметтерге сәйкес болуы керек.
+                {t('auth.register.nameExample')}
               </Typography>
             </Paper>
           </Collapse>
@@ -199,7 +200,7 @@ const PersonalInfoStep = ({ formData, formErrors, handleInputChange, isLoading }
             required
             fullWidth
             id="name"
-            label="Аты-жөні"
+            label={t('auth.register.fullName')}
             name="name"
             autoComplete="name"
             value={formData.name}
@@ -208,7 +209,7 @@ const PersonalInfoStep = ({ formData, formErrors, handleInputChange, isLoading }
             helperText={formErrors.name}
             disabled={isLoading}
             variant="outlined"
-            placeholder="Аты-жөніңізді толық енгізіңіз"
+            placeholder={t('auth.register.fullNamePlaceholder')}
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
@@ -280,8 +281,7 @@ const PersonalInfoStep = ({ formData, formErrors, handleInputChange, isLoading }
               }} 
             />
             <Typography variant="caption" color="info" sx={{ lineHeight: 1.5 }}>
-              Аты-жөні университет жүйесінде тіркелген деректерге сәйкес болуы тиіс. 
-              Бұл сіздің кітапханалық аккаунтыңызды оқу орнының жүйесімен байланыстыруға мүмкіндік береді.
+              {t('auth.register.nameSystemNote')}
             </Typography>
           </Box>
         </Card>
@@ -318,7 +318,7 @@ const PersonalInfoStep = ({ formData, formErrors, handleInputChange, isLoading }
                 }}
               >
                 <BadgeOutlined sx={{ mr: 1 }} />
-                Сәлем, {formData.name.split(' ')[0]}! Келесі қадамға өтуге дайынсыз.
+                {t('auth.register.welcomeReadyToNext', { name: formData.name.split(' ')[0] })}
               </Typography>
             </Box>
           </motion.div>

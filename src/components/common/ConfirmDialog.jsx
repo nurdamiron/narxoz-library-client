@@ -35,6 +35,7 @@ import {
   Error as ErrorIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 // Диалог анимациясы үшін transition компоненті
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -64,12 +65,17 @@ const ConfirmDialog = ({
   title,
   message,
   type = 'info',
-  cancelText = "Болдырмау",
-  confirmText = "Растау",
+  cancelText,
+  confirmText,
   loading = false,
   showCancel = true
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
+  
+  // Set default values for text using translations
+  const defaultCancelText = cancelText || t('common.cancel');
+  const defaultConfirmText = confirmText || t('common.confirm');
 
   /**
    * Диалог түріне байланысты түс, белгіше және т.б. конфигурацияларды қайтарады
@@ -179,7 +185,7 @@ const ConfirmDialog = ({
           <IconButton 
             size="small" 
             onClick={onClose}
-            aria-label="Жабу"
+            aria-label={t('common.close')}
             sx={{
               color: 'text.secondary',
               '&:hover': {
@@ -236,7 +242,7 @@ const ConfirmDialog = ({
               borderRadius: 1.5
             }}
           >
-            {cancelText}
+            {defaultCancelText}
           </Button>
         )}
         
@@ -262,7 +268,7 @@ const ConfirmDialog = ({
             {loading ? (
               <CircularProgress size={24} color="inherit" thickness={4} />
             ) : (
-              confirmText
+              defaultConfirmText
             )}
           </Button>
         </motion.div>

@@ -1,6 +1,7 @@
 // src/components/auth/RegisterForm/FormAlerts.jsx
 import React from 'react';
 import { Alert, Box, Typography, useTheme, Paper, Divider, Link } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { 
   Celebration, 
   ErrorOutline, 
@@ -23,6 +24,7 @@ import { motion, AnimatePresence } from 'framer-motion';
  * @returns {JSX.Element} - Хабарламалар компоненті
  */
 const FormAlerts = ({ success, error }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
 
   // Распознавание разных типов ошибок
@@ -69,15 +71,15 @@ const FormAlerts = ({ success, error }) => {
   const getErrorTitle = (type) => {
     switch (type) {
       case 'email':
-        return 'Email қатесі';
+        return t('auth.register.errorTitles.email');
       case 'username':
-        return 'Логин қатесі';
+        return t('auth.register.errorTitles.username');
       case 'password':
-        return 'Құпия сөз қатесі';
+        return t('auth.register.errorTitles.password');
       case 'unknown':
-        return 'Белгісіз қате';
+        return t('auth.register.errorTitles.unknown');
       default:
-        return 'Тіркеу қатесі';
+        return t('auth.register.errorTitles.general');
     }
   };
   
@@ -85,15 +87,15 @@ const FormAlerts = ({ success, error }) => {
   const getErrorSolution = (type) => {
     switch (type) {
       case 'email':
-        return 'Басқа email пайдаланыңыз немесе кіру бетіне өтіңіз.';
+        return t('auth.register.errorSolutions.email');
       case 'username':
-        return 'Басқа логин таңдаңыз.';
+        return t('auth.register.errorSolutions.username');
       case 'password':
-        return 'Күрделі құпия сөз пайдаланыңыз (кемінде 6 таңба).';
+        return t('auth.register.errorSolutions.password');
       case 'unknown':
-        return 'Браузерді жаңартып, қайталап көріңіз немесе әкімшіге хабарласыңыз.';
+        return t('auth.register.errorSolutions.unknown');
       default:
-        return 'Барлық өрістерді тексеріп, қайталап көріңіз.';
+        return t('auth.register.errorSolutions.general');
     }
   };
 
@@ -123,7 +125,7 @@ const FormAlerts = ({ success, error }) => {
             >
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  Сіз сәтті тіркелдіңіз! Нархоз кітапханасына қош келдіңіз!
+                  {t('auth.register.successMessage')}
                 </Typography>
               </Box>
             </Alert>
@@ -153,7 +155,7 @@ const FormAlerts = ({ success, error }) => {
                 }}
               >
                 <Typography variant="body2">
-                  Белгісіз қате орын алды. Әрекетті қайталап көріңіз.
+                  {t('auth.register.unknownError')}
                 </Typography>
               </Alert>
             ) : (
@@ -183,14 +185,14 @@ const FormAlerts = ({ success, error }) => {
                 <Box sx={{ p: 1, bgcolor: `${theme.palette.warning.light}30`, borderRadius: 1, mt: 1 }}>
                   <Typography variant="body2" display="flex" alignItems="center">
                     <Warning sx={{ fontSize: 18, mr: 1, color: theme.palette.warning.main }} />
-                    <span><strong>Шешім:</strong> {getErrorSolution(errorType)}</span>
+                    <span><strong>{t('auth.register.solution')}:</strong> {getErrorSolution(errorType)}</span>
                   </Typography>
                 </Box>
                 
                 {errorType === 'email' && (
                   <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
                     <Link href="/login" color="primary" underline="hover">
-                      Кіру бетіне өту
+                      {t('auth.register.goToLogin')}
                     </Link>
                   </Box>
                 )}

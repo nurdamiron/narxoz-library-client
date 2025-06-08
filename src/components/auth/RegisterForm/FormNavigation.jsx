@@ -2,6 +2,7 @@
 import React from 'react';
 import { Box, Button, CircularProgress, useTheme, useMediaQuery, Tooltip } from '@mui/material';
 import { ArrowBack, ArrowForward, Check, HourglassEmpty } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Тіркелу формасындағы навигациялық батырмалар компоненті
@@ -30,6 +31,7 @@ const FormNavigation = ({
   handleBack, 
   handleNext 
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -41,9 +43,9 @@ const FormNavigation = ({
    */
   const getNextButtonText = () => {
     if (isProcessing) {
-      return 'Тексерілуде...';
+      return t('auth.register.processing');
     }
-    return 'Келесі';
+    return t('auth.register.next');
   };
 
   /**
@@ -54,15 +56,15 @@ const FormNavigation = ({
    */
   const getFinalButtonText = () => {
     if (isSuccess) {
-      return 'Тіркелдіңіз!';
+      return t('auth.register.registered');
     }
     if (isLoading) {
-      return 'Тіркелуде...';
+      return t('auth.register.registering');
     }
     if (isProcessing) {
-      return 'Тексерілуде...';
+      return t('auth.register.processing');
     }
-    return 'Тіркелу';
+    return t('auth.register.registerButton');
   };
 
   return (
@@ -95,12 +97,12 @@ const FormNavigation = ({
           }
         }}
       >
-        Артқа
+        {t('auth.register.back')}
       </Button>
       
       {activeStep === stepsLength - 1 ? (
         // Соңғы қадамның тіркелу батырмасы
-        <Tooltip title={isButtonDisabled ? "Барлық қажетті өрістерді толтырыңыз" : ""}>
+        <Tooltip title={isButtonDisabled ? t('auth.register.fillAllRequiredFields') : ""}>
           <span>
             <Button
               variant="contained"
@@ -151,7 +153,7 @@ const FormNavigation = ({
         </Tooltip>
       ) : (
         // Аралық қадамдардың келесі батырмасы
-        <Tooltip title={isButtonDisabled ? (isProcessing ? "Email тексерілуін күтіңіз" : "Барлық қажетті өрістерді толтырыңыз") : ""}>
+        <Tooltip title={isButtonDisabled ? (isProcessing ? t('auth.register.waitForEmailVerification') : t('auth.register.fillAllRequiredFields')) : ""}>
           <span>
             <Button
               variant="contained"

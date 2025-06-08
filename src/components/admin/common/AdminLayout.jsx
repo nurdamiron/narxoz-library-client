@@ -32,15 +32,29 @@ const AdminLayout = () => {
     userRoleLowercase: user?.role?.toLowerCase()
   });
   
-  // Конфигурация маршрутов для навигации
+  // Role-based navigation routes according to specifications
   const adminRoutes = userIsModerator ? [
-    { path: '/admin', index: 0, label: 'admin.dashboard', icon: <DashboardIcon /> },
-    { path: '/admin/books', index: 1, label: 'admin.books', icon: <LibraryBooksIcon /> },
-    { path: '/admin/borrows', index: 2, label: 'admin.borrows', icon: <BookmarkIcon /> },
-    { path: '/admin/categories', index: 3, label: 'admin.categories', icon: <CategoryIcon /> },
-    { path: '/admin/events', index: 4, label: 'events.admin.title', icon: <EventIcon /> },
-    { path: '/admin/reviews', index: 5, label: 'admin.reviews', icon: <RateReviewIcon /> }
+    // Moderator has limited access:
+    // ❌ Dashboard - not visible to moderators
+    // ❌ Users - not accessible to moderators  
+    // ✅ Books (read-only) - visible to moderators
+    // ❌ Loans - not accessible to moderators
+    // ✅ Categories (read-only) - visible to moderators
+    // ✅ Events (limited rights) - accessible to moderators
+    // ✅ Reviews (primary work) - accessible to moderators
+    { path: '/admin/books', index: 0, label: 'admin.books', icon: <LibraryBooksIcon /> },
+    { path: '/admin/categories', index: 1, label: 'admin.categories', icon: <CategoryIcon /> },
+    { path: '/admin/events', index: 2, label: 'events.admin.title', icon: <EventIcon /> },
+    { path: '/admin/reviews', index: 3, label: 'admin.reviews', icon: <RateReviewIcon /> }
   ] : [
+    // Admin/Librarian has full access:
+    // ✅ Dashboard - full access
+    // ✅ Users - full access  
+    // ✅ Books - full access
+    // ✅ Loans - full access
+    // ✅ Categories - full access
+    // ✅ Events - full access
+    // ✅ Reviews - full access
     { path: '/admin', index: 0, label: 'admin.dashboard', icon: <DashboardIcon /> },
     { path: '/admin/users', index: 1, label: 'admin.users', icon: <PeopleIcon /> },
     { path: '/admin/books', index: 2, label: 'admin.books', icon: <LibraryBooksIcon /> },
@@ -78,12 +92,21 @@ const AdminLayout = () => {
   
   const [tabIndex, setTabIndex] = useState(getCurrentTabIndex(location.pathname));
   
-  // Обновляем индекс вкладки при изменении маршрута
+  // Redirect moderators from restricted pages
   useEffect(() => {
+    if (userIsModerator) {
+      // If moderator tries to access admin dashboard or other restricted pages, redirect to books
+      if (location.pathname === '/admin' || location.pathname === '/admin/users' || location.pathname === '/admin/borrows') {
+        console.log('Redirecting moderator from restricted page:', location.pathname);
+        navigate('/admin/books', { replace: true });
+        return;
+      }
+    }
+    
     const currentIndex = getCurrentTabIndex(location.pathname);
     console.log(`Route changed to ${location.pathname}, updating tab index to ${currentIndex}`);
     setTabIndex(currentIndex);
-  }, [location.pathname]);
+  }, [location.pathname, userIsModerator, navigate]);
   
   // Функция для навигационных хлебных крошек
   const getBreadcrumbs = () => {

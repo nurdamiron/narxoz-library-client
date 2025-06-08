@@ -94,6 +94,7 @@ const routes = [
     path: '/user-dashboard',
     element: <UserDashboard />,
     protected: true,
+    roles: ['moderator', 'admin', 'librarian'], // Dashboard only for moderators and admins
   },
   {
     path: '/my-reviews',
@@ -106,66 +107,73 @@ const routes = [
     protected: true,
   },
   
-  // Admin routes
+  // Admin routes - role-based access according to specifications
   {
     path: '/admin',
-    element: <Navigate to="/admin/dashboard" replace />,
+    element: <Navigate to="/admin/books" replace />, // Redirect to books for moderators, dashboard for admins handled in AdminLayout
     protected: true,
-    roles: ['admin', 'moderator'],
+    roles: ['admin', 'moderator', 'librarian'],
   },
   {
     path: '/admin/dashboard',
     element: <AdminDashboard />,
     protected: true,
-    roles: ['admin', 'moderator'],
+    roles: ['admin', 'librarian'], // ❌ Dashboard - not visible to moderators
   },
   {
     path: '/admin/books',
     element: <AdminBooksPage />,
     protected: true,
-    roles: ['admin', 'moderator'],
+    roles: ['admin', 'moderator', 'librarian'], // ✅ Books - visible to moderators (read-only)
   },
   {
     path: '/admin/users',
     element: <AdminUsersPage />,
     protected: true,
-    roles: ['admin'],
+    roles: ['admin', 'librarian'], // ❌ Users - not accessible to moderators
   },
   {
     path: '/admin/borrows',
     element: <AdminBorrowsPage />,
     protected: true,
-    roles: ['admin', 'moderator'],
+    roles: ['admin', 'librarian'], // ❌ Loans - not accessible to moderators
   },
   {
     path: '/admin/categories',
     element: <AdminCategoriesPage />,
     protected: true,
-    roles: ['admin', 'moderator'],
+    roles: ['admin', 'moderator', 'librarian'], // ✅ Categories - visible to moderators (read-only)
   },
   {
     path: '/admin/events',
     element: <AdminEventsPage />,
     protected: true,
-    roles: ['admin', 'moderator'],
+    roles: ['admin', 'moderator', 'librarian'], // ✅ Events - accessible to moderators (limited rights)
   },
   {
     path: '/admin/events/create',
     element: <CreateEventPage />,
     protected: true,
-    roles: ['admin', 'moderator'],
+    roles: ['admin', 'moderator', 'librarian'], // ✅ Events management - accessible to moderators
   },
   {
     path: '/admin/events/edit/:id',
     element: <EditEventPage />,
     protected: true,
-    roles: ['admin', 'moderator'],
+    roles: ['admin', 'moderator', 'librarian'], // ✅ Events management - accessible to moderators
   },
   {
     path: '/admin/events/:id/registrations',
     element: <EventRegistrationsPage />,
     protected: true,
-    roles: ['admin', 'moderator'],
+    roles: ['admin', 'moderator', 'librarian'], // ✅ Events management - accessible to moderators
+  },
+  // Add Reviews admin page route
+  {
+    path: '/admin/reviews',
+    element: <div>Reviews Admin Page - Coming Soon</div>, // ✅ Reviews - primary work for moderators
+    protected: true,
+    roles: ['admin', 'moderator', 'librarian'],
   },
   
   // Debug routes

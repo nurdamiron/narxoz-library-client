@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -42,6 +43,7 @@ import EmptyState from '../components/common/EmptyState';
  * - Кітап бетіне навигация
  */
 const BookmarkManager = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
@@ -84,7 +86,7 @@ const BookmarkManager = () => {
 
       // Сұрау сәтті болмаса қате көрсету
       if (!response.ok) {
-        throw new Error('Ошибка при загрузке закладок');
+        throw new Error(t('bookmarks.loadError'));
       }
 
       // Деректерді алу және күйге орнату
@@ -93,7 +95,7 @@ const BookmarkManager = () => {
       setError(null);
     } catch (err) {
       console.error('Ошибка при загрузке закладок:', err);
-      setError('Не удалось загрузить закладки. Пожалуйста, попробуйте позже.');
+      setError(t('bookmarks.loadErrorDescription'));
     } finally {
       setLoading(false);
     }
@@ -118,7 +120,7 @@ const BookmarkManager = () => {
 
       // Сұрау сәтті болмаса қате көрсету
       if (!response.ok) {
-        throw new Error('Ошибка при удалении закладки');
+        throw new Error(t('bookmarks.deleteError'));
       }
 
       // Тізімді өзгерту арқылы күйді жаңарту (API сұрауын қайта жіберместен)
@@ -129,14 +131,14 @@ const BookmarkManager = () => {
       // Хабарлама көрсету
       setSnackbar({
         open: true,
-        message: 'Книга удалена из закладок',
+        message: t('bookmarks.deleteSuccess'),
         severity: 'success',
       });
     } catch (err) {
       console.error('Ошибка при удалении закладки:', err);
       setSnackbar({
         open: true,
-        message: 'Не удалось удалить закладку',
+        message: t('bookmarks.deleteError'),
         severity: 'error',
       });
     }
@@ -224,7 +226,7 @@ const BookmarkManager = () => {
             {/* Қосымша ақпарат */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <Typography variant="body2" color="text.secondary">
-                Добавлено: {new Date(bookmark.addedAt).toLocaleDateString()}
+                {t('bookmarks.addedOn', { date: new Date(bookmark.addedAt).toLocaleDateString() })}
               </Typography>
             </Box>
           </CardContent>
@@ -236,7 +238,7 @@ const BookmarkManager = () => {
               startIcon={<InfoIcon />}
               onClick={() => handleViewBookDetails(book.id)}
             >
-              Подробнее
+              {t('bookmarks.moreDetails')}
             </Button>
             
             {/* Таңдаулыдан жою түймесі */}
@@ -244,7 +246,7 @@ const BookmarkManager = () => {
               color="error" 
               onClick={() => handleRemoveBookmark(bookmark.id)}
               size="small"
-              aria-label="Удалить из закладок"
+              aria-label={t('bookmarks.removeFromBookmarks')}
             >
               <DeleteIcon />
             </IconButton>
@@ -296,12 +298,12 @@ const BookmarkManager = () => {
       {/* Тақырып */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5" component="h1" fontWeight="bold">
-          Мои закладки
+          {t('bookmarks.myBookmarks')}
         </Typography>
         <Chip 
           icon={<BookmarkIcon />} 
-          label={`${bookmarks.length} ${bookmarks.length === 1 ? 'книга' : 
-            (bookmarks.length >= 2 && bookmarks.length <= 4) ? 'книги' : 'книг'}`} 
+          label={bookmarks.length === 1 ? t('bookmarks.booksCountSingular', { count: bookmarks.length }) : 
+            (bookmarks.length >= 2 && bookmarks.length <= 4) ? t('bookmarks.booksCountFew', { count: bookmarks.length }) : t('bookmarks.booksCountMany', { count: bookmarks.length })} 
           color="primary"
           variant="outlined"
         />
@@ -325,9 +327,9 @@ const BookmarkManager = () => {
           {bookmarks.length === 0 ? (
             <EmptyState 
               icon={<BookmarkBorderIcon sx={{ fontSize: 60 }} />}
-              title="У вас пока нет закладок"
-              description="Добавляйте книги в закладки, чтобы быстро находить их позже"
-              actionText="Найти книги"
+              title={t('bookmarks.noBookmarks')}
+              description={t('bookmarks.noBookmarksDescription')}
+              actionText={t('bookmarks.browseBooks')}
               actionIcon={<BookIcon />}
               onAction={() => navigate('/books')}
             />

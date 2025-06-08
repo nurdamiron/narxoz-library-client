@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { TextField, Typography, InputAdornment, Box, useTheme, useMediaQuery, Card, Tooltip, Grid, CircularProgress } from '@mui/material';
 import { Email, Phone, InfoOutlined, AlternateEmail, CheckCircle, ErrorOutline } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import apiClient from '../../../services/api'; // Import your API client
 import { translateError } from '../../../utils/errorMessages';
 
@@ -23,6 +24,7 @@ import { validateField } from '../../../utils/validationUtils';
  * @returns {JSX.Element} Байланыс ақпараты формасы
  */
 const ContactInfoStep = ({ formData, formErrors, handleInputChange, setFieldError, isLoading, setStepIsProcessing }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
@@ -141,7 +143,7 @@ const ContactInfoStep = ({ formData, formErrors, handleInputChange, setFieldErro
           fontSize: { xs: '1.1rem', sm: '1.25rem' }
         }}
       >
-        Байланыс ақпараты
+        {t('auth.register.contactInfoTitle')}
       </Typography>
 
       <motion.div
@@ -182,7 +184,7 @@ const ContactInfoStep = ({ formData, formErrors, handleInputChange, setFieldErro
             }}
           >
             <InfoOutlined fontSize="small" sx={{ mr: 1, color: theme.palette.info.main }} />
-            Сіз көрсеткен байланыс деректері арқылы сізге хабарламалар жіберіледі
+            {t('auth.register.contactInfoSubtitle')}
           </Typography>
 
           <motion.div variants={itemVariants}>
@@ -191,7 +193,7 @@ const ContactInfoStep = ({ formData, formErrors, handleInputChange, setFieldErro
               required
               fullWidth
               id="email"
-              label="Email"
+              label={t('auth.register.email')}
               name="email"
               autoComplete="email"
               value={formData.email}
@@ -199,7 +201,7 @@ const ContactInfoStep = ({ formData, formErrors, handleInputChange, setFieldErro
               error={!!formErrors.email || (emailChecked && !emailAvailable)}
               helperText={
                 formErrors.email || 
-                (emailChecked && !emailAvailable ? translateError('emailExists') : '')
+                (emailChecked && !emailAvailable ? t('auth.register.emailExists') : '')
               }
               disabled={isLoading}
               variant="outlined"
@@ -279,7 +281,7 @@ const ContactInfoStep = ({ formData, formErrors, handleInputChange, setFieldErro
                     ) : emailChecked && emailAvailable ? (
                       <CheckCircle color="success" />
                     ) : (
-                      <Tooltip title="Белсенді email мекенжайын көрсетіңіз" arrow>
+                      <Tooltip title={t('auth.register.activeEmailTooltip')} arrow>
                         <AlternateEmail sx={{ cursor: 'help', color: theme.palette.text.secondary, opacity: 0.7 }} />
                       </Tooltip>
                     )}
@@ -294,15 +296,15 @@ const ContactInfoStep = ({ formData, formErrors, handleInputChange, setFieldErro
               margin="normal"
               fullWidth
               id="phone"
-              label="Телефон"
+              label={t('auth.register.phone')}
               name="phone"
               autoComplete="tel"
               value={formData.phone}
               onChange={handleInputChange}
               error={!!formErrors.phone}
-              helperText={formErrors.phone || "Мысалы: +77771234567"}
+              helperText={formErrors.phone || t('auth.register.phoneExample')}
               disabled={isLoading}
-              placeholder="+7XXXXXXXXXX"
+              placeholder={t('auth.register.phonePlaceholder')}
               variant="outlined"
               sx={{
                 '& .MuiOutlinedInput-root': {
@@ -352,7 +354,7 @@ const ContactInfoStep = ({ formData, formErrors, handleInputChange, setFieldErro
       >
         <InfoOutlined sx={{ mr: 1.5, color: theme.palette.info.main }} />
         <Typography variant="body2" color="info.main">
-          Кітапхана жаңалықтары мен хабарландырулары үшін email жәнe телефон нөміріңіз қолданылады
+          {t('auth.register.contactInfoNote')}
         </Typography>
       </Box>
     </motion.div>
