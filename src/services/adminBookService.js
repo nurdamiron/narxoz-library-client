@@ -553,11 +553,11 @@ const adminBookService = {
       console.log('📤 API endpoint:', `/books/${id}/cover`);
       
       // Напрямую используем URL бэкенда для гарантированного подключения
-      const apiUrl = 'http://localhost:5001/api';
+      const apiUrl = 'http://localhost:5002/api';
       console.log('📤 API URL:', apiUrl);
       
       // Бэкенд URL для будущего использования при построении полного URL
-      const backendBaseUrl = 'http://localhost:5001';
+      const backendBaseUrl = 'http://localhost:5002';
       
       const response = await apiClient.put(`/books/${id}/cover`, formData, {
         headers: {

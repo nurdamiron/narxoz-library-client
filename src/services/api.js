@@ -3,7 +3,7 @@ import axios from 'axios';
 import apiDebugger from '../utils/apiDebugger';
 
 // Получаем базовый URL из переменных окружения или используем локальный адрес
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
 
 // Для отладки выводим используемый API URL
 console.log(`🌐 API URL: ${API_URL}`);

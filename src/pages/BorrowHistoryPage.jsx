@@ -345,7 +345,7 @@ const BorrowHistoryPage = () => {
     
     // Special handling for NarXoz book
     if (book.title === 'NarXoz') {
-      return 'http://localhost:5001/api/narxoz-cover';
+      return 'http://localhost:5002/api/narxoz-cover';
     }
     
     // Use the global utility function we fixed

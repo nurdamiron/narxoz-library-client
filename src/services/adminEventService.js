@@ -139,7 +139,7 @@ class AdminEventService {
       console.log('📤 API endpoint:', `/events/${id}/image`);
       
       // Backend URL for future use in building full URL
-      const backendBaseUrl = 'http://localhost:5001';
+      const backendBaseUrl = 'http://localhost:5002';
       
       const response = await apiClient.put(`/events/${id}/image`, formData, {
         headers: {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Box, 
   Typography, 
@@ -34,6 +34,7 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Image as ImageI
 import adminBookService from '../../services/adminBookService';
 import PageHeader from '../../components/common/PageHeader';
 import BookCoverPreview from '../../components/admin/BookCoverPreview';
+import BookTableImage from '../../components/admin/BookTableImage';
 import { useToast } from '../../context/ToastContext';
 import { translateError } from '../../utils/errorMessages';
 import { useTranslation } from 'react-i18next';
@@ -648,26 +649,34 @@ const BooksPage = () => {
     setSelectedBook(book);
     setOpenDeleteDialog(true);
   };
+  
+  // Мемоизация отфильтрованных книг для предотвращения лишних рендеров
+  const paginatedBooks = useMemo(() => {
+    return books.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  }, [books, page, rowsPerPage]);
 
   // Функция получения URL обложки
-  const getCoverUrl = (book) => {
+  const getCoverUrl = useCallback((book) => {
+    // Используем базовый URL без /api для статических файлов
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5002';
+    
     // Если у книги есть cover и это URL (начинается с http или /uploads)
     if (book.cover) {
       if (book.cover.startsWith('/uploads')) {
         // Формируем полный URL для серверных изображений
-        return `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${book.cover}`;
+        return `${BACKEND_URL}${book.cover}`;
       }
       return book.cover;
     } else if (book.coverUrl) {
       if (book.coverUrl.startsWith('/uploads')) {
         // Формируем полный URL для серверных изображений
-        return `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${book.coverUrl}`;
+        return `${BACKEND_URL}${book.coverUrl}`;
       }
       return book.coverUrl;
     }
     // Если нет обложки, возвращаем заглушку
     return '/images/default-book-cover.jpg';
-  };
+  }, []);
 
   // Отображение диалога загрузки обложки
   const renderCoverDialog = () => (
@@ -774,30 +783,12 @@ const BooksPage = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {books
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((book) => (
+                  {paginatedBooks.map((book) => (
                       <TableRow key={book.id}>
                         <TableCell>
-                          <Box 
-                            component="img" 
+                          <BookTableImage 
                             src={getCoverUrl(book)} 
                             alt={book.title}
-                            sx={{ 
-                              width: 60, 
-                              height: 80, 
-                              objectFit: 'cover',
-                              borderRadius: 1,
-                              border: '1px solid #e0e0e0',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                              '&:hover': {
-                                transform: 'scale(1.05)',
-                                transition: 'transform 0.2s ease-in-out'
-                              }
-                            }}
-                            onError={(e) => {
-                              e.target.src = '/images/default-book-cover.jpg';
-                            }}
                           />
                         </TableCell>
                         <TableCell>{book.title}</TableCell>

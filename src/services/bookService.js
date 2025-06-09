@@ -111,7 +111,7 @@ const bookService = {
         headers['Authorization'] = 'Basic ' + btoa(`${email}:${password}`);
       }
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/books/${id}/cover`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5002/api'}/books/${id}/cover`, {
         method: 'PUT',
         body: formData,
         headers

@@ -142,7 +142,7 @@ const BookCard = ({
   // For debugging purposes - log the cover URL
   // Force a direct URL for NarXoz book
   const coverUrl = book.title === 'NarXoz' ? 
-    'http://localhost:5001/api/narxoz-cover' : 
+    'http://localhost:5002/api/narxoz-cover' : 
     getBookCoverUrl(book.cover);
   
   // Debug our cover URL
@@ -167,7 +167,7 @@ const BookCard = ({
   // Try direct access to the book-cover-debug endpoint for NarXoz
   if (book.title === 'NarXoz' && book.cover && book.cover.includes('/uploads/covers/')) {
     const filename = book.cover.split('/uploads/covers/')[1];
-    const debugUrl = `http://localhost:5001/api/book-cover-debug/${filename}`;
+    const debugUrl = `http://localhost:5002/api/book-cover-debug/${filename}`;
     console.log(`🔍 Trying direct debug URL for NarXoz: ${debugUrl}`);
   }
   
@@ -219,7 +219,7 @@ const BookCard = ({
       // Проверяем, не является ли текущий src уже запасным вариантом
       if (!e.target.src.includes('placeholder.com') && !e.target.src.includes('default-book-cover.jpg')) {
         // Заменяем src на дефолтную обложку
-        e.target.src = 'http://localhost:5001/uploads/covers/default-book-cover.jpg';
+        e.target.src = 'http://localhost:5002/uploads/covers/default-book-cover.jpg';
         console.log('✅ Заменяем недоступное изображение на дефолтную обложку');
         return;
       }

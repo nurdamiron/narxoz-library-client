@@ -124,6 +124,8 @@ const EventCard = ({ event, isLoading = false }) => {
         onError={(e) => {
           // If image fails to load, show placeholder
           e.target.src = '/images/event-placeholder.jpg';
+          // Prevent infinite loop
+          e.target.onerror = null;
         }}
       />
       

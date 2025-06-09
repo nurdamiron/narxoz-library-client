@@ -45,6 +45,7 @@ import { format } from 'date-fns';
 import { useEvents } from '../../hooks';
 import { useAuth } from '../../context/AuthContext';
 import LoadingSkeleton from '../common/LoadingSkeleton';
+import { getEventImageUrl } from '../../utils/eventMediaUtils';
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -154,6 +155,26 @@ const EventDetails = () => {
       <Grid container spacing={4}>
         {/* Left column - Main content */}
         <Grid item xs={12} md={8}>
+          {/* Event Image */}
+          <Card elevation={2} sx={{ mb: 3, overflow: 'hidden' }}>
+            <CardMedia
+              component="img"
+              height="300"
+              image={getEventImageUrl(event)}
+              alt={event.title}
+              sx={{
+                objectFit: 'cover',
+                backgroundColor: 'grey.100'
+              }}
+              onError={(e) => {
+                // If image fails to load, show placeholder
+                e.target.src = '/images/event-placeholder.jpg';
+                // Prevent infinite loop
+                e.target.onerror = null;
+              }}
+            />
+          </Card>
+          
           <Paper elevation={2} sx={{ mb: 3, overflow: 'hidden', borderTop: '6px solid', borderColor: 'primary.main' }}>
             <Box sx={{ p: 3, pt: 3 }}>
               {/* Event type chip */}

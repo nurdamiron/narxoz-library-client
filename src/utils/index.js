@@ -224,7 +224,7 @@ export const formatDate = (date, options = {}) => {
    */
   export const getBookCoverUrl = (cover) => {
     // Константа для адреса местного сервера - всегда используем явно указанный URL
-    const LOCAL_BACKEND_URL = 'http://localhost:5001';
+    const LOCAL_BACKEND_URL = 'http://localhost:5002';
     
     // Если путь не указан или пустой, возвращаем изображение по умолчанию
     if (!cover) {
@@ -233,7 +233,7 @@ export const formatDate = (date, options = {}) => {
     
     // Если это явно указанный placeholder, используем его
     if (cover === 'NarXoz') {
-      return 'http://localhost:5001/api/narxoz-cover';
+      return 'http://localhost:5002/api/narxoz-cover';
     }
     
     // Если путь уже полный URL, возвращаем как есть

@@ -8,8 +8,8 @@
  * @returns {string} Event image URL
  */
 export const getEventImageUrl = (event) => {
-  // Use environment variable or fallback to localhost for development
-  const LOCAL_BACKEND_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+  // Use base backend URL without /api suffix for static files
+  const LOCAL_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5002';
   
   // If no event or no image, return placeholder
   if (!event || !event.image) {

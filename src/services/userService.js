@@ -44,7 +44,7 @@ const userService = {
         headers['Authorization'] = 'Basic ' + btoa(`${email}:${password}`);
       }
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/users/me/avatar`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5002/api'}/users/me/avatar`, {
         method: 'PUT',
         body: formData,
         headers
