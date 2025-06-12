@@ -27,6 +27,7 @@
     "adminRole": "Administrator",
     "librarianRole": "Librarian",
     "moderatorRole": "Moderator",
+    "teacherRole": "Teacher",
     "readerRole": "Reader",
     "manage": "Manage",
     "moderatorInfo": "Moderator (manage books, loans, categories and reviews)",
@@ -845,7 +846,7 @@
       "events": "Events",
       "bookmarks": "Favorites",
       "borrowHistory": "History",
-      "myEvents": "Events",
+      "myEvents": "My Events",
       "adminPanel": "Admin Panel"
     },
     "categories": "Categories",
@@ -953,7 +954,7 @@
       "cancelled": "Cancelled"
     },
     "myEvents": {
-      "title": "Events",
+      "title": "My Events",
       "description": "Events you've registered for at Narxoz University Library",
       "upcoming": "Upcoming Events",
       "past": "Past Events",
@@ -1021,7 +1022,7 @@
       "cancelled": "Cancelled"
     },
     "myEvents": {
-      "title": "Events",
+      "title": "My Events",
       "description": "Events you've registered for at Narxoz University Library",
       "upcoming": "Upcoming Events",
       "past": "Past Events",
@@ -1287,5 +1288,12 @@
       "attended": "Attended",
       "cancelled": "Cancelled"
     }
+  },
+  "roles": {
+    "admin": "Administrator",
+    "moderator": "Moderator",
+    "teacher": "Teacher",
+    "student": "Student",
+    "librarian": "Librarian"
   }
 }

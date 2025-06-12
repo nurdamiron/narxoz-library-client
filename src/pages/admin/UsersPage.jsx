@@ -329,6 +329,8 @@ const UsersPage = () => {
         return 'warning';
       case 'student':
         return 'primary';
+      case 'teacher':
+        return 'info';
       default:
         return 'default';
     }
@@ -343,6 +345,8 @@ const UsersPage = () => {
         return t('roles.moderator', 'Модератор');
       case 'student':
         return t('roles.student', 'Студент');
+      case 'teacher':
+        return t('roles.teacher', 'Преподаватель');
       default:
         return role;
     }
@@ -449,6 +453,7 @@ const UsersPage = () => {
                 <MenuItem value="all">{t('admin.filterAll', 'Все')}</MenuItem>
                 <MenuItem value="admin">{t('roles.admin', 'Администратор')}</MenuItem>
                 <MenuItem value="moderator">{t('roles.moderator', 'Модератор')}</MenuItem>
+                <MenuItem value="teacher">{t('roles.teacher', 'Преподаватель')}</MenuItem>
                 <MenuItem value="student">{t('roles.student', 'Студент')}</MenuItem>
               </Select>
             </FormControl>
@@ -565,9 +570,10 @@ const UsersPage = () => {
                 required
                 margin="dense"
               >
-                <MenuItem value="student">Студент</MenuItem>
-                <MenuItem value="moderator">Модератор</MenuItem>
-                <MenuItem value="admin">Әкімші</MenuItem>
+                <MenuItem value="student">{t('roles.student', 'Студент')}</MenuItem>
+                <MenuItem value="teacher">{t('roles.teacher', 'Преподаватель')}</MenuItem>
+                <MenuItem value="moderator">{t('roles.moderator', 'Модератор')}</MenuItem>
+                <MenuItem value="admin">{t('roles.admin', 'Администратор')}</MenuItem>
               </TextField>
             </Grid>
             
@@ -711,9 +717,10 @@ const UsersPage = () => {
                 required
                 margin="dense"
               >
-                <MenuItem value="student">Студент</MenuItem>
-                <MenuItem value="moderator">Модератор</MenuItem>
-                <MenuItem value="admin">Әкімші</MenuItem>
+                <MenuItem value="student">{t('roles.student', 'Студент')}</MenuItem>
+                <MenuItem value="teacher">{t('roles.teacher', 'Преподаватель')}</MenuItem>
+                <MenuItem value="moderator">{t('roles.moderator', 'Модератор')}</MenuItem>
+                <MenuItem value="admin">{t('roles.admin', 'Администратор')}</MenuItem>
               </TextField>
             </Grid>
             

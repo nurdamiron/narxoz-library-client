@@ -112,6 +112,7 @@ export const logUserRoleInfo = (user) => {
     role: user?.role,
     roleLowercase: user?.role?.toLowerCase(),
     isAdmin: user?.role?.toLowerCase() === 'admin',
-    isModerator: user?.role?.toLowerCase() === 'moderator'
+    isModerator: user?.role?.toLowerCase() === 'moderator',
+    isTeacher: user?.role?.toLowerCase() === 'teacher'
   });
 };
