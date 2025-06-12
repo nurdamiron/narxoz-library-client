@@ -104,7 +104,7 @@ const UserDashboard = () => {
       title: t('userDashboard.myEvents'),
       description: t('userDashboard.myEventsDesc'),
       icon: EventIcon,
-      path: '/user-events-manager',
+      path: '/my-events',
       color: '#4caf50',
       stats: { upcoming: 2, total: 7 }
     },

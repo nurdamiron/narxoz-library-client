@@ -70,14 +70,7 @@ const ProfileCard = ({ userData, onEditClick }) => {
             {userData.name}
           </Typography>
           
-          {/* Пайдаланушы мәртебесі */}
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            gutterBottom
-          >
-            {t('profile.studentYear', { year: userData.year })}
-          </Typography>
+          {/* Year field removed - no longer showing user's year */}
           
           {/* Пайдаланушы мамандығы */}
           <ProfileSpecialization specialization={userData.specialization} />

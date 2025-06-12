@@ -281,7 +281,7 @@ const AdminDashboard = () => {
                   <ListItemAvatar>
                     <Avatar 
                       variant="rounded"
-                      src={(book.book?.coverUrl || book.coverUrl) || '/images/default-book-cover.jpg'} 
+                      src={(book.book?.coverUrl || book.coverUrl) || '/images/no-image.png'} 
                       alt={(book.book?.title || book.title)}
                     />
                   </ListItemAvatar>

@@ -196,7 +196,7 @@ const BookmarkManager = () => {
             height: isMobile ? 200 : 'auto',
             objectFit: 'cover'
           }}
-          image={book.cover ? `/uploads/books/${book.cover}` : '/images/default-book-cover.jpg'}
+          image={book.cover ? `/uploads/books/${book.cover}` : '/images/no-image.png'}
           alt={book.title}
         />
         

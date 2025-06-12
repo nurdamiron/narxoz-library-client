@@ -40,6 +40,7 @@ import {
 
 // Fix import to use default export
 import useProfile from '../hooks/useProfile';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getAvatarUrl, formatApiError } from '../utils';
 
@@ -65,7 +66,8 @@ function TabPanel(props) {
 }
 
 const ProfilePage = () => {
-  const { profile, stats, loading, updateProfile, uploadAvatar, changePassword } = useProfile();
+  const { profile, stats, loading, updateProfile, uploadAvatar, changePassword, fetchProfile } = useProfile();
+  const { updateUserData } = useAuth();
   const { success, error: showError } = useToast();
   const { t } = useTranslation();
   
@@ -85,12 +87,13 @@ const ProfilePage = () => {
   
   // Состояние формы профиля
   const [profileData, setProfileData] = useState(profile ? {
-    name: profile.name || '',
+    firstName: profile.firstName || '',
+    lastName: profile.lastName || '',
     email: profile.email || '',
-    phone: profile.phone || '',
+    phone: profile.phoneNumber || profile.phone || '',
     faculty: profile.faculty || '',
-    specialization: profile.specialization || '',
-    year: profile.year || ''
+    specialization: profile.specialization || ''
+    // year field removed
   } : {});
   
   // Состояние формы смены пароля
@@ -104,12 +107,13 @@ const ProfilePage = () => {
   React.useEffect(() => {
     if (profile) {
       setProfileData({
-        name: profile.name || '',
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
         email: profile.email || '',
-        phone: profile.phone || '',
+        phone: profile.phoneNumber || profile.phone || '',
         faculty: profile.faculty || '',
-        specialization: profile.specialization || '',
-        year: profile.year || ''
+        specialization: profile.specialization || ''
+        // year field removed
       });
     }
   }, [profile]);
@@ -171,12 +175,13 @@ const ProfilePage = () => {
     // Восстанавливаем исходные данные
     if (profile) {
       setProfileData({
-        name: profile.name || '',
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
         email: profile.email || '',
-        phone: profile.phone || '',
+        phone: profile.phoneNumber || profile.phone || '',
         faculty: profile.faculty || '',
         specialization: profile.specialization || '',
-        year: profile.year || ''
+        year: profile.year || profile.course || ''
       });
     }
     setFormErrors({});
@@ -187,8 +192,12 @@ const ProfilePage = () => {
   const validateProfileForm = () => {
     const errors = {};
     
-    if (!profileData.name) {
-      errors.name = t('validation.required', 'Аты-жөні міндетті');
+    if (!profileData.firstName) {
+      errors.firstName = t('validation.required', 'Аты міндетті');
+    }
+    
+    if (!profileData.lastName) {
+      errors.lastName = t('validation.required', 'Тегі міндетті');
     }
     
     if (!profileData.email) {
@@ -197,17 +206,8 @@ const ProfilePage = () => {
       errors.email = t('validation.email', 'Жарамды электрондық пошта енгізіңіз');
     }
     
-    if (!profileData.faculty) {
-      errors.faculty = t('validation.required', 'Факультет міндетті');
-    }
-    
-    if (!profileData.specialization) {
-      errors.specialization = t('validation.required');
-    }
-    
-    if (!profileData.year) {
-      errors.year = t('validation.required');
-    }
+    // Faculty, specialization и year необязательные поля
+    // Убираем их из обязательной валидации
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -245,15 +245,61 @@ const ProfilePage = () => {
     
     try {
       setSavingProfile(true);
-      await updateProfile(profileData);
-      setEditMode(false);
-      success(t('profile.updateSuccess'));
+      
+      // Подготавливаем данные для отправки
+      const dataToSend = {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        phoneNumber: profileData.phone, // Backend expects phoneNumber, not phone
+        faculty: profileData.faculty,
+        specialization: profileData.specialization
+        // year field removed
+      };
+      
+      // Удаляем пустые поля
+      Object.keys(dataToSend).forEach(key => {
+        if (!dataToSend[key] || dataToSend[key].toString().trim() === '') {
+          delete dataToSend[key];
+        }
+      });
+      
+      console.log('Sending profile data:', dataToSend);
+      
+      const response = await updateProfile(dataToSend);
+      console.log('Profile update response:', response);
+      
+      if (response && response.success) {
+        // Обновляем локальное состояние профиля новыми данными
+        if (response.data) {
+          setProfileData({
+            firstName: response.data.firstName || '',
+            lastName: response.data.lastName || '',
+            email: response.data.email || '',
+            phone: response.data.phoneNumber || response.data.phone || '',
+            faculty: response.data.faculty || '',
+            specialization: response.data.specialization || ''
+            // year field removed
+          });
+        }
+        
+        // Принудительно обновляем профиль из API
+        await fetchProfile();
+        
+        // Также обновляем данные в AuthContext
+        await updateUserData();
+        
+        setEditMode(false);
+        success(t('profile.updateSuccess'));
+      }
     } catch (err) {
       console.error(`${t('profile.updateError')}:`, err);
       
       // Обработка ошибок валидации с API
       if (err.response?.data?.errors) {
         setFormErrors(formatApiError(err));
+      } else if (err.response?.data?.error) {
+        showError(err.response.data.error);
       } else {
         showError(t('profile.updateError'));
       }
@@ -397,7 +443,7 @@ const ProfilePage = () => {
               </Box>
               
               <Typography variant="h5" gutterBottom sx={{ textAlign: 'center' }}>
-                {profile?.name}
+                {profile ? `${profile.firstName || ''} ${profile.lastName || ''}`.trim() : ''}
               </Typography>
               
               <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center' }}>
@@ -533,16 +579,36 @@ const ProfilePage = () => {
                 {/* Вкладка с личной информацией */}
                 <TabPanel value={activeTab} index={0}>
                   <Grid container spacing={3}>
-                    <Grid item xs={12}>
+                    <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
-                        label={t('profile.fullName')}
-                        name="name"
-                        value={profileData.name}
+                        label={t('profile.firstName', 'Аты')}
+                        name="firstName"
+                        value={profileData.firstName}
                         onChange={handleProfileChange}
                         disabled={!editMode}
-                        error={!!formErrors.name}
-                        helperText={formErrors.name}
+                        error={!!formErrors.firstName}
+                        helperText={formErrors.firstName}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <BadgeIcon />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    </Grid>
+                    
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label={t('profile.lastName', 'Тегі')}
+                        name="lastName"
+                        value={profileData.lastName}
+                        onChange={handleProfileChange}
+                        disabled={!editMode}
+                        error={!!formErrors.lastName}
+                        helperText={formErrors.lastName}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
@@ -567,20 +633,22 @@ const ProfilePage = () => {
                 {/* Вкладка с учебной информацией */}
                 <TabPanel value={activeTab} index={1}>
                   <Grid container spacing={3}>
+                    {/* Year field removed */}
+                    
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
-                        label={t('profile.year')}
-                        name="year"
-                        value={profileData.year}
+                        label={t('user.faculty')}
+                        name="faculty"
+                        value={profileData.faculty}
                         onChange={handleProfileChange}
                         disabled={!editMode}
-                        error={!!formErrors.year}
-                        helperText={formErrors.year}
+                        error={!!formErrors.faculty}
+                        helperText={formErrors.faculty}
                       />
                     </Grid>
                     
-                    <Grid item xs={12}>
+                    <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
                         label={t('profile.specialization')}

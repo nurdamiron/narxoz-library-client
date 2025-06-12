@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { Box } from '@mui/material';
+import { getDefaultBookCover } from '../../utils';
 
-const BookTableImage = memo(({ src, alt, fallbackSrc = '/images/default-book-cover.jpg' }) => {
+const BookTableImage = memo(({ src, alt, fallbackSrc = getDefaultBookCover() }) => {
   return (
     <Box 
       component="img" 
@@ -22,8 +23,10 @@ const BookTableImage = memo(({ src, alt, fallbackSrc = '/images/default-book-cov
         }
       }}
       onError={(e) => {
-        e.target.onerror = null;
-        e.target.src = fallbackSrc;
+        if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+          e.target.src = fallbackSrc;
+          e.target.onerror = null;
+        }
       }}
     />
   );

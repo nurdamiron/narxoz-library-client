@@ -105,7 +105,7 @@ const BooksPage = () => {
           } else if (book.coverUrl) {
             coverUrl = book.coverUrl;
           } else {
-            coverUrl = '/images/default-book-cover.jpg';
+            coverUrl = '/images/no-image.png';
           }
           
           console.log(`Обложка для книги ${book.id}: ${coverUrl}`); // Отладочный лог
@@ -675,7 +675,7 @@ const BooksPage = () => {
       return book.coverUrl;
     }
     // Если нет обложки, возвращаем заглушку
-    return '/images/default-book-cover.jpg';
+    return '/images/no-image.png';
   }, []);
 
   // Отображение диалога загрузки обложки

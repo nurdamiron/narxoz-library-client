@@ -82,7 +82,7 @@
     </div>
     
     <button id="generate">Обновить</button>
-    <button id="download">Скачать (JPG)</button>
+    <button id="download">Скачать (PNG)</button>
     
     <div class="instructions">
       <h3>Инструкции:</h3>
@@ -90,7 +90,7 @@
         <li>Настройте текст и цвета заглушки по своему усмотрению</li>
         <li>Нажмите "Обновить" для применения изменений</li>
         <li>Нажмите "Скачать" для сохранения изображения</li>
-        <li>Переименуйте скачанный файл в "default-book-cover.jpg"</li>
+        <li>Переименуйте скачанный файл в "no-image.png"</li>
         <li>Поместите файл в папку public/images/ проекта</li>
       </ol>
     </div>
@@ -149,9 +149,9 @@
       }
       
       function downloadImage() {
-        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+        const dataURL = canvas.toDataURL('image/png');
         const link = document.createElement('a');
-        link.download = 'default-book-cover.jpg';
+        link.download = 'no-image.png';
         link.href = dataURL;
         link.click();
       }

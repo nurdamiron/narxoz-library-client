@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -32,7 +33,7 @@ import {
   VisibilityOff,
   BrokenImage,
 } from '@mui/icons-material';
-import { getBookCoverUrl } from '../../utils';
+import { getBookCoverUrl, getDefaultBookCover } from '../../utils';
 
 // Hover эффектісі бар сурет контейнері
 const ImageContainer = styled(Box)(({ theme }) => ({
@@ -66,6 +67,7 @@ const BookListItem = ({
   sx = {}
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [bookmarked, setBookmarked] = useState(book.isBookmarked || false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -118,7 +120,24 @@ const BookListItem = ({
     setImageError(false);
   };
   
-  const handleImageError = () => {
+  const handleImageError = (e) => {
+    if (e.target && e.target.src) {
+      console.error(`Ошибка загрузки обложки книги: ${book.title}, URL: ${e.target.src}`);
+      
+      // Проверяем, не является ли текущий src уже запасным вариантом
+      // чтобы предотвратить бесконечный цикл
+      if (!e.target.src.includes('no-image.png')) {
+        // Заменяем src на дефолтную обложку
+        e.target.src = getDefaultBookCover();
+        console.log('✅ Заменяем недоступное изображение на дефолтную обложку');
+        // Убираем обработчик ошибки чтобы предотвратить повторные вызовы
+        e.target.onerror = null;
+        setImageError(false); // Не показываем состояние ошибки если есть fallback
+        return;
+      }
+    }
+    
+    // Если не удалось загрузить даже fallback изображение, показываем состояние ошибки
     setImageError(true);
     setImageLoaded(true);
     console.error(`Ошибка загрузки обложки книги: ${book.title}, URL: ${coverUrl}`);

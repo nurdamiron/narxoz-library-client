@@ -44,7 +44,7 @@ import { useTranslation } from 'react-i18next';
 
 // Локальные компоненты
 import BookRating from './BookRating';
-import { getBookCoverUrl } from '../../utils';
+import { getBookCoverUrl, getDefaultBookCover } from '../../utils';
 
 /**
  * BookCard компоненті
@@ -203,29 +203,23 @@ const BookCard = ({
 
   // Обработка ошибки загрузки изображения
   const handleImageError = (e) => {
-    // Здесь мы можем напрямую изменить src элемента изображения
-    // вместо установки состояния ошибки
     if (e.target && e.target.src) {
       console.error(`Ошибка загрузки обложки книги: ${book.title}, URL: ${e.target.src}`);
       
-      // Special handling for NarXoz book
-      if (book.title === 'NarXoz') {
-        e.target.src = 'https://via.placeholder.com/200x300?text=NarXoz';
-        console.log('✅ Заменяем обложку NarXoz на placeholder');
-        setImageLoaded(true);
-        return;
-      }
-      
       // Проверяем, не является ли текущий src уже запасным вариантом
-      if (!e.target.src.includes('placeholder.com') && !e.target.src.includes('default-book-cover.jpg')) {
+      // чтобы предотвратить бесконечный цикл
+      if (!e.target.src.includes('no-image.png')) {
         // Заменяем src на дефолтную обложку
-        e.target.src = 'http://localhost:5002/uploads/covers/default-book-cover.jpg';
+        e.target.src = getDefaultBookCover();
         console.log('✅ Заменяем недоступное изображение на дефолтную обложку');
+        // Убираем обработчик ошибки чтобы предотвратить повторные вызовы
+        e.target.onerror = null;
+        setImageError(false); // Не показываем состояние ошибки если есть fallback
         return;
       }
     }
     
-    // Если не удалось напрямую исправить, используем state
+    // Если не удалось загрузить даже fallback изображение, показываем состояние ошибки
     setImageError(true);
     setImageLoaded(true); // Убираем скелетон при ошибке загрузки
     console.error(`Ошибка загрузки обложки книги: ${book.title}, Original: ${book.cover}`);

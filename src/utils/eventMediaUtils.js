@@ -13,7 +13,7 @@ export const getEventImageUrl = (event) => {
   
   // If no event or no image, return placeholder
   if (!event || !event.image) {
-    return getEventPlaceholderImage(event?.type);
+    return `${LOCAL_BACKEND_URL}/uploads/covers/no-image.png`;
   }
   
   // If image is already a full URL (processed by backend), return as is
@@ -43,14 +43,9 @@ export const getEventImageUrl = (event) => {
  * @returns {string} Placeholder image URL
  */
 export const getEventPlaceholderImage = (eventType = 'default') => {
-  // Try to use event-specific placeholder first
-  if (eventType && eventType !== 'default') {
-    const typeSpecificPlaceholder = `/images/event-placeholder-${eventType}.jpg`;
-    return typeSpecificPlaceholder;
-  }
-
-  // Use generic event placeholder
-  return '/images/event-placeholder.jpg';
+  const LOCAL_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5002';
+  // Always return no-image.png as placeholder
+  return `${LOCAL_BACKEND_URL}/uploads/covers/no-image.png`;
 };
 
 /**

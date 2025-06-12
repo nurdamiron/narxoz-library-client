@@ -62,14 +62,22 @@ const EventList = () => {
     changePage
   } = useEvents({
     page: 1,
-    limit: 12,
-    isActive: true
+    limit: 12
   });
   
   // Fetch categories on component mount
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('EventList - Events:', events);
+    console.log('EventList - Loading:', loading);
+    console.log('EventList - Error:', error);
+    console.log('EventList - Filters:', filters);
+    console.log('EventList - Pagination:', pagination);
+  }, [events, loading, error, filters, pagination]);
   
   // Apply filters
   const handleApplyFilters = () => {

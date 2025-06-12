@@ -59,9 +59,10 @@ import {
 import {
   Avatar
 } from '@mui/material';
-import { getBookCoverUrl } from '../../utils';
+import { getBookCoverUrl, getDefaultBookCover } from '../../utils';
 
-import borrowService from '../services/borrowService';
+import borrowService from '../../services/borrowService';
+import bookmarkService from '../../services/bookmarkService';
 
 const BookDetails = ({ book }) => {
   const { t } = useTranslation();
@@ -81,15 +82,19 @@ const BookDetails = ({ book }) => {
   // Бетбелгіге қосу/алып тастау функциясы
   const handleBookmarkToggle = async () => {
     try {
-      // This component needs to be updated to call the actual API
-      // Here we're just toggling the state locally for now
-      setBookmarked(!bookmarked);
-      setSnackbarMessage(
-        bookmarked
-          ? t('books.details.bookmarkRemoved')
-          : t('books.details.bookmarkAdded')
-      );
-      setSnackbarSeverity('success');
+      const response = await bookmarkService.toggleBookmark(book.id);
+      
+      if (response.success) {
+        setBookmarked(response.data.bookmarked);
+        setSnackbarMessage(
+          response.data.bookmarked
+            ? t('books.details.bookmarkAdded')
+            : t('books.details.bookmarkRemoved')
+        );
+        setSnackbarSeverity('success');
+      } else {
+        throw new Error(response.error || 'Bookmark toggle failed');
+      }
       setSnackbarOpen(true);
     } catch (err) {
       console.error('Error toggling bookmark:', err);
@@ -307,6 +312,12 @@ const BookDetails = ({ book }) => {
                   image={getBookCoverUrl(book.cover)}
                   alt={book.title}
                   onLoad={handleImageLoad}
+                  onError={(e) => {
+                    if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+                      e.target.src = getDefaultBookCover();
+                      e.target.onerror = null;
+                    }
+                  }}
                   sx={{
                     height: 'auto',
                     maxHeight: 500,
@@ -989,9 +1000,15 @@ const BookDetails = ({ book }) => {
                 }}
               >
                 <img 
-                  src={getBookCoverUrl(book.cover) || 'https://via.placeholder.com/100x150?text=No+Cover'} 
+                  src={getBookCoverUrl(book.cover) || getDefaultBookCover()} 
                   alt={book.title}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => {
+                    if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+                      e.target.src = getDefaultBookCover();
+                      e.target.onerror = null;
+                    }
+                  }}
                 />
               </Box>
               <Box>
@@ -1087,12 +1104,18 @@ const BookDetails = ({ book }) => {
             </IconButton>
             <Box 
               component="img"
-              src={getBookCoverUrl(book.cover) || 'https://via.placeholder.com/800x1200?text=No+Cover'}
+              src={getBookCoverUrl(book.cover) || getDefaultBookCover()}
               alt={book.title}
               sx={{
                 width: '100%',
                 maxHeight: '80vh',
                 objectFit: 'contain'
+              }}
+              onError={(e) => {
+                if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+                  e.target.src = getDefaultBookCover();
+                  e.target.onerror = null;
+                }
               }}
             />
           </DialogContent>

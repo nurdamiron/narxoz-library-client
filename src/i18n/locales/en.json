@@ -38,7 +38,9 @@
     "refresh": "Refresh",
     "view": "View",
     "showMore": "Show more",
-    "showLess": "Show less"
+    "showLess": "Show less",
+    "update": "Update",
+    "submitting": "Submitting..."
   },
   "auth": {
     "loginTitle": "Account Login",
@@ -514,6 +516,7 @@
     "advancedFilters": "Advanced filters",
     "apply": "Apply",
     "clear": "Clear",
+    "reviewsFilter": "Reviews filter",
     "allReviews": "All reviews",
     "pendingReviews": "Pending reviews",
     "approvedReviews": "Approved reviews",
@@ -645,6 +648,7 @@
     "active": "Active",
     "returned": "Returned",
     "overdue": "Overdue",
+    "returnedLate": "Returned late",
     "borrowDate": "Borrow date",
     "dueDate": "Due date",
     "returnDate": "Return date",
@@ -673,7 +677,10 @@
     "dueToday": "Due today",
     "dueTomorrow": "Due tomorrow",
     "daysRemaining": "{{days}} days remaining",
-    "overdueBy": "Overdue by {{days}} days"
+    "overdueBy": "Overdue by {{days}} days",
+    "extendDialogTitle": "Extend Due Date",
+    "extendDialogQuestion": "Would you like to extend the due date for the following book?",
+    "currentDueDate": "Current due date"
   },
   "bookmarks": {
     "title": "Bookmarks",

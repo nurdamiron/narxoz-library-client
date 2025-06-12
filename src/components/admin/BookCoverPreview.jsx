@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
-import { getBookCoverUrl } from '../../utils';
+import { getBookCoverUrl, getDefaultBookCover } from '../../utils';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -20,7 +20,7 @@ const BookCoverPreview = ({ file, imageUrl, title }) => {
   
   // Используем URL из файла, если он есть, иначе используем imageUrl, если он есть
   // В противном случае используем заглушку
-  const previewUrl = fileUrl || (imageUrl ? getBookCoverUrl(imageUrl) : '/images/default-book-cover.jpg');
+  const previewUrl = fileUrl || (imageUrl ? getBookCoverUrl(imageUrl) : getDefaultBookCover());
 
   // Эффект для очистки URL объекта при размонтировании компонента
   React.useEffect(() => {
@@ -63,7 +63,10 @@ const BookCoverPreview = ({ file, imageUrl, title }) => {
           }}
           onError={(e) => {
             // В случае ошибки загрузки изображения заменяем на заглушку
-            e.target.src = '/images/default-book-cover.jpg';
+            if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+              e.target.src = getDefaultBookCover();
+              e.target.onerror = null;
+            }
           }}
         />
       </Paper>

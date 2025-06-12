@@ -120,6 +120,10 @@ const Header = ({ toggleSidebar }) => {
   // AuthContext-тен пайдаланушы мәліметтерін алу
   const { user, isAuthenticated, logout } = useAuth();
   
+  // Debug log
+  console.log('Header - isAuthenticated:', isAuthenticated);
+  console.log('Header - user:', user);
+  
   // State
   const [anchorEl, setAnchorEl] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -356,31 +360,18 @@ const Header = ({ toggleSidebar }) => {
             </Button>
             
             {/* Events - visible to all users */}
-            <Tooltip title={t('events.title')}>
-              <IconButton
-                color="inherit"
-                component={RouterLink}
-                to="/events"
-                sx={{ 
-                  display: { xs: 'flex', lg: 'none' },
-                  p: { xs: 0.5, sm: 0.75 }
-                }}
-              >
-                <EventIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
-              </IconButton>
-            </Tooltip>
-            
             <Button
               color="inherit"
               component={RouterLink}
               to="/events"
               startIcon={<EventIcon sx={{ fontSize: 16 }} />}
               sx={{ 
-                display: { xs: 'none', lg: 'flex' },
+                display: 'flex', // Force display
                 px: 1.5,
                 py: 0.5,
                 fontSize: '0.813rem',
                 minWidth: 'auto',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)', // Легкий фон для видимости
                 '&:hover': {
                   backgroundColor: 'rgba(255, 255, 255, 0.1)',
                 },
@@ -391,6 +382,30 @@ const Header = ({ toggleSidebar }) => {
             >
               {t('events.title')}
             </Button>
+
+            {/* My Events - only for authenticated users */}
+            {isAuthenticated && (
+              <Button
+                color="inherit"
+                component={RouterLink}
+                to="/my-events"
+                startIcon={<EventIcon sx={{ fontSize: 16 }} />}
+                sx={{ 
+                  px: 1.5,
+                  py: 0.5,
+                  fontSize: '0.813rem',
+                  minWidth: 'auto',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                  '& .MuiButton-startIcon': {
+                    marginRight: 0.5,
+                  }
+                }}
+              >
+                {t('events.myEvents.title')}
+              </Button>
+            )}
 
             {/* Bookmarks - only for authenticated users (students, moderators, admins) */}
             {isAuthenticated && (

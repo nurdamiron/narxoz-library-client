@@ -100,18 +100,10 @@ export const formatDate = (date, options = {}) => {
     const daysRemaining = getDaysRemaining(dueDate);
     
     if (status === 'returned') {
-    // Check if the book was returned late
-    const wasOverdue = returnDate && new Date(returnDate) > new Date(dueDate);
-    if (wasOverdue) {
       return { 
-        text: 'Кешіктіріліп қайтарылған', 
-        color: 'warning' 
+        text: 'Қайтарылған', 
+        color: 'success' 
       };
-    }
-    return { 
-      text: 'Қайтарылған', 
-      color: 'success' 
-    };
     }
     
     if (status === 'overdue' || daysRemaining < 0) {
@@ -226,48 +218,22 @@ export const formatDate = (date, options = {}) => {
   };
   
   /**
-   * Get backend base URL
-   * @returns {string} Backend base URL
-   */
-  export const getBackendUrl = () => {
-    // Use environment variable if available, otherwise use the current origin with port 5002
-    if (process.env.REACT_APP_BACKEND_URL) {
-      return process.env.REACT_APP_BACKEND_URL;
-    }
-    
-    // In production, backend might be on the same domain
-    if (process.env.NODE_ENV === 'production') {
-      return window.location.origin.replace(':3002', ':5002');
-    }
-    
-    // Default to localhost for development
-    return 'http://localhost:5002';
-  };
-
-  /**
-   * Get default book cover image URL
-   * @returns {string} Default book cover URL
-   */
-  export const getDefaultBookCover = () => {
-    return `${getBackendUrl()}/uploads/covers/no-image.png`;
-  };
-
-  /**
    * Get cover image URL with default fallback
    * @param {string} cover - Cover path from API
    * @returns {string} Cover image URL
    */
   export const getBookCoverUrl = (cover) => {
-    const backendUrl = getBackendUrl();
+    // Константа для адреса местного сервера - всегда используем явно указанный URL
+    const LOCAL_BACKEND_URL = 'http://localhost:5002';
     
     // Если путь не указан или пустой, возвращаем изображение по умолчанию
     if (!cover) {
-      return getDefaultBookCover();
+      return `${LOCAL_BACKEND_URL}/uploads/covers/default-book-cover.jpg`;
     }
     
     // Если это явно указанный placeholder, используем его
     if (cover === 'NarXoz') {
-      return `${backendUrl}/api/narxoz-cover`;
+      return 'http://localhost:5002/api/narxoz-cover';
     }
     
     // Если путь уже полный URL, возвращаем как есть
@@ -277,11 +243,11 @@ export const formatDate = (date, options = {}) => {
     
     // Для путей вида /uploads/... (начинающихся с /)
     if (cover.startsWith('/')) {
-      return `${backendUrl}${cover}`;
+      return `${LOCAL_BACKEND_URL}${cover}`;
     }
     
     // Для относительных путей без начального слэша
-    return `${backendUrl}/${cover}`;
+    return `${LOCAL_BACKEND_URL}/${cover}`;
   };
   
   /**

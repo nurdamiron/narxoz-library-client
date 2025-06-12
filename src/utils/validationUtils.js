@@ -78,9 +78,7 @@ export const validateField = (name, value, formData, setFieldError = null) => {
         
         return '';
         
-      case 'year':
-        if (isEmpty) return 'Оқу жылын таңдаңыз';
-        return '';
+      // Year field removed - no longer validating year/course
         
       case 'password':
         if (isEmpty) return 'Құпия сөзді енгізіңіз';
@@ -141,7 +139,7 @@ export const validateField = (name, value, formData, setFieldError = null) => {
         return checkRequiredFields(contactFields) && checkNoErrors(contactFields);
         
       case 2: // Education Info
-        const educationFields = ['faculty', 'specialization', 'studentId', 'year'];
+        const educationFields = ['faculty', 'specialization', 'studentId']; // year field removed
         return checkRequiredFields(educationFields) && checkNoErrors(educationFields);
         
       case 3: // Password

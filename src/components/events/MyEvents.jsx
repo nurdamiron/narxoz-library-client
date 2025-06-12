@@ -17,6 +17,7 @@ import {
   Button,
   Divider,
   Card,
+  CardMedia,
   CardContent,
   CardActions,
   Chip,
@@ -33,6 +34,7 @@ import { format } from 'date-fns';
 import { useEvents } from '../../hooks';
 import LoadingSkeleton from '../common/LoadingSkeleton';
 import EmptyState from '../common/EmptyState';
+import { getEventImageUrl } from '../../utils/eventMediaUtils';
 
 const MyEvents = () => {
   const { t } = useTranslation();
@@ -51,6 +53,14 @@ const MyEvents = () => {
   useEffect(() => {
     fetchMyEvents();
   }, [fetchMyEvents]);
+
+  // Debug log
+  useEffect(() => {
+    console.log('MyEvents component - myEvents state:', myEvents);
+    console.log('MyEvents component - loading:', loading);
+    console.log('MyEvents component - error:', error);
+  }, [myEvents, loading, error]);
+
   
   // Handle tab change
   const handleTabChange = (event, newValue) => {
@@ -84,6 +94,7 @@ const MyEvents = () => {
           display: 'flex', 
           flexDirection: 'column', 
           height: '100%',
+          minHeight: 380,
           opacity: event.registrationStatus === 'cancelled' ? 0.7 : 1,
           position: 'relative'
         }}
@@ -103,6 +114,25 @@ const MyEvents = () => {
             }}
           />
         )}
+        
+        {/* Event Image */}
+        <CardMedia
+          component="img"
+          height="180"
+          image={getEventImageUrl(event)}
+          alt={event.title}
+          sx={{
+            objectFit: 'cover',
+            backgroundColor: 'grey.100'
+          }}
+          onError={(e) => {
+            // If image fails to load, show placeholder
+            if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+              e.target.src = 'http://localhost:5002/uploads/covers/no-image.png';
+              e.target.onerror = null;
+            }
+          }}
+        />
         
         <CardContent sx={{ flexGrow: 1, pb: 1 }}>
           <Typography 
@@ -238,7 +268,7 @@ const MyEvents = () => {
           {/* Upcoming Events Tab */}
           {tabValue === 0 && (
             <>
-              {myEvents.upcomingEvents && myEvents.upcomingEvents.length > 0 ? (
+              {myEvents?.upcomingEvents && myEvents.upcomingEvents.length > 0 ? (
                 <Grid container spacing={3}>
                   {myEvents.upcomingEvents.map(event => (
                     <Grid item xs={12} sm={6} md={4} key={event.id}>
@@ -270,7 +300,7 @@ const MyEvents = () => {
           {/* Past Events Tab */}
           {tabValue === 1 && (
             <>
-              {myEvents.pastEvents && myEvents.pastEvents.length > 0 ? (
+              {myEvents?.pastEvents && myEvents.pastEvents.length > 0 ? (
                 <Grid container spacing={3}>
                   {myEvents.pastEvents.map(event => (
                     <Grid item xs={12} sm={6} md={4} key={event.id}>

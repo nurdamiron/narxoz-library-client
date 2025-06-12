@@ -118,7 +118,7 @@ const RegisterForm = () => {
     faculty: '',
     specialization: '',
     studentId: '',
-    year: '',
+    // year field removed
     password: '',
     confirmPassword: '',
   });
@@ -134,7 +134,7 @@ const RegisterForm = () => {
     faculty: '',
     specialization: '',
     studentId: '',
-    year: '',
+    // year field removed
     password: '',
     confirmPassword: '',
   });
@@ -509,7 +509,7 @@ const RegisterForm = () => {
               {steps.map((label, index) => {
                 const stepError = index === 0 && formErrors.name ||
                                 index === 1 && (formErrors.email || formErrors.phone) ||
-                                index === 2 && (formErrors.faculty || formErrors.specialization || formErrors.studentId || formErrors.year) ||
+                                index === 2 && (formErrors.faculty || formErrors.specialization || formErrors.studentId) || // year field removed
                                 index === 3 && (formErrors.password || formErrors.confirmPassword);
                 
                 return (

@@ -38,7 +38,7 @@ import { useTranslation } from 'react-i18next';
 // Импорт хуков и утилит
 import useBookmarks from '../hooks/useBookmarks';
 import { useToast } from '../context/ToastContext';
-import { getBookCoverUrl, truncateString } from '../utils';
+import { getBookCoverUrl, truncateString, getDefaultBookCover } from '../utils';
 
 const BookmarksPage = () => {
   const { t } = useTranslation();
@@ -185,7 +185,7 @@ const BookmarksPage = () => {
                     <Card 
                       elevation={2} 
                       sx={{ 
-                        height: '100%', 
+                        height: 460,
                         display: 'flex', 
                         flexDirection: 'column',
                         transition: 'transform 0.2s, box-shadow 0.2s',
@@ -200,31 +200,77 @@ const BookmarksPage = () => {
                         height="200"
                         image={getBookCoverUrl(bookmark.book?.cover)}
                         alt={bookmark.book?.title}
-                        sx={{ objectFit: 'contain', backgroundColor: 'action.hover' }}
+                        sx={{ 
+                          objectFit: 'cover', 
+                          backgroundColor: 'action.hover',
+                          minHeight: 200,
+                          maxHeight: 200
+                        }}
+                        onError={(e) => {
+                          if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+                            e.target.src = getDefaultBookCover();
+                            e.target.onerror = null;
+                          }
+                        }}
                       />
                       
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6" component="div" gutterBottom noWrap>
-                          {bookmark.book?.title}
-                        </Typography>
+                      <CardContent sx={{ 
+                        height: 180,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        p: 2
+                      }}>
+                        <Box sx={{ height: 120, overflow: 'hidden' }}>
+                          <Typography 
+                            variant="h6" 
+                            component="div" 
+                            gutterBottom
+                            sx={{
+                              height: 72,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                              fontSize: '1rem',
+                              lineHeight: 1.2
+                            }}
+                          >
+                            {bookmark.book?.title}
+                          </Typography>
+                          
+                          <Typography 
+                            variant="body2" 
+                            color="text.secondary" 
+                            sx={{
+                              height: 40,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical'
+                            }}
+                          >
+                            {bookmark.book?.author}
+                          </Typography>
+                        </Box>
                         
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          {bookmark.book?.author}
-                        </Typography>
-                        
-                        {bookmark.book?.category && (
-                          <Chip 
-                            label={bookmark.book.category.name} 
-                            size="small" 
-                            variant="outlined"
-                            sx={{ mt: 1 }}
-                          />
-                        )}
+                        <Box sx={{ height: 32, display: 'flex', alignItems: 'center' }}>
+                          {bookmark.book?.category ? (
+                            <Chip 
+                              label={bookmark.book.category.name} 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ height: 24 }}
+                            />
+                          ) : null}
+                        </Box>
                       </CardContent>
                       
                       <Divider />
                       
-                      <CardActions sx={{ justifyContent: 'space-between', px: 2, py: 1 }}>
+                      <CardActions sx={{ justifyContent: 'space-between', px: 2, py: 1.5, height: 56, minHeight: 56 }}>
                         <Button
                           size="small"
                           component={RouterLink}

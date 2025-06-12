@@ -102,32 +102,69 @@ const UserEventsManager = () => {
       setLoading(true);
       const response = await eventService.getMyEvents();
       
-      const upcomingEvents = response.filter(event => {
-        const eventDate = new Date(event.startDate);
-        return eventDate > new Date() && event.registrationStatus !== 'cancelled';
-      });
-      
-      const pastEvents = response.filter(event => {
-        const eventDate = new Date(event.startDate);
-        return eventDate <= new Date() && event.registrationStatus !== 'cancelled';
-      });
-      
-      const cancelledEvents = response.filter(event => 
-        event.registrationStatus === 'cancelled'
-      );
-      
-      setEvents({
-        upcoming: upcomingEvents,
-        past: pastEvents,
-        cancelled: cancelledEvents
-      });
-      
-      setStats({
-        total: response.length,
-        upcoming: upcomingEvents.length,
-        attended: pastEvents.filter(e => e.registrationStatus === 'attended').length,
-        cancelled: cancelledEvents.length
-      });
+      // The API returns data in the format: { success: true, data: { upcomingEvents: [], pastEvents: [] } }
+      if (response.success && response.data) {
+        const { upcomingEvents = [], pastEvents = [] } = response.data;
+        
+        // Combine all events to get cancelled ones
+        const allEvents = [...upcomingEvents, ...pastEvents];
+        
+        // Filter out cancelled events from upcoming and past
+        const activeUpcomingEvents = upcomingEvents.filter(event => 
+          event.registrationStatus !== 'cancelled'
+        );
+        
+        const activePastEvents = pastEvents.filter(event => 
+          event.registrationStatus !== 'cancelled'
+        );
+        
+        const cancelledEvents = allEvents.filter(event => 
+          event.registrationStatus === 'cancelled'
+        );
+        
+        setEvents({
+          upcoming: activeUpcomingEvents,
+          past: activePastEvents,
+          cancelled: cancelledEvents
+        });
+        
+        setStats({
+          total: allEvents.length,
+          upcoming: activeUpcomingEvents.length,
+          attended: activePastEvents.filter(e => e.registrationStatus === 'attended').length,
+          cancelled: cancelledEvents.length
+        });
+      } else {
+        // If the response is in the old format (just an array), use the old logic
+        const eventsList = Array.isArray(response) ? response : [];
+        
+        const upcomingEvents = eventsList.filter(event => {
+          const eventDate = new Date(event.startDate);
+          return eventDate > new Date() && event.registrationStatus !== 'cancelled';
+        });
+        
+        const pastEvents = eventsList.filter(event => {
+          const eventDate = new Date(event.startDate);
+          return eventDate <= new Date() && event.registrationStatus !== 'cancelled';
+        });
+        
+        const cancelledEvents = eventsList.filter(event => 
+          event.registrationStatus === 'cancelled'
+        );
+        
+        setEvents({
+          upcoming: upcomingEvents,
+          past: pastEvents,
+          cancelled: cancelledEvents
+        });
+        
+        setStats({
+          total: eventsList.length,
+          upcoming: upcomingEvents.length,
+          attended: pastEvents.filter(e => e.registrationStatus === 'attended').length,
+          cancelled: cancelledEvents.length
+        });
+      }
     } catch (error) {
       console.error('Error fetching events:', error);
       showToast(t('userEventsManager.loadError'), 'error');

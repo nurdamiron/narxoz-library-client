@@ -94,6 +94,12 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
     
     // Only for authenticated users (students, moderators, admins)
     { 
+      text: t('sidebar.mainMenu.myEvents'), 
+      icon: <EventIcon />, 
+      path: '/my-events',
+      requireAuth: true
+    },
+    { 
       text: t('sidebar.mainMenu.bookmarks'), 
       icon: <BookmarkIcon />, 
       path: '/bookmarks',
@@ -118,13 +124,6 @@ const Sidebar = ({ open, onClose, stats = {}, categories = [] }) => {
       requireRole: ['moderator', 'admin', 'librarian']
     },
     
-    // My Events - only for authenticated users
-    { 
-      text: t('sidebar.mainMenu.myEvents'), 
-      icon: <EventIcon />, 
-      path: '/my-events',
-      requireAuth: true
-    },
     
     // Admin/Moderator Panel - only for moderators and admins
     { 

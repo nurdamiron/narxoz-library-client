@@ -85,10 +85,10 @@ import { kk } from 'date-fns/locale';
 
 // Импорт сервисов
 import borrowService from '../services/borrowService';
-import bookService from '../services/bookService';
+import bookmarkService from '../services/bookmarkService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { getBookCoverUrl } from '../utils';
+import { getBookCoverUrl, getDefaultBookCover } from '../utils';
 
 /**
  * BorrowHistoryPage компоненті - жақсартылған нұсқа
@@ -299,7 +299,16 @@ const BorrowHistoryPage = () => {
    */
   const handleAddToBookmarks = async (bookId) => {
     try {
-      await bookService.addToBookmarks(bookId);
+      console.log('Adding bookmark for bookId:', bookId);
+      
+      if (!bookId) {
+        showMessage(t('books.bookmarkError'), 'error');
+        return;
+      }
+      
+      const response = await bookmarkService.addBookmark({ bookId });
+      console.log('Bookmark response:', response);
+      
       showMessage(t('books.bookmarkAdded'), 'success');
     } catch (err) {
       console.error(`${t('books.bookmarkError')}:`, err);
@@ -339,17 +348,8 @@ const BorrowHistoryPage = () => {
    * Кітап мұқабасының URL-ін алу
    */
   const getCoverUrl = (book) => {
-    if (!book) {
-      return '/images/default-book-cover.jpg';
-    }
-    
-    // Special handling for NarXoz book
-    if (book.title === 'NarXoz') {
-      return 'http://localhost:5002/api/narxoz-cover';
-    }
-    
-    // Use the global utility function we fixed
-    return getBookCoverUrl(book.cover);
+    // Use the global utility function for all cases
+    return getBookCoverUrl(book?.cover);
   };
   
   /**
@@ -360,6 +360,19 @@ const BorrowHistoryPage = () => {
     const dueDate = new Date(borrow.dueDate);
     
     if (borrow.status === 'returned') {
+      // Check if the book was returned late
+      const returnDate = new Date(borrow.returnDate);
+      const wasOverdue = returnDate > dueDate;
+      
+      if (wasOverdue) {
+        return {
+          label: t('borrowHistory.returnedLate'),
+          color: 'warning',
+          icon: <CheckCircleOutline />,
+          bg: alpha(theme.palette.warning.main, 0.08)
+        };
+      }
+      
       return {
         label: t('borrowHistory.returned'),
         color: 'success',
@@ -397,14 +410,14 @@ const BorrowHistoryPage = () => {
       // Белсенді қарыздар
       filtered = borrows.filter(borrow => borrow.status === 'active');
     } else if (tabValue === 2) {
+      // Қайтарылған қарыздар
+      filtered = borrows.filter(borrow => borrow.status === 'returned');
+    } else {
       // Мерзімі өткен қарыздар
       filtered = borrows.filter(borrow => 
         borrow.status === 'overdue' || 
         (borrow.status === 'active' && isPast(new Date(borrow.dueDate)))
       );
-    } else {
-      // Қайтарылған қарыздар
-      filtered = borrows.filter(borrow => borrow.status === 'returned');
     }
     
     // Іздеу
@@ -712,8 +725,8 @@ const BorrowHistoryPage = () => {
                 : tabValue === 1 
                 ? t('borrowHistory.noActiveBorrows')
                 : tabValue === 2 
-                ? t('borrowHistory.noOverdueBorrows')
-                : t('borrowHistory.noReturnedBooks')}
+                ? t('borrowHistory.noReturnedBooks')
+                : t('borrowHistory.noOverdueBorrows')}
             </Typography>
             
             <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 500, mx: 'auto', mb: 3 }}>
@@ -724,8 +737,8 @@ const BorrowHistoryPage = () => {
                 : tabValue === 1 
                 ? t('borrowHistory.noActiveBorrowsDesc')
                 : tabValue === 2 
-                ? t('borrowHistory.noOverdueBorrowsDesc')
-                : t('borrowHistory.noReturnedBooksDesc')}
+                ? t('borrowHistory.noReturnedBooksDesc')
+                : t('borrowHistory.noOverdueBorrowsDesc')}
             </Typography>
             
             <Button
@@ -749,7 +762,7 @@ const BorrowHistoryPage = () => {
                 const status = getBorrowStatus(borrow);
                 const daysUntilDue = getDaysUntilDue(borrow.dueDate);
                 const daysOverdue = getDaysOverdue(borrow.dueDate);
-                const canExtend = borrow.status === 'active' && daysUntilDue > 0;
+                const canExtend = borrow.status === 'active' && daysUntilDue >= 0;
                 const canReturn = borrow.status === 'active' || borrow.status === 'overdue';
                 const progressValue = getProgressValue(borrow);
                 const progressColor = getProgressColor(borrow);
@@ -809,6 +822,12 @@ const BorrowHistoryPage = () => {
                             image={getCoverUrl(borrow.book)}
                             alt={borrow.book?.title}
                             crossOrigin="anonymous" // Add crossOrigin prop for CORS support
+                            onError={(e) => {
+                              if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+                                e.target.src = getDefaultBookCover();
+                                e.target.onerror = null; // Prevent infinite loop
+                              }
+                            }}
                             sx={{
                               position: 'absolute',
                               top: 0,
@@ -1091,7 +1110,15 @@ const BorrowHistoryPage = () => {
                   variant="rounded" 
                   src={getCoverUrl(selectedBorrow.book)}
                   sx={{ width: 60, height: 80, mr: 2 }}
-                  imgProps={{ crossOrigin: "anonymous" }} // Add crossOrigin prop for CORS support
+                  imgProps={{ 
+                    crossOrigin: "anonymous", // Add crossOrigin prop for CORS support
+                    onError: (e) => {
+                      if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+                        e.target.src = getDefaultBookCover();
+                        e.target.onerror = null; // Prevent infinite loop
+                      }
+                    }
+                  }}
                 >
                   <BookIcon />
                 </Avatar>
@@ -1133,6 +1160,89 @@ const BorrowHistoryPage = () => {
               startIcon={returnLoading ? <CircularProgress size={20} /> : null}
             >
               {returnLoading ? t('borrowHistory.returning') : t('borrowHistory.return')}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+      
+      {/* Диалог продления книги */}
+      <Dialog
+        open={extendDialogOpen}
+        onClose={handleCloseExtendDialog}
+        aria-labelledby="extend-dialog-title"
+      >
+        <DialogTitle id="extend-dialog-title">
+          {t('borrowHistory.extendDialogTitle', { defaultValue: 'Продлить срок возврата' })}
+        </DialogTitle>
+        <DialogContent>
+          {selectedBorrow && (
+            <Box sx={{ mb: 2 }}>
+              <DialogContentText>
+                {t('borrowHistory.extendDialogQuestion', { defaultValue: 'Вы хотите продлить срок возврата следующей книги?' })}
+              </DialogContentText>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mt: 2,
+                p: 2,
+                bgcolor: 'background.paper',
+                borderRadius: 1,
+                boxShadow: 1
+              }}>
+                <Avatar 
+                  variant="rounded" 
+                  src={getCoverUrl(selectedBorrow.book)}
+                  sx={{ width: 60, height: 80, mr: 2 }}
+                  imgProps={{ 
+                    crossOrigin: "anonymous",
+                    onError: (e) => {
+                      if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+                        e.target.src = getDefaultBookCover();
+                        e.target.onerror = null;
+                      }
+                    }
+                  }}
+                >
+                  <BookIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {selectedBorrow.book?.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedBorrow.book?.author}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {t('borrowHistory.currentDueDate', { defaultValue: 'Текущий срок возврата' })}: {format(new Date(selectedBorrow.dueDate), 'dd.MM.yyyy')}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
+          
+          {extendSuccess && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              {t('borrowHistory.extendSuccess')}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={handleCloseExtendDialog} 
+            color="primary"
+            disabled={extendLoading}
+          >
+            {extendSuccess ? t('common.close') : t('common.cancel')}
+          </Button>
+          {!extendSuccess && (
+            <Button 
+              onClick={handleExtendBorrow} 
+              color="primary" 
+              variant="contained"
+              disabled={extendLoading}
+              startIcon={extendLoading ? <CircularProgress size={20} /> : null}
+            >
+              {extendLoading ? t('borrowHistory.extending') : t('borrowHistory.extend')}
             </Button>
           )}
         </DialogActions>

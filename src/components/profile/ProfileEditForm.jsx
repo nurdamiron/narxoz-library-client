@@ -111,16 +111,7 @@ const ProfileEditForm = ({ userData, onDataChange, onSave, onCancel, editMode })
           />
         </Grid>
         
-        {/* Курс өрісі */}
-        <Grid item xs={12} sm={6}>
-          <ProfileTextField
-            label="Курс"
-            name="year"
-            value={userData.year}
-            onChange={handleInputChange}
-            disabled={!editMode}
-          />
-        </Grid>
+        {/* Year/Course field removed */}
       </Grid>
       
       {/* Өңдеу режимінде көрсетілетін түймелер */}

@@ -198,18 +198,7 @@ const EducationInfoStep = ({ formData, formErrors, handleInputChange, setFieldEr
    */
   const specializations = formData.faculty ? facultiesAndSpecializations[formData.faculty] || [] : [];
 
-  /**
-   * Курстар тізімі
-   * @type {Array<{value: string, label: string}>}
-   */
-  const years = [
-    { value: "1", label: "1 курс" },
-    { value: "2", label: "2 курс" },
-    { value: "3", label: "3 курс" },
-    { value: "4", label: "4 курс" },
-    { value: "Магистратура", label: "Магистратура" },
-    { value: "Докторантура", label: "Докторантура" },
-  ];
+  // Year/Course field removed - no longer needed
 
   // Форма элементтері үшін анимация
   const containerVariants = {
@@ -457,75 +446,7 @@ const EducationInfoStep = ({ formData, formErrors, handleInputChange, setFieldEr
     </motion.div>
   </Grid>
 
-  <Grid item xs={12} md={6}>
-    <motion.div variants={itemVariants}>
-      <FormControl 
-        fullWidth 
-        margin="normal" 
-        required 
-        error={!!formErrors.year}
-        sx={{
-          mb: 2,
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            transition: 'all 0.3s ease',
-            '&:hover fieldset': {
-              borderColor: theme.palette.primary.main + '90',
-            },
-            '&.Mui-focused fieldset': {
-              borderWidth: '2px',
-            },
-          },
-          '& .MuiInputLabel-root': {
-            fontSize: { xs: '0.9rem', sm: '1rem' },
-          },
-          '& .MuiSelect-select': {
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: { xs: '0.95rem', sm: '1rem' },
-            padding: { xs: '12px 14px', sm: '15px 14px' },
-          },
-          '& .MuiFormHelperText-root': {
-            fontSize: { xs: '0.7rem', sm: '0.75rem' },
-            marginLeft: 1,
-          },
-        }}
-      >
-        <InputLabel id="year-label">
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Timeline fontSize="small" sx={{ mr: 1, opacity: 0.7 }} /> Курс
-          </Box>
-        </InputLabel>
-        <Select
-          labelId="year-label"
-          id="year"
-          name="year"
-          value={formData.year || ''}
-          label="Курс"
-          onChange={handleInputChange}
-          disabled={isLoading}
-          MenuProps={{
-            PaperProps: {
-              sx: {
-                borderRadius: 2,
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-              },
-            },
-          }}
-        >
-          {years.map(year => (
-            <MenuItem key={year.value} value={year.value}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Timeline fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main, opacity: 0.7 }} />
-                {year.label}
-              </Box>
-            </MenuItem>
-          ))}
-        </Select>
-        {formErrors.year && <FormHelperText>{formErrors.year}</FormHelperText>}
-      </FormControl>
-    </motion.div>
-  </Grid>
+  {/* Year/Course field removed */}
 
   <Grid item xs={12}>
     <motion.div variants={itemVariants}>
@@ -673,15 +594,7 @@ const EducationInfoStep = ({ formData, formErrors, handleInputChange, setFieldEr
             variant="outlined" 
             color="primary" 
           />
-          {formData.year && (
-            <Chip 
-              icon={<Timeline fontSize="small" />} 
-              label={`Курс: ${formData.year}`} 
-              size="small" 
-              variant="outlined" 
-              color="primary" 
-            />
-          )}
+          {/* Year/Course chip removed */}
         </Box>
         
         <Box 

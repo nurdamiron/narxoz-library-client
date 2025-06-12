@@ -38,6 +38,7 @@ import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import EmptyState from '../components/common/EmptyState';
 import reviewService from '../services/reviewService';
 import { useToast } from '../context/ToastContext';
+import { getBookCoverUrl, getDefaultBookCover } from '../utils';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -233,9 +234,15 @@ const MyReviewsPage = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           {review.Book?.cover && (
                             <img
-                              src={review.Book.cover}
+                              src={getBookCoverUrl(review.Book.cover)}
                               alt={review.Book.title}
                               style={{ width: 40, height: 60, objectFit: 'cover' }}
+                              onError={(e) => {
+                                if (e.target && e.target.src && !e.target.src.includes('no-image.png')) {
+                                  e.target.src = getDefaultBookCover();
+                                  e.target.onerror = null;
+                                }
+                              }}
                             />
                           )}
                           <Box>

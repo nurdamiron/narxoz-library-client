@@ -58,7 +58,10 @@ class EventService {
    * @returns {Promise} - Promise with user's events
    */
   async getMyEvents() {
-    return BaseService.get('/events/my-events');
+    console.log('EventService.getMyEvents - calling /events/my-events');
+    const result = await BaseService.get('/events/my-events');
+    console.log('EventService.getMyEvents - result:', result);
+    return result;
   }
 
   /**

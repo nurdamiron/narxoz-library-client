@@ -38,7 +38,9 @@
     "refresh": "Жаңарту",
     "view": "Көру",
     "showMore": "Толығырақ",
-    "showLess": "Жию"
+    "showLess": "Жию",
+    "update": "Жаңарту",
+    "submitting": "Жіберілуде..."
   },
   "auth": {
     "loginTitle": "Аккаунтқа кіру",
@@ -469,6 +471,7 @@
     "advancedFilters": "Кеңейтілген сүзгілер",
     "apply": "Қолдану",
     "clear": "Тазалау",
+    "reviewsFilter": "Пікірлер сүзгісі",
     "allReviews": "Барлық пікірлер",
     "pendingReviews": "Күтудегі пікірлер",
     "approvedReviews": "Бекітілген пікірлер",
@@ -702,6 +705,7 @@
     "noSearchResults": "\"{{term}}\" бойынша нәтижелер табылмады.",
     "active": "Белсенді",
     "returned": "Қайтарылған",
+    "returnedLate": "Кешіктіріліп қайтарылған",
     "overdue": "Мерзімі өткен",
     "borrowDate": "Алу күні",
     "dueDate": "Қайтару күні",
@@ -731,7 +735,10 @@
     "dueToday": "Бүгін мерзімі аяқталады",
     "dueTomorrow": "Ертең мерзімі аяқталады",
     "daysRemaining": "{{days}} күн қалды",
-    "overdueBy": "Мерзімі {{days}} күнге кешіктірілді"
+    "overdueBy": "Мерзімі {{days}} күнге кешіктірілді",
+    "extendDialogTitle": "Қайтару мерзімін ұзарту",
+    "extendDialogQuestion": "Келесі кітаптың қайтару мерзімін ұзартқыңыз келе ме?",
+    "currentDueDate": "Ағымдағы қайтару мерзімі"
   },
   "bookmarks": {
     "title": "Бетбелгілер",
@@ -891,7 +898,7 @@
       "events": "Іс-шаралар",
       "bookmarks": "Таңдаулылар",
       "borrowHistory": "Алу тарихы",
-      "myEvents": "Іс-шаралар",
+      "myEvents": "Менің іс-шараларым",
       "adminPanel": "Админ панелі"
     },
     "categories": "Категориялар",

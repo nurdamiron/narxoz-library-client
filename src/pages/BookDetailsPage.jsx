@@ -270,7 +270,7 @@ const BookDetailsPage = () => {
   };
   
   // Мұқаба URL-ін дайындау
-  const coverUrl = book && book.cover ? getBookCoverUrl(book.cover) : '/images/default-book-cover.jpg';
+  const coverUrl = book && book.cover ? getBookCoverUrl(book.cover) : '/images/no-image.png';
   
   // Мұқаба суретінің жүктелу оқиғасын өңдеу
   const handleImageLoad = () => {

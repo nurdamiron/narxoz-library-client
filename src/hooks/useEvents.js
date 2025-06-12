@@ -35,7 +35,10 @@ const useEvents = (initialFilters = {}) => {
       setErrorState(null);
       
       const filtersToUse = newFilters || filters;
+      console.log('useEvents - Fetching with filters:', filtersToUse);
+      
       const response = await eventService.getEvents(filtersToUse);
+      console.log('useEvents - API Response:', response);
       
       if (response.success) {
         setEvents(response.data);
@@ -124,15 +127,24 @@ const useEvents = (initialFilters = {}) => {
   const fetchMyEvents = useCallback(async () => {
     try {
       setLoading(true);
+      setErrorState(null); // Clear any previous errors
       
       const response = await eventService.getMyEvents();
       
+      console.log('useEvents - getMyEvents response:', response);
+      console.log('useEvents - response.data structure:', response.data);
+      
       if (response.success) {
-        setMyEvents(response.data);
+        // Extract the nested data object that contains upcomingEvents and pastEvents
+        setMyEvents(response.data || { upcomingEvents: [], pastEvents: [] });
       } else {
+        setErrorState(response.error || t('events.myEventsError'));
         error(response.error || t('events.myEventsError'));
       }
     } catch (err) {
+      console.error('useEvents - fetchMyEvents error:', err);
+      console.error('useEvents - error response:', err.response);
+      setErrorState(err.message || t('events.myEventsError'));
       error(err.message || t('events.myEventsError'));
     } finally {
       setLoading(false);
@@ -186,7 +198,22 @@ const useEvents = (initialFilters = {}) => {
         return false;
       }
     } catch (err) {
-      error(err.message || t('events.cancelError'));
+      // Check if this is a network error or actually successful cancellation
+      // Some 400 errors might still indicate successful cancellation
+      console.error('Cancel registration error:', err);
+      
+      // If the error is about the user not being registered, it might actually be successful
+      if (err.response?.status === 400 && err.response?.data?.error) {
+        const errorMessage = err.response.data.error;
+        
+        // If the error is about not being registered, treat it as success
+        if (errorMessage.includes('not registered') || errorMessage.includes('already cancelled')) {
+          success(t('events.cancelSuccess'));
+          return true;
+        }
+      }
+      
+      error(err.response?.data?.error || err.message || t('events.cancelError'));
       return false;
     } finally {
       setLoading(false);
